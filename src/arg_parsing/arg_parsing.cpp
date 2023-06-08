@@ -31,9 +31,6 @@ namespace cppli::detail {
                 }
                 else if(arg_string[0] == '-') { // short flag(s) and/or option (these are not ez)
                     if(arg_string.find('=') != std::string::npos) {
-                        if(arg_string[0] != '-') {
-                            throw std::runtime_error("")
-                        }
                         for(unsigned char_i = 1; char_i < arg_string.size(); ++char_i) {
                             std::string char_string = arg_string.substr(char_i,1);
                             if((char_i < arg_string.size()-1) && (arg_string[char_i+1] == '=')) {
@@ -64,17 +61,12 @@ namespace cppli::detail {
                                         ++arg_i; // we just ate the next arg, so don't process it again
                                     }
                                     else {
-                                        throw std::runtime_error(std::string("the last character (") + arg_string[char_i] + ") in flag/option group \"" + arg_string + "\" referred to an option with a mandatory argument, "
-                                                                                                                                                                       "but no argument followed\n");
+                                        throw std::runtime_error(std::string("the last character (") + arg_string[char_i] + ") in flag/option group \"" + arg_string + "\" referred to an option with a required argument, but no argument followed\n");
                                     }
                                 }
                                 else {
                                     assert(false);
                                 }
-                                /*if((char_i != arg_string.size()-1) && (arg_string[char_i+1] != '=')) {
-                                    throw std::runtime_error(std::string("Couldn't "))
-                                }*/
-
                             }
                             else if(subcommand_takes_flag(subcommand_name, char_string)) {
                                 args.flags.emplace(char_string);
