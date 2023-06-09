@@ -3,49 +3,54 @@
 ## Terms
 First off, here's what I mean. To my understanding, a lot of these words have somewhat vague meanings, so I'm 
 * Argument: when I say argument, I'm referring to the actual space separated strings passed to `main`; the things in `argv`
-* Position Arguments: These are arguments passed to a (sub)command *not* preceded by `-` or `--`. I call them positional because their meaning is determined based on their relative order. In the command `mv f1 f2`, I would consider `f1` and `f2` to be positional args
-* Flag: a boolean value specified with `-f` or `--force`. Flags don't take arguments
-* Option:
+* Position Arguments: These are arguments passed to a (sub)command *not* preceded by `-` or `--`. 
+I call them positional because their meaning is determined based on their relative order. In the command `mv f1 f2`, I would call `f1` and `f2` to be positional args
+* Flag: a boolean value specified with a hyphen followed by single character (`-f`) or two hyphens followed by two or more characters (`--force`). 
+Flags don't take arguments (unlike options)
+* Option: a value that 
 
 ## Flags and Options
-
-### Flags
-Work how you'd expect
 
 ### Options
 #### Short
 Short options can be specified with or without a space, so `program -c blue` and `program -cblue` are equivalent.  
 An equals sign can also be used to connect the option name and value, like so: `program -c=blue`.  
-This has the same meaning as the other two examples
+This has the same meaning as the other two syntaxes
 
 #### Long
 Long options work the same as short options, except that you can't omit the space between the option name and its value,  
 so `program --color blue` and `program --color=blue` are both valid, but `program --colorblue` is not (it would be interpreted as a flag or option called "colorblue")
 
+#### Optional and Required Options
+In real life software, options are usually (almost always?) optional, meaning that both of the following inputs are valid:  
+`program --color=blue`  
+`program // no color specified`  
+However, cppli also provides the ability to make required options. 
+These work by simply requiring that an option be specified;
+if the `color` option of the hypothetical program above were required, then the second input would be invalid.
+
 #### Optional Option Arguments
+An option's argument can also be optional, like this:  
+`program --color // omitted`  
+`program --color=blue`  
+`program --color blue // DOESN'T DO WHAT YOU EXPECT`  
+Note that you have to use the `=` syntax (or, with short options, the connected [`-cblue`] syntax) with optional option arguments,
+because if there were a space after the option, the parser would assume that the option argument had been omitted and that the following token argument is an unrelated positional argument.
+
+So with the example inputs above, under assumption 1, `program --color` could simply be equivalent to `program --color=green`, or whatever the default color is  
+Under assumption 2, the inclusion of `--color` could mean something more general like "do colorized output, but with what", but 
 
 ##### Optional Options and Optional Option Arguments
 
-This table shows how optional options interact with optional option arguments
+This table shows how optional options interact with optional option arguments.  
+✔️ indicates that the input is valid,  
+❌ indicates that it isn't
 
-|                                     | The option itself is optional      | The option itself is required                                                                                                                                                    |
-|-------------------------------------|------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **The option argument is optional** | nothing✔️ <br/> -c✔️<br/> -cblue✔️ | Making it illegal to not include an option but okay to include it with no value wouldn't make sense, so this combination isn't allowed<br/><br/>nothing❌<br/> -c✔️<br/> -cblue✔️ |
-| **The option argument is required** | nothing✔️<br/> -c❌ <br/> -cblue✔️  | nothing❌<br/> -c❌<br/> -cblue✔️                                                                                                                                                  |
-
-
-
-
-
-### Grouping
-Flags can be grouped like this: 
-`program -abc`  
-The input above is equivalent to `program -a -b -c`
-
-The last character in a group can be an option that can optionally be take an argument, like so:  
-`program -abcoouput.txt`. All characters after the first character in the group that matches an option **with a required (non-optional) argument** are assumed to be the characters of that options value.
-This means that there can be only one option 
-
+|                                     | The option itself is optional     | The option itself is required         |
+|-------------------------------------|-----------------------------------|---------------------------------------|
+| **The option argument is optional** | nothing✔️ <br/> -c✔️<br/> -cblue✔️ | ~~*nothing❌<br/> -c✔️<br/> -cblue✔️~~ |
+| **The option argument is required** | nothing✔️<br/> -c❌ <br/> -cblue✔️ | nothing❌<br/> -c❌<br/> -cblue✔️       |
+*: required options with optional argument wouldn't make sense, so I don't allow them
 
 ## Subcommands
 
