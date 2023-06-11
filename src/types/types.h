@@ -10,90 +10,106 @@
 
 namespace cppli {
 
-    using int_t    = int;
     using float_t  = float;
     using string_t = std::string;
 
+    struct int_t {
+        int val;
+
+        int_t(const std::string& str) {
+            try {
+                val = std::stoi(str);
+            }
+            catch(std::exception& e) {
+                throw std::runtime_error("Could not form a valid integer from string \"" + str + '\"');
+            }
+        }
+
+        operator int() {
+            return val;
+        }
+    };
+
+    struct dummy_t{};
+
     namespace detail {
         template<typename T>
-        decltype(auto) string_to_type(const std::string& str);
+        struct wrapper_type_info_t {
+            static constexpr bool is_wrapper_type = false;
+
+            using wrapped_t = dummy_t;
+        };
 
         template<>
-        decltype(auto) string_to_type<int_t>(const std::string& str) {
-            return std::stoi(str);
-        }
+        struct wrapper_type_info_t<int_t> {
+            static constexpr bool is_wrapper_type = true;
+            using wrapped_t = int;
+        };
 
         template<>
-        decltype(auto) string_to_type<float_t>(const std::string& str) {
-            return std::stof(str);
-        }
+        struct wrapper_type_info_t<float_t> {
+            static constexpr bool is_wrapper_type = true;
+            using wrapped_t = float;
+        };
 
         template<>
-        decltype(auto) string_to_type<string_t>(const std::string& str) {
-            return str;
-        }
+        struct wrapper_type_info_t<string_t> {
+            static constexpr bool is_wrapper_type = true;
+            using wrapped_t = const std::string&;
+        };
 
         template<typename T>
-        struct type_string_t;
+        static constexpr bool is_wrapper_type = wrapper_type_info_t<T>::is_wrapper_type;
 
-        template<>
-        struct type_string_t<int_t> {
-            static constexpr const char* name = "integer";
-        };
-
-        template<>
-        struct type_string_t<float_t> {
-            static constexpr const char* name = "integer";
-        };
-
-        template<>
-        struct type_string_t<string_t> {
-            static constexpr const char* name = "integer";
-        };
+        template<typename T>
+        using wrapper_type_wrapped_t = typename wrapper_type_info_t<T>::wrapped_t;
     }
 
-    struct no_default_value_t {
-        constexpr bool operator==(const no_default_value_t&) const = default;
-    };
-    static constexpr auto no_default_value = no_default_value_t{};
+    template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
+             bool optional_, bool argument_optional_,
+             string_literal short_name_ = "">
 
-    struct application_determined_default_value_t {
-        constexpr bool operator==(const application_determined_default_value_t&) const = default;
-    };
-    static constexpr auto application_determined_default_value = application_determined_default_value_t{};
-
-
-    template<typename type_, string_literal name_, string_literal description_, auto default_value = no_default_value>
     class option {
         /// type_ if default_value == no_default_value, otherwise std::optional<type_>
-        using optional_or_raw_type = std::conditional_t<std::is_same_v<std::remove_cvref_t<decltype(default_value)>, no_default_value_t>, type_, std::optional<type_>>;
+    public:
+        using optional_or_raw_type = std::conditional_t<argument_optional_, std::optional<type_>, type_>;
 
+    private:
         optional_or_raw_type value_;
+        bool was_included_ = false;
+
+        static_assert(!(argument_optional_ && (!optional_)), "required options with optional arguments are not allowed because that wouldn't make sense");
 
     public:
-        operator type_() const {
-            static_assert(!std::is_same_v<std::remove_cvref_t<decltype(default_value)>, application_determined_default_value_t>, "option implicit conversion to underlying type is not allowed with application determined default values. You need to use value_or");
+        static constexpr auto name              = name_,
+                              short_name        = short_name_,
+                              documentation     = documentation_,
+                              argument_text     = argument_text_,
+                              optional          = optional_,
+                              argument_optional = argument_optional_;
 
-            if constexpr(std::is_same_v<decltype(value_), type_>) {
+        operator type_() const {
+            static_assert((!optional_) && (!argument_optional_), "option implicit conversion to underlying type is only allowed if the option in question is required (not optional) and has a required (not optional) argument");
+
+            return value_;
+        }
+
+        operator detail::wrapper_type_wrapped_t<type_>()
+        requires(detail::is_wrapper_type<type_>) {
+            static_assert((!optional_) && (!argument_optional_), "option implicit conversion to underlying type is only allowed if the option in question is required (not optional) and has a required (not optional) argument");
+
+            if constexpr(detail::is_wrapper_type<type_>) {
                 return value_;
             }
             else {
-                return value_.value_or(default_value);
+                return dummy_t{};
             }
         }
 
-        option(const std::string& str) {
-            try {
-                value_ = detail::string_to_type<type_>(str);
-            }
-            catch(std::exception& e) {
-                throw std::runtime_error("Could not convert string \"" + str + "\" to option type " + detail::type_string_t<type_>::name + " for option " + name_.make_lowercase_and_convert_underscores());
-            }
-        }
+        option() = default;
+        option(const optional_or_raw_type& str) : value_(str),
+                                                        was_included_(true) {}
 
-        template<typename T>
-        requires(!std::is_same_v<std::remove_cvref_t<T>, option>)
-        option(T&& arg) : value_(std::forward<T>(arg)) {}
 
         option(const option&) = default;
         option& operator=(const option&) = default;
@@ -101,11 +117,104 @@ namespace cppli {
         option(option&&) = default;
         option& operator=(option&&) = default;
 
+        bool was_included() const {
+            static_assert(optional_, "option::was_included is only available if the option in question is optional");
+
+            return was_included_;
+        }
+
+        bool has_value() const {
+            static_assert(optional_ || argument_optional_, "option::has_value is only available if the option in question is optional or takes an optional argument");
+
+            return value_.has_value();
+        }
+
+        /// call func with value if has_value() is true, does nothing otherwise
+        template<typename func_t>
+        void access_value_if_present(func_t&& func) const {
+            static_assert(optional_ || argument_optional_, "option::access_value_if_present is only available if the option in question is optional or takes an optional argument");
+
+            if(has_value()) {
+                func(*value_);
+            }
+        }
 
         type_ value_or(const type_& alternative) const {
-            static_assert(std::is_same_v<std::remove_cvref_t<decltype(default_value)>, application_determined_default_value_t>, "option::value_or is only available if default value is set to application determined. Use implicit conversion operator instead");
+            static_assert(optional_ || argument_optional_, "option::value_or is only available if the option in question is optional or takes an optional argument");
+
             return value_.value_or(alternative);
         }
     };
 
+    template<string_literal name_, string_literal short_name_, string_literal documentation_>
+    class flag {
+        bool value_;
+
+    public:
+        static constexpr auto name           = name_,
+                              short_name     = short_name_,
+                              documentation  = documentation_;
+
+        flag(bool value) : value_(value) {}
+
+        operator bool() {
+            return value_;
+        }
+    };
+
+    template<typename type_, bool optional_, string_literal name_, string_literal documentation_>
+    class positional {
+    public:
+        using optional_or_raw_type = std::conditional_t<optional_, std::optional<type_>, type_>;
+
+    private:
+        optional_or_raw_type value_;
+
+    public:
+        static constexpr auto name          = name_,
+                              optional      = optional_,
+                              documentation = documentation_;
+
+        positional(const optional_or_raw_type& value) : value_(value) {}
+
+        operator type_() const {
+            static_assert(!optional_, "positional implicit conversion to underlying type is only allowed if the positional argument in question is required (not optional)");
+
+            return value_;
+        }
+
+        operator detail::wrapper_type_wrapped_t<type_>()
+        requires(detail::is_wrapper_type<type_>) {
+            static_assert(!optional_, "positional implicit conversion to underlying type is only allowed if the positional argument in question is required (not optional)");
+
+            if constexpr(detail::is_wrapper_type<type_>) {
+                return value_;
+            }
+            else {
+                return dummy_t{};
+            }
+        }
+
+        bool has_value() const {
+            static_assert(optional_, "positional::has_value is only available if the positional argument in question is optional");
+
+            return value_.has_value();
+        }
+
+        /// call func with value if has_value() is true, does nothing otherwise
+        template<typename func_t>
+        void access_value_if_present(func_t&& func) const {
+            static_assert(optional_, "positional::access_value_if_present is only available if the positional argument in question is optional");
+
+            if(has_value()) {
+                func(*value_);
+            }
+        }
+
+        type_ value_or(const type_& alternative) const {
+            static_assert(optional_, "positional::value_or is only available if the positional argument in question is optional");
+
+            return value_.value_or(alternative);
+        }
+    };
 }

@@ -4,11 +4,12 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <string>
+#include <optional>
 
 namespace cppli::detail {
     struct subcommand_args_t {
         std::vector<std::string> positional_args;
-        std::unordered_map<std::string, std::string> options_to_values;
+        std::unordered_map<std::string, std::optional<std::string>> options_to_values;
         std::unordered_set<std::string> flags;
     };
 

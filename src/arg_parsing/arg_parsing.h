@@ -4,5 +4,5 @@
 
 namespace cppli::detail {
 
-    std::vector<subcommand_args_t> parse(int argc, char** argv);
+    std::vector<subcommand_args_t> parse(int argc, const char* const* const argv);
 }
