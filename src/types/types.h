@@ -92,10 +92,27 @@ namespace cppli::detail {
         using wrapper_type_wrapped_t = typename wrapper_type_info_t<T>::wrapped_t;
     //}
 
+    template<string_literal name_, string_literal documentation_, char short_name_>
+    class flag {
+        bool value_;
+
+    public:
+        static constexpr auto name           = name_;
+        static constexpr auto short_name     = short_name_;
+        static constexpr auto documentation  = documentation_;
+
+        static constexpr auto has_short_name    = (short_name_ != '\0');
+
+        flag(bool value) : value_(value) {}
+
+        operator bool() {
+            return value_;
+        }
+    };
+
     template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
              bool optional_, bool argument_optional_,
-             string_literal short_name_ = "">
-
+             char short_name_ = '\0'>
     class option {
         /// type_ if default_value == no_default_value, otherwise std::optional<type_>
         using optional_or_raw_type = std::conditional_t<argument_optional_, std::optional<type_>, type_>;
@@ -107,13 +124,15 @@ namespace cppli::detail {
         static_assert(!(argument_optional_ && (!optional_)), "required options with optional arguments are not allowed because that wouldn't make sense");
 
     public:
-        static constexpr auto name              = name_,
-                              type_string       = type_::string,
-                              short_name        = short_name_,
-                              documentation     = documentation_,
-                              argument_text     = argument_text_,
-                              optional          = optional_,
-                              argument_optional = argument_optional_;
+        static constexpr auto name              = name_;
+        static constexpr auto type_string       = type_::string;
+        static constexpr auto short_name        = short_name_;
+        static constexpr auto documentation     = documentation_;
+        static constexpr auto argument_text     = argument_text_;
+        static constexpr auto optional          = optional_;
+        static constexpr auto argument_optional = argument_optional_;
+
+        static constexpr auto has_short_name    = (short_name_ != '\0');
 
         operator type_() const {
             static_assert((!optional_) && (!argument_optional_), "option implicit conversion to underlying type is only allowed if the option in question is required (not optional) and has a required (not optional) argument");
@@ -184,34 +203,21 @@ namespace cppli::detail {
         }
     };
 
-    template<string_literal name_, string_literal short_name_, string_literal documentation_>
-    class flag {
-        bool value_;
-
-    public:
-        static constexpr auto name           = name_,
-                              short_name     = short_name_,
-                              documentation  = documentation_;
-
-        flag(bool value) : value_(value) {}
-
-        operator bool() {
-            return value_;
-        }
-    };
-
     template<typename type_, bool optional_, string_literal name_, string_literal documentation_>
     class positional {
-        using optional_or_raw_type      = std::conditional_t<optional_, std::optional<type_>, type_>;
+        using optional_or_raw_type = std::conditional_t<optional_, std::optional<type_>, type_>;
 
     private:
         optional_or_raw_type value_;
 
     public:
-        static constexpr auto name          = name_,
-                              type_string   = type_::string,
-                              optional      = optional_,
-                              documentation = documentation_;
+        static constexpr auto name           = name_;
+        static constexpr auto type_string    = type_::string;
+        static constexpr auto optional       = optional_;
+        static constexpr auto documentation  = documentation_;
+
+        static constexpr auto has_short_name = false;
+
 
         positional(const std::string& value) : value_(value) {}
 
@@ -259,8 +265,8 @@ namespace cppli::detail {
     template<typename T>
     struct argument_info_t;
 
-    template<string_literal name_, string_literal short_name_, string_literal documentation_>
-    struct argument_info_t<flag<name_, short_name_, documentation_>> {
+    template<string_literal name_, char short_name_, string_literal documentation_>
+    struct argument_info_t<flag<name_, documentation_, short_name_>> {
         static constexpr bool is_flag = true;
         static constexpr bool is_option = false;
         static constexpr bool is_positional = false;
@@ -268,7 +274,7 @@ namespace cppli::detail {
 
     template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
             bool optional_, bool argument_optional_,
-            string_literal short_name_>
+            char short_name_>
     struct argument_info_t<option<type_, name_, documentation_, argument_text_, optional_, argument_optional_, short_name_>> {
         static constexpr bool is_flag = false;
         static constexpr bool is_option = true;

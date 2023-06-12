@@ -40,6 +40,8 @@ namespace cppli::detail {
                     argument_text,
                     documentation;
 
+        char short_name;
+        
         bool is_optional,
              argument_is_optional;
 
@@ -50,8 +52,6 @@ namespace cppli::detail {
         std::string type,
                     name,
                     documentation;
-
-        char short_name;
 
         bool optional;
     };
@@ -134,10 +134,11 @@ namespace cppli::detail {
                     throw std::runtime_error(std::string("(sub)command \"") + subcommand.name.back() + "\" was not provided with required option \"" + static_cast<std::string>(canonical_name) + '"');
                 }
                 else if(!subcommand.inputs.options_to_values.at(canonical_name).has_value()) {
-                    throw std::runtime_error(std::string("(sub)command \"") + subcommand.name.back() + "\" option \"" + static_cast<std::string>(canonical_name) + "\" requires an argument, but one was not provided (expected an argument of type " + static_cast<std::string>(T::type_string.make_lowercase_and_convert_underscores()) + ')');
+                    throw std::runtime_error(std::string("(sub)command \"") + subcommand.name.back() + "\" option \"" + static_cast<std::string>(canonical_name) + "\" requires an argument, but one was not provided "
+                                                         "(expected an argument of type " + static_cast<std::string>(T::type_string.make_lowercase_and_convert_underscores()) + ')');
                 }
                 else {
-                    try {      
+                    try {
                         return {subcommand.inputs.options_to_values.at(canonical_name)};
                     }
                     catch(std::runtime_error& e) {
@@ -190,6 +191,17 @@ namespace cppli::detail {
         }
     }
 
+    template<typename arg_t, typename...arg_ts>
+    constexpr std::size_t count_positionals() {
+        constexpr bool is_positional = argument_info_t<std::remove_cvref_t<arg_t>>::is_positional;
+        if constexpr(sizeof...(arg_ts) > 0) {
+            return count_positionals<arg_ts...>()+is_positional;
+        }
+        else {
+            return is_positional;
+        }
+    }
+
     template<std::size_t max_index, typename...arg_ts>
     static constexpr std::size_t count_positionals_before_index_v = count_positionals_before_index_func<0, max_index, arg_ts...>();
 
@@ -209,6 +221,11 @@ namespace cppli::detail {
     template<typename return_t, typename...arg_ts, auto func>
     struct call_func_wrapper_t<return_t(arg_ts...), func> { // we need all this ugly partial specializations so that we can deduce arg_ts and indices
         static void call_func(const subcommand_t& subcommand) {
+            constexpr auto positionals_count = count_positionals<arg_ts...>();
+            if(positionals_count < subcommand.inputs.positional_args.size()) {
+                throw std::runtime_error("Too many positional arguments to (sub)command \"" + subcommand.name.back() +
+                                         "\" (expected " + std::to_string(positionals_count) + ", got " + std::to_string(subcommand.inputs.positional_args.size()) + ')');
+            }
             call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::call_func(subcommand);
         }
     };
@@ -218,18 +235,77 @@ namespace cppli::detail {
         call_func_wrapper_t<decltype(func), func>::call_func(command);
     }
 
+    template<typename T, typename U, typename...Ts>
+    constexpr bool pack_contains_short_name_func() {
+        if constexpr(T::has_short_name && U::has_short_name) {
+            if constexpr(sizeof...(Ts) > 0) {
+                return (T::short_name == U::short_name) || pack_contains_short_name_func<T, Ts...>();
+            }
+            else {
+                return (T::short_name == U::short_name);
+            }
+        }
+        else {
+            return false;
+        }
+    }
+
+    template<std::size_t index, typename first_t, typename...rest_ts>
+    constexpr bool no_repeated_short_names_func() {
+        if constexpr(sizeof...(rest_ts) == 0) {
+            return true;
+        }
+        else if constexpr(index < sizeof...(rest_ts)) {
+            return (!pack_contains_short_name_func<first_t, rest_ts...>()) && no_repeated_short_names_func<index+1, rest_ts..., first_t>();
+        }
+        else {
+            return (!pack_contains_short_name_func<first_t, rest_ts...>());
+        }
+    }
+
+    template<typename...arg_ts>
+    constexpr bool no_repeated_short_names_v = no_repeated_short_names_func<0, std::remove_cvref_t<arg_ts>...>();
+
     template<typename return_t, typename arg_t, typename...arg_ts>                      // don't actually care about func, just need to deduce args
     void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, return_t(*func)(arg_t, arg_ts...) = nullptr) {
         using arg_info_t = argument_info_t<std::remove_cvref_t<arg_t>>;
         using type = std::remove_cvref_t<arg_t>;
+
+        static_assert(no_repeated_short_names_v<arg_t, arg_ts...>, "multiple flags/options cannot share a short name");
+
         if constexpr(arg_info_t::is_flag) {
-            documentation.options.emplace()
+            documentation.flags.emplace(type::name,
+                                        type::documentation,
+                                        type::short_name);
+
+            info.flags.insert(type::name);
+
+            if(type::short_name) {
+                info.flags.insert(type::short_name);
+            }
         }
         else if constexpr(arg_info_t::is_option) {
+            documentation.options.emplace(type::type_string,
+                                          type::name,
+                                          type::argument_text,
+                                          type::documentation,
+                                          type::short_name,
 
+                                          type::optional,
+                                          type::argument_optional);
+
+            info.option_argument_is_optional.emplace(type::name, type::argument_optional);
+
+            if(type::short_name) {
+                info.option_argument_is_optional.emplace(std::string(type::short_name), type::argument_optional);
+            }
         }
         else { // positional
+            documentation.positionals.emplace(type::type_string,
+                                              type::name,
+                                              type::documentation,
 
+                                              type::optional);
         }
 
         if constexpr(sizeof...(arg_ts) > 0) {
@@ -238,12 +314,20 @@ namespace cppli::detail {
     }
 
     template<auto func>
-    void register_subcommand(const subcommand_name_t& name) {
-        extern std::unordered_map<subcommand_name_t, subcommand_inputs_info_and_func_t> subcommand_name_to_func_;
+    dummy_t register_subcommand(const subcommand_name_t& name) {
+        extern std::unordered_map<subcommand_name_t, subcommand_func_t>          subcommand_name_to_func_;
+        extern std::unordered_map<subcommand_name_t, subcommand_inputs_info_t>   subcommand_name_to_inputs_info_;
+        extern std::unordered_map<subcommand_name_t, subcommand_documentation_t> subcommand_name_to_docs_;
+
         subcommand_inputs_info_t   info;
         subcommand_documentation_t docs;
-        // TODO: ge
+
+        generate_input_info_and_docs(info, docs, func);
 
         subcommand_name_to_func_.emplace(name, call_func<func>);
+        subcommand_name_to_inputs_info_.emplace(name, std::move(info));
+        subcommand_name_to_docs_.emplace(name, std::move(docs));
+
+        return {};
     }
 }
