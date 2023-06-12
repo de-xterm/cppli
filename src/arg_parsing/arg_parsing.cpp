@@ -11,13 +11,13 @@ namespace cppli::detail {
         ARG
     };
 
-    std::vector<subcommand_args_t> parse(int argc, const char* const* const argv) {
+    std::vector<subcommand_inputs_t> parse(int argc, const char* const* const argv) {
                           // skip the program name
-        std::vector<subcommand_args_t> commands;
+        std::vector<subcommand_inputs_t> commands;
 
         subcommand_name_t subcommand_name = {argv[0]};
 
-        subcommand_args_t args;
+        subcommand_inputs_t args;
 
         bool disambiguate_next_arg = false;
 
@@ -31,8 +31,9 @@ namespace cppli::detail {
             }
             else {
                 if((arg_string.substr(0,2) == "--") && !disambiguate_next_arg) { // long flag (these are ez)
-                    if(arg_string.size() == 2) { // if the whole string is just "--", then this arg is used to disambiguate the next
-                        disambiguate_next_arg = true; // ( "--" just means "the next arg is positional, even if it looks like an option, a flag (starts with '-' or "--", or a subcommand (matches a subcommand name))
+                                                    // we need this check so that we can handle the case where "--" is the thing we're trying to disambiguate. Ex: "program -- --"
+                    if((arg_string.size() == 2) && (!disambiguate_next_arg)) { // if the whole string is just "--", then this arg is used to disambiguate the next
+                        disambiguate_next_arg = true; // ( "--" just means "the next arg is positional, even if it looks like an option/flag (starts with '-' or "--"), or a subcommand (matches a subcommand name))
                     }
                     else {
                         std::string::size_type equals_pos;
@@ -44,13 +45,13 @@ namespace cppli::detail {
                                 args.options_to_values.emplace(option_name, option_value);
                             }
                             else if(subcommand_takes_flag(subcommand_name, option_name)) {
-                                std::cerr << "For (sub)command \"" << ((subcommand_name.size() == 0) ? argv[0] : subcommand_name.back()) << "\", \"" << option_name << "\" is a flag, not an option, and therefore can't be assigned a value (like it was in \"" << arg_string << "\"). "
+                                std::cerr << "For (sub)command \"" << subcommand_name.back() << "\", \"" << option_name << "\" is a flag, not an option, and therefore can't be assigned a value (like it was in \"" << arg_string << "\"). "
                                                                                                                                                                                                                                                                                   "The value will be ignored and the flag will be set to true\n";
 
                                 args.flags.emplace(option_name);
                             }
                             else {
-                                std::cerr << "Flag/option \"" << option_name << "\" (from \"" << arg_string << "\") was not recognized by (sub)command \"" << ((subcommand_name.size() == 0) ? argv[0] : subcommand_name.back()) << "\" and is therefore being ignored\n";
+                                std::cerr << "Flag/option \"" << option_name << "\" (from \"" << arg_string << "\") was not recognized by (sub)command \"" << subcommand_name.back() << "\" and is therefore being ignored\n";
                             }
                         }
                         else {
@@ -74,11 +75,10 @@ namespace cppli::detail {
                                 args.flags.emplace(option_or_flag_name);
                             }
                             else {
-                                throw std::runtime_error("(Sub)command \"" + ((subcommand_name.size() == 0) ? argv[0] : subcommand_name.back()) + "\" does not accept a flag or option \"" + arg_string + '\"');
+                                throw std::runtime_error("(Sub)command \"" + subcommand_name.back() + "\" does not accept a flag or option \"" + arg_string + '\"');
                             }
                         }
                     }
-
                 }
                 else if((arg_string[0] == '-') && !disambiguate_next_arg) { // short flag(s) and/or option (these are not so ez)
                     if(arg_string.find('=') != std::string::npos) {
@@ -89,13 +89,13 @@ namespace cppli::detail {
                                     args.options_to_values.emplace(char_string, arg_string.substr(char_i+2, arg_string.size()-(char_i+2)));
                                 }
                                 else if(subcommand_takes_flag(subcommand_name, char_string)) {
-                                    std::cerr << "For (sub)command \"" << ((subcommand_name.size() == 0) ? argv[0] : subcommand_name.back()) << "\", \"" << char_string << "\" is a flag, not an option, and therefore can't be assigned a value (like it was in flag/option group \"" << arg_string << "\"). "
+                                    std::cerr << "For (sub)command \"" << subcommand_name.back() << "\", \"" << char_string << "\" is a flag, not an option, and therefore can't be assigned a value (like it was in flag/option group \"" << arg_string << "\"). "
                                                  "The value will be ignored and the flag will be set to true\n";
 
                                     args.flags.emplace(char_string);
                                 }
                                 else {
-                                    std::cerr << "Flag/option \"" << char_string << "\" (from flag/option group \"" << arg_string << "\") was not recognized by (sub)command \"" << ((subcommand_name.size() == 0) ? argv[0] : subcommand_name.back()) << "\" and is therefore being ignored\n";
+                                    std::cerr << "Flag/option \"" << char_string << "\" (from flag/option group \"" << arg_string << "\") was not recognized by (sub)command \"" << subcommand_name.back() << "\" and is therefore being ignored\n";
                                 }
                                 break;
                             }
@@ -107,7 +107,7 @@ namespace cppli::detail {
                                     args.options_to_values.emplace(char_string, std::nullopt);
                                 }
                                 else {
-                                    std::cerr << "Flag/option \"" << char_string << "\" (from flag/option group \"" << arg_string << "\") was not recognized by (sub)command \"" << ((subcommand_name.size() == 0) ? argv[0] : subcommand_name.back()) << "\" and is therefore being ignored\n";
+                                    std::cerr << "Flag/option \"" << char_string << "\" (from flag/option group \"" << arg_string << "\") was not recognized by (sub)command \"" << subcommand_name.back() << "\" and is therefore being ignored\n";
                                 }
                             }
                         }
@@ -135,7 +135,7 @@ namespace cppli::detail {
                                     }
                                 }
                                 else {
-                                    assert(false);
+                                    assert(false); // this should never happen
                                 }
                             }
                             else if(subcommand_takes_flag(subcommand_name, char_string)) {
@@ -143,7 +143,7 @@ namespace cppli::detail {
                             }
                             else {
                                 throw std::runtime_error("Character '" + char_string + "' in flag/option group \"" + arg_string + "\" "
-                                                         "did not form a valid flag or option for (sub)command \"" + ((subcommand_name.size() == 0) ? argv[0] : subcommand_name.back()) + '\"');
+                                                         "did not form a valid flag or option for (sub)command \"" + subcommand_name.back() + '\"');
                             }
                         }
                     }

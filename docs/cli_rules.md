@@ -46,11 +46,27 @@ This table shows how optional options interact with optional option arguments.
 ✔️ indicates that the input is valid,  
 ❌ indicates that it isn't
 
-|                                     | The option itself is optional     | The option itself is required         |
-|-------------------------------------|-----------------------------------|---------------------------------------|
+|                                     | The option itself is optional      | The option itself is required         |
+|-------------------------------------|------------------------------------|---------------------------------------|
 | **The option argument is optional** | nothing✔️ <br/> -c✔️<br/> -cblue✔️ | ~~*nothing❌<br/> -c✔️<br/> -cblue✔️~~ |
-| **The option argument is required** | nothing✔️<br/> -c❌ <br/> -cblue✔️ | nothing❌<br/> -c❌<br/> -cblue✔️       |
+| **The option argument is required** | nothing✔️<br/> -c❌ <br/> -cblue✔️  | nothing❌<br/> -c❌<br/> -cblue✔️       |
 *: required options with optional argument wouldn't make sense, so I don't allow them
+
+
+## Positionals
+### 
+
+### Disambiguation
+Occasionally, the user might want to provide a positional argument that looks like a flag/option or subcommand.  
+In these cases `--` can be used to disambiguate the following argument. `--` just means "the next argument should be treated as a positional, even if it starts with `-` or `--` or matches a subcommand name".  
+Example: say `program` takes a single positional argument that is supposed to be a file.
+`program --bad-file-name.txt`  
+In this case, the file name starts with `--`, so this input will be interpreted as trying to execute `program` with the flag/option `bad-file-name.txt`.  
+In order to interpret `--bad-file-name.txt` as a positional argument, we just need to put `--` before it, like so:  
+`program -- --bad-file-name.txt`  
+Note that `--` can be used to disambiguate itself, so `program -- --` is valid, and indicates that `--` is interpreted as a positional arg
+
+### Variadics
 
 ## Subcommands
 

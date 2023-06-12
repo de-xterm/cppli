@@ -2,6 +2,7 @@
 #include "subcommand.h"
 
 #include <unordered_set>
+#include <tuple>
 
 namespace cppli::detail {
     /// this is just boost::hash_combine, but I don't want to drag boost into this library just for hash_combine
@@ -26,19 +27,22 @@ namespace std {
 }
 
 namespace cppli::detail {
-    using subcommand_func_t = void(const subcommand_args_t&);
+    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t>   subcommand_name_to_inputs_info_;
+    std::unordered_map<subcommand_name_t, subcommand_func_t>          subcommand_name_to_func_;
+    std::unordered_map<subcommand_name_t, subcommand_documentation_t> subcommand_name_to_docs_;
 
-    struct subcommand_inputs_info_t {
-        std::unordered_set<std::string> flags;
-        std::unordered_map<std::string, bool> option_argument_is_optional;
-    };
+    bool flag_info_t::operator<(const flag_info_t& rhs) const {
+        return (name < rhs.name);
+    }
 
-    struct subcommand_inputs_info_and_func_t {
-        subcommand_inputs_info_t inputs_info;
-        subcommand_func_t func;
-    };
+    bool option_info_t::operator<(const option_info_t& rhs) const {
+        return std::tie(is_optional, argument_is_optional, name) <
+               std::tie(rhs.is_optional, rhs.argument_is_optional, rhs.name);
+    }
 
-    std::unordered_map<subcommand_name_t, subcommand_inputs_info_and_func_t> subcommand_name_to_func_;
+    bool subcommand_documentation_t::operator<(const subcommand_documentation_t& rhs) const {
+        return (name < rhs.name);
+    }
 
     bool is_valid_subcommand(subcommand_name_t& parent_command_names, const std::string& arg) {
         std::vector temp = parent_command_names;
@@ -51,16 +55,16 @@ namespace cppli::detail {
     }
 
     bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name) {
-        return subcommand_name_to_func_.at(subcommand).inputs_info.flags.contains(flag_name);
+        return subcommand_name_to_inputs_info_.at(subcommand).flags.contains(flag_name);
     }
 
     bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name) {
-        return subcommand_name_to_func_.at(subcommand).inputs_info.option_argument_is_optional.contains(option_name);
+        return subcommand_name_to_inputs_info_.at(subcommand).option_argument_is_optional.contains(option_name);
     }
 
     bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name) {
-        if(subcommand_name_to_func_.at(subcommand).inputs_info.option_argument_is_optional.contains(option_name)) {
-            return subcommand_name_to_func_.at(subcommand).inputs_info.option_argument_is_optional.at(option_name);
+        if(subcommand_name_to_inputs_info_.at(subcommand).option_argument_is_optional.contains(option_name)) {
+            return subcommand_name_to_inputs_info_.at(subcommand).option_argument_is_optional.at(option_name);
         }
         return false;
     }

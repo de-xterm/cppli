@@ -3,7 +3,6 @@
 #include <algorithm>
 
 namespace cppli {
-    // source: https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
     constexpr char underscore_to_hyphen(char c) {
         if(c == '_') {
             return '-';
@@ -13,6 +12,7 @@ namespace cppli {
         }
     }
 
+    // source for string_literal: https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
     template<size_t N>
     struct string_literal {
         constexpr string_literal(const char (&str)[N]) {

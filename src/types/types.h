@@ -8,10 +8,22 @@
 
 #include "constexpr_string_literal.h"
 
-namespace cppli {
+namespace cppli::detail {
 
-    using float_t  = float;
-    using string_t = std::string;
+   // using string_t = std::string;
+
+    struct string_t {
+        std::string val;
+
+        // TODO: set up perfect forwarding
+        string_t(const std::string& str) : val(str) {}
+
+        operator const std::string&() const {
+            return val;
+        }
+
+        static constexpr string_literal string = "string";
+    };
 
     struct int_t {
         int val;
@@ -28,11 +40,32 @@ namespace cppli {
         operator int() {
             return val;
         }
+
+        static constexpr string_literal string = "integer";
+    };
+
+    struct float_t {
+        float val;
+
+        float_t(const std::string& str) {
+            try {
+                val = std::stof(str);
+            }
+            catch(std::exception& e) {
+                throw std::runtime_error("Could not form a valid integer from string \"" + str + '\"');
+            }
+        }
+
+        operator float() {
+            return val;
+        }
+
+        static constexpr string_literal string = "decimal";
     };
 
     struct dummy_t{};
 
-    namespace detail {
+    //namespace detail {
         template<typename T>
         struct wrapper_type_info_t {
             static constexpr bool is_wrapper_type = false;
@@ -52,18 +85,12 @@ namespace cppli {
             using wrapped_t = float;
         };
 
-        template<>
-        struct wrapper_type_info_t<string_t> {
-            static constexpr bool is_wrapper_type = true;
-            using wrapped_t = const std::string&;
-        };
-
         template<typename T>
         static constexpr bool is_wrapper_type = wrapper_type_info_t<T>::is_wrapper_type;
 
         template<typename T>
         using wrapper_type_wrapped_t = typename wrapper_type_info_t<T>::wrapped_t;
-    }
+    //}
 
     template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
              bool optional_, bool argument_optional_,
@@ -71,7 +98,6 @@ namespace cppli {
 
     class option {
         /// type_ if default_value == no_default_value, otherwise std::optional<type_>
-    public:
         using optional_or_raw_type = std::conditional_t<argument_optional_, std::optional<type_>, type_>;
 
     private:
@@ -82,6 +108,7 @@ namespace cppli {
 
     public:
         static constexpr auto name              = name_,
+                              type_string       = type_::string,
                               short_name        = short_name_,
                               documentation     = documentation_,
                               argument_text     = argument_text_,
@@ -107,9 +134,20 @@ namespace cppli {
         }
 
         option() = default;
-        option(const optional_or_raw_type& str) : value_(str),
-                                                        was_included_(true) {}
+        option(const std::optional<std::string>& str)
+        requires(argument_optional_) {
+            if(str.has_value()) {
+                value_ = *str;
+            }
+            else {
+                value_ = std::nullopt;
+            }
+        }
 
+        option(const std::optional<std::string>& str)
+        requires(!argument_optional_)
+                : value_(*str), // emptiness check happens elsewhere
+                  was_included_(true) {}
 
         option(const option&) = default;
         option& operator=(const option&) = default;
@@ -164,18 +202,18 @@ namespace cppli {
 
     template<typename type_, bool optional_, string_literal name_, string_literal documentation_>
     class positional {
-    public:
-        using optional_or_raw_type = std::conditional_t<optional_, std::optional<type_>, type_>;
+        using optional_or_raw_type      = std::conditional_t<optional_, std::optional<type_>, type_>;
 
     private:
         optional_or_raw_type value_;
 
     public:
         static constexpr auto name          = name_,
+                              type_string   = type_::string,
                               optional      = optional_,
                               documentation = documentation_;
 
-        positional(const optional_or_raw_type& value) : value_(value) {}
+        positional(const std::string& value) : value_(value) {}
 
         operator type_() const {
             static_assert(!optional_, "positional implicit conversion to underlying type is only allowed if the positional argument in question is required (not optional)");
@@ -217,4 +255,31 @@ namespace cppli {
             return value_.value_or(alternative);
         }
     };
+
+    template<typename T>
+    struct argument_info_t;
+
+    template<string_literal name_, string_literal short_name_, string_literal documentation_>
+    struct argument_info_t<flag<name_, short_name_, documentation_>> {
+        static constexpr bool is_flag = true;
+        static constexpr bool is_option = false;
+        static constexpr bool is_positional = false;
+    };
+
+    template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
+            bool optional_, bool argument_optional_,
+            string_literal short_name_>
+    struct argument_info_t<option<type_, name_, documentation_, argument_text_, optional_, argument_optional_, short_name_>> {
+        static constexpr bool is_flag = false;
+        static constexpr bool is_option = true;
+        static constexpr bool is_positional = false;
+    };
+
+    template<typename type_, bool optional_, string_literal name_, string_literal documentation_>
+    struct argument_info_t<positional<type_, optional_, name_, documentation_>> {
+        static constexpr bool is_flag = false;
+        static constexpr bool is_option = false;
+        static constexpr bool is_positional = true;
+    };
+
 }
