@@ -5,28 +5,6 @@
 #include <tuple>
 
 namespace cppli::detail {
-    /// this is just boost::hash_combine, but I don't want to drag boost into this library just for hash_combine
-    template<typename T>
-    std::size_t hash_combine(std::size_t& seed, const T& val) {
-        return (seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2));
-    }
-}
-
-namespace std {
-    template<typename T>
-    struct hash<std::vector<T>> {
-        std::size_t operator()(const auto& vec) const {
-            std::size_t hash = 0;
-            for(const auto& e : vec) {
-                cppli::detail::hash_combine(hash, e);
-            }
-
-            return hash;
-        }
-    };
-}
-
-namespace cppli::detail {
     std::unordered_map<subcommand_name_t, subcommand_inputs_info_t>   subcommand_name_to_inputs_info_;
     std::unordered_map<subcommand_name_t, subcommand_func_t>          subcommand_name_to_func_;
     std::unordered_map<subcommand_name_t, subcommand_documentation_t> subcommand_name_to_docs_;
@@ -41,12 +19,12 @@ namespace cppli::detail {
     }
 
     bool subcommand_documentation_t::operator<(const subcommand_documentation_t& rhs) const {
-        return (name < rhs.name);
+        return (name.back() < rhs.name.back());
     }
 
     bool is_valid_subcommand(subcommand_name_t& parent_command_names, const std::string& arg) {
-        std::vector temp = parent_command_names;
-        parent_command_names.push_back(arg);
+        auto temp = parent_command_names;
+        parent_command_names.command_names.push_back(arg);
         if(subcommand_name_to_func_.contains(temp)) {
             parent_command_names = std::move(temp);
             return true;

@@ -15,7 +15,7 @@ namespace cppli::detail {
                           // skip the program name
         std::vector<subcommand_inputs_t> commands;
 
-        subcommand_name_t subcommand_name = {argv[0]};
+        subcommand_name_t subcommand_name = {{argv[0]}};
 
         subcommand_inputs_t args;
 

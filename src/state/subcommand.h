@@ -7,7 +7,7 @@
 #include <optional>
 #include <set>
 
-#include "types.h"
+#include "parameter_types.h"
 
 namespace cppli::detail {
     struct subcommand_inputs_t {
@@ -16,14 +16,46 @@ namespace cppli::detail {
         std::unordered_set<std::string> flags;
     };
 
-    using subcommand_name_t = std::vector<std::string>;
+
+    struct subcommand_name_t {
+        std::vector<std::string> command_names;
+
+
+        const std::string& back() const {
+            return command_names.back();
+        }
+
+        bool operator==(const subcommand_name_t&) const = default;
+    };
+
+    /// this is just boost::hash_combine, but I don't want to drag boost into this library just for hash_combine
+    template<typename T>
+    std::size_t hash_combine(std::size_t& seed, const T& val) {
+        return (seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+    }
+}
+namespace std {
+    template<>
+    struct hash<cppli::detail::subcommand_name_t> {
+        std::size_t operator()(const auto& name) const {
+            std::size_t hash = 0;
+            for(const auto& e : name.command_names) {
+                cppli::detail::hash_combine(hash, e);
+            }
+
+            return hash;
+        }
+    };
+}
+
+namespace cppli::detail {
 
     struct subcommand_t {
         subcommand_name_t name;
         subcommand_inputs_t inputs;
     };
 
-    using subcommand_func_t = void(const subcommand_t&);
+    using subcommand_func_t = void(*)(const subcommand_t&);
 
     struct flag_info_t {
         std::string name,
@@ -184,7 +216,7 @@ namespace cppli::detail {
     template<std::size_t current_index, std::size_t max_index, typename arg_t, typename...arg_ts>
     constexpr std::size_t count_positionals_before_index_func() {
         if constexpr(current_index < max_index) {
-            return count_positionals_before_index<current_index+1, max_index, arg_ts...>()+argument_info_t<std::remove_cvref_t<arg_t>>::is_positional;
+            return count_positionals_before_index_func<current_index+1, max_index, arg_ts...>()+argument_info_t<std::remove_cvref_t<arg_t>>::is_positional;
         }
         else {
             return 0; // return 0 instead of is_positional because inclusivity is not what we want
@@ -209,7 +241,7 @@ namespace cppli::detail {
     struct call_func_wrapper_impl_t;
 
     template<typename return_t, typename...arg_ts, std::size_t...indices, auto func>
-    struct call_func_wrapper_impl_t<return_t(arg_ts...), func, std::integer_sequence<std::size_t, indices...>> {
+    struct call_func_wrapper_impl_t<return_t(*)(arg_ts...), func, std::integer_sequence<std::size_t, indices...>> {
         static void call_func(const subcommand_t& subcommand) {
             func(process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand)...);
         }
@@ -219,7 +251,7 @@ namespace cppli::detail {
     struct call_func_wrapper_t;
 
     template<typename return_t, typename...arg_ts, auto func>
-    struct call_func_wrapper_t<return_t(arg_ts...), func> { // we need all this ugly partial specializations so that we can deduce arg_ts and indices
+    struct call_func_wrapper_t<return_t(*)(arg_ts...), func> { // we need all this ugly partial specializations so that we can deduce arg_ts and indices
         static void call_func(const subcommand_t& subcommand) {
             constexpr auto positionals_count = count_positionals<arg_ts...>();
             if(positionals_count < subcommand.inputs.positional_args.size()) {
@@ -274,36 +306,36 @@ namespace cppli::detail {
         static_assert(no_repeated_short_names_v<arg_t, arg_ts...>, "multiple flags/options cannot share a short name");
 
         if constexpr(arg_info_t::is_flag) {
-            documentation.flags.emplace(type::name,
-                                        type::documentation,
+            documentation.flags.emplace(type::name.string(),
+                                        type::documentation.string(),
                                         type::short_name);
 
-            info.flags.insert(type::name);
+            info.flags.insert(type::name.string());
 
             if(type::short_name) {
-                info.flags.insert(type::short_name);
+                info.flags.insert(std::string{type::short_name});
             }
         }
         else if constexpr(arg_info_t::is_option) {
-            documentation.options.emplace(type::type_string,
-                                          type::name,
-                                          type::argument_text,
-                                          type::documentation,
+            documentation.options.emplace(type::type_string.string(),
+                                          type::name.string(),
+                                          type::argument_text.string(),
+                                          type::documentation.string(),
                                           type::short_name,
 
-                                          type::optional,
-                                          type::argument_optional);
+                                          type::optional.string(),
+                                          type::argument_optional.string());
 
-            info.option_argument_is_optional.emplace(type::name, type::argument_optional);
+            info.option_argument_is_optional.emplace(type::name.string(), type::argument_optional);
 
             if(type::short_name) {
-                info.option_argument_is_optional.emplace(std::string(type::short_name), type::argument_optional);
+                info.option_argument_is_optional.emplace(std::string{type::short_name}, type::argument_optional);
             }
         }
         else { // positional
-            documentation.positionals.emplace(type::type_string,
-                                              type::name,
-                                              type::documentation,
+            documentation.positionals.emplace(type::type_string.string(),
+                                              type::name.string(),
+                                              type::documentation.string(),
 
                                               type::optional);
         }

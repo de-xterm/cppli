@@ -1,6 +1,6 @@
 #pragma once
 
-#include "macros.h"
+#include "subcommand_macros.h"
 #include "subcommand.h"
 
 namespace cppli::detail {
