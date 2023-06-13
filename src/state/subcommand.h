@@ -34,10 +34,11 @@ namespace cppli::detail {
         return (seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2));
     }
 }
+
 namespace std {
     template<>
     struct hash<cppli::detail::subcommand_name_t> {
-        std::size_t operator()(const auto& name) const {
+        std::size_t operator()(const auto& name) const noexcept {
             std::size_t hash = 0;
             for(const auto& e : name.command_names) {
                 cppli::detail::hash_combine(hash, e);
@@ -105,11 +106,9 @@ namespace cppli::detail {
         std::unordered_map<std::string, bool> option_argument_is_optional;
     };
 
-    struct subcommand_inputs_info_and_func_t {
-        subcommand_inputs_info_t inputs_info;
-        subcommand_func_t func;
-    };
-
+    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t>&   subcommand_name_to_inputs_info();
+    std::unordered_map<subcommand_name_t, subcommand_func_t>&          subcommand_name_to_func();
+    std::unordered_map<subcommand_name_t, subcommand_documentation_t>& subcommand_name_to_docs();
 
     /// if arg appended to parent_command_names forms a valid subcommand,
     /// pushes back arg to parent_command_names and returns true.
@@ -347,18 +346,14 @@ namespace cppli::detail {
 
     template<auto func>
     dummy_t register_subcommand(const subcommand_name_t& name) {
-        extern std::unordered_map<subcommand_name_t, subcommand_func_t>          subcommand_name_to_func_;
-        extern std::unordered_map<subcommand_name_t, subcommand_inputs_info_t>   subcommand_name_to_inputs_info_;
-        extern std::unordered_map<subcommand_name_t, subcommand_documentation_t> subcommand_name_to_docs_;
-
         subcommand_inputs_info_t   info;
         subcommand_documentation_t docs;
 
         generate_input_info_and_docs(info, docs, func);
 
-        subcommand_name_to_func_.emplace(name, call_func<func>);
-        subcommand_name_to_inputs_info_.emplace(name, std::move(info));
-        subcommand_name_to_docs_.emplace(name, std::move(docs));
+        subcommand_name_to_func().emplace(name, call_func<func>);
+        subcommand_name_to_inputs_info().emplace(name, std::move(info));
+        subcommand_name_to_docs().emplace(name, std::move(docs));
 
         return {};
     }
