@@ -4,10 +4,13 @@
 #include "arg_parsing.h"
 #include "cppli.h"
 
+
 CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
+                 "does a thing",
                  CPPLI_FLAG(force_reset, "Force the thing to rest the thing", f)) {
 
 }
+
 
 
 TEST_CASE("arg parsing works") {

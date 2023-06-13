@@ -25,10 +25,12 @@ target_include_directories(cppli PRIVATE ${PROJECT_HEADERS})
 file(GLOB_RECURSE TEST_SOURCES ${PROJECT_SOURCE_DIR}/test/*.cpp) #globbing expressions intentionally excludes main, because these sources will be linked to test too
 add_executable(Test_Executable ${TEST_SOURCES} ${COMMON_SOURCES})
 target_include_directories(Test_Executable PRIVATE ${PROJECT_HEADERS} lib/Catch2/src/catch2)
+target_compile_options(cppli PRIVATE /Zc:preprocessor)
 
-#target_compile_definitions(Test_Executable PUBLIC _CRT_FUNCTIONS_REQUIRED=1)
 
 add_subdirectory(lib/Catch2)
 target_link_libraries(Test_Executable PRIVATE Catch2)
+
+target_compile_options(Test_Executable PRIVATE /Zc:preprocessor)
 
 add_test(Test Test_Executable)
