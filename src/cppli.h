@@ -14,17 +14,23 @@ extern "C" void cppli_internal_CAT(CPPLI_GENERATED, name) (__VA_ARGS__)
 
 /// the optional last argument is a single character short name
 #define CPPLI_FLAG(NAME, DOCUMENTATION, /*SHORT_NAME*/...) \
-const cppli::detail::flag<cppli_internal_STRINGIFY(NAME), DOCUMENTATION __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
+const ::cppli::detail::flag<cppli_internal_STRINGIFY(NAME), DOCUMENTATION __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
 
 /// the optional last argument is a single character short name
-#define CPPLI_OPTION(TYPE, NAME, ARGUMENT_TEXT, DOCUMENTATION, /*SHORT_NAME*/...)
+#define CPPLI_OPTION(TYPE, NAME, ARGUMENT_TEXT, DOCUMENTATION, /*SHORT_NAME*/...) \
+const ::cppli::detail::option<TYPE, cppli_internal_STRINGIFY(NAME), DOCUMENTATION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
+/// the optional last argument is a single character short name
+#define CPPLI_REQUIRED_OPTION(TYPE, NAME, ARGUMENT_TEXT, DOCUMENTATION, /*SHORT_NAME*/...) \
+const ::cppli::detail::option<TYPE, cppli_internal_STRINGIFY(NAME), DOCUMENTATION, ARGUMENT_TEXT, false, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
 
 /// the optional last argument is a single character short name
-#define CPPLI_REQUIRED_OPTION(TYPE, NAME, ARGUMENT_TEXT, DOCUMENTATION, /*SHORT_NAME*/...)
+#define CPPLI_OPTIONAL_ARGUMENT_OPTION(TYPE, NAME, ARGUMENT_TEXT, DOCUMENTATION, /*SHORT_NAME*/...) \
+const ::cppli::detail::option<TYPE, cppli_internal_STRINGIFY(NAME), DOCUMENTATION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
 
-/// the optional last argument is a single character short name
-#define CPPLI_OPTIONAL_ARGUMENT_OPTION(TYPE, NAME, ARGUMENT_TEXT, DOCUMENTATION, /*SHORT_NAME*/...)
+#define CPPLI_POSITIONAL(TYPE, NAME, DOCUMENTATION) \
+const ::cppli::detail::positional<TYPE, false, cppli_internal_STRINGIFY(NAME), DOCUMENTATION>& NAME
 
-#define CPPLI_POSITIONAL(TYPE, NAME, DOCUMENTATION)
+#define CPPLI_OPTIONAL_POSITIONAL(TYPE, NAME, DOCUMENTATION) \
+const ::cppli::detail::positional<TYPE, true, cppli_internal_STRINGIFY(NAME), DOCUMENTATION>& NAME
 
 }

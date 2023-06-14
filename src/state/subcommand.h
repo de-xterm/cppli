@@ -64,6 +64,8 @@ namespace cppli::detail {
 
         char short_name;
 
+        flag_info_t(const std::string& name, const std::string& documentation, char short_name);
+
         bool operator<(const flag_info_t& rhs) const;
     };
 
@@ -78,6 +80,9 @@ namespace cppli::detail {
         bool is_optional,
              argument_is_optional;
 
+        option_info_t(const std::string& type, const std::string& name, const std::string& argument_text,
+                      const std::string& documentation, char short_name, bool is_optional, bool argument_is_optional);
+
         bool operator<(const option_info_t& rhs) const;
     };
 
@@ -85,6 +90,9 @@ namespace cppli::detail {
         std::string type,
                     name,
                     documentation;
+
+        positional_info_t(const std::string& type, const std::string& name, const std::string& documentation,
+                          bool optional);
 
         bool optional;
     };
@@ -332,7 +340,7 @@ namespace cppli::detail {
             }
         }
         else { // positional
-            documentation.positionals.emplace(type::type_string.string(),
+            documentation.positionals.emplace_back(type::type_string.string(),
                                               type::name.string(),
                                               type::documentation.string(),
 

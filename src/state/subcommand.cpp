@@ -30,10 +30,23 @@ namespace cppli::detail {
         return (name < rhs.name);
     }
 
+    flag_info_t::flag_info_t(const std::string& name, const std::string& documentation, char short_name) : name(name),
+                                                                                                           documentation(
+                                                                                                                   documentation),
+                                                                                                           short_name(
+                                                                                                                   short_name) {}
+
     bool option_info_t::operator<(const option_info_t& rhs) const {
         return std::tie(is_optional, argument_is_optional, name) <
                std::tie(rhs.is_optional, rhs.argument_is_optional, rhs.name);
     }
+
+    option_info_t::option_info_t(const std::string& type, const std::string& name, const std::string& argument_text,
+                                 const std::string& documentation, char short_name, bool is_optional,
+                                 bool argument_is_optional) : type(type), name(name), argument_text(argument_text),
+                                                              documentation(documentation), short_name(short_name),
+                                                              is_optional(is_optional),
+                                                              argument_is_optional(argument_is_optional) {}
 
     bool subcommand_documentation_t::operator<(const subcommand_documentation_t& rhs) const {
         return (name.back() < rhs.name.back());
@@ -63,4 +76,10 @@ namespace cppli::detail {
         }
         return false;
     }
+
+    positional_info_t::positional_info_t(const std::string& type, const std::string& name,
+                                         const std::string& documentation, bool optional) : type(type), name(name),
+                                                                                               documentation(
+                                                                                                       documentation),
+                                                                                               optional(optional) {}
 }
