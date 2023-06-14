@@ -14,7 +14,7 @@ namespace cppli::detail {
 
     constexpr char tolower(char c) {
         if((c >= 65) && (c <= 90)) { // is an uppercase char
-            return (c-32);
+            return (c+32);
         }
         else {
             return c;

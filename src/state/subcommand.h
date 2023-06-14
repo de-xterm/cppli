@@ -330,8 +330,8 @@ namespace cppli::detail {
                                           type::documentation.string(),
                                           type::short_name,
 
-                                          type::optional.string(),
-                                          type::argument_optional.string());
+                                          type::optional,
+                                          type::argument_optional);
 
             info.option_argument_is_optional.emplace(type::name.string(), type::argument_optional);
 

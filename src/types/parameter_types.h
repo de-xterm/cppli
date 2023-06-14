@@ -117,7 +117,7 @@ namespace cppli {
                 char short_name_ = '\0'>
         class option {
             /// type_ if default_value == no_default_value, otherwise std::optional<type_>
-            using optional_or_raw_type = std::conditional_t<argument_optional_, std::optional<type_>, type_>;
+            using optional_or_raw_type = std::conditional_t<optional_ || argument_optional_, std::optional<type_>, type_>;
 
         private:
             optional_or_raw_type value_;

@@ -19,7 +19,10 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
 
     }
 
-    if(color.has_value())
+    if(color.has_value()) {
+        
+    }
+
 }
 
 
