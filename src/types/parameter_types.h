@@ -146,13 +146,15 @@ namespace cppli {
                 return value_;
             }
 
-            operator detail::wrapper_type_wrapped_t<type_>()requires(detail::is_wrapper_type<type_>) {
+            operator detail::wrapper_type_wrapped_t<type_>()
+            requires(detail::is_wrapper_type<type_>) {
                 static_assert((!optional_) && (!argument_optional_),
                               "option implicit conversion to underlying type is only allowed if the option in question is required (not optional) and has a required (not optional) argument");
 
                 if constexpr(detail::is_wrapper_type<type_>) {
                     return value_;
-                } else {
+                }
+                else {
                     return dummy_t{};
                 }
             }
@@ -180,7 +182,7 @@ namespace cppli {
             option& operator=(option&&) = default;
 
             bool was_included() const {
-                static_assert(optional_,
+                static_assert(optional_, // TODO: shouldn't this be optional_ && argument_optional_?
                               "option::was_included is only available if the option in question is optional");
 
                 return was_included_;
@@ -197,7 +199,7 @@ namespace cppli {
             template<typename func_t>
             void access_value_if_present(func_t&& func) const {
                 static_assert(optional_ || argument_optional_,
-                              "option::access_value_if_present is only available if the option in question is optional or takes an optional argument");
+                              "option::access_value_if_present is only available if the option in question is optional or takes an optional argument. Use implicit conversion to underlying type instead");
 
                 if (has_value()) {
                     func(*value_);
@@ -206,7 +208,7 @@ namespace cppli {
 
             type_ value_or(const type_& alternative) const { 
                 static_assert(optional_ || argument_optional_,
-                              "option::value_or is only available if the option in question is optional or takes an optional argument");
+                              "option::value_or is only available if the option in question is optional or takes an optional argument. Use implicit conversion to underlying type instead");
 
                 return value_.value_or(alternative);
             }
