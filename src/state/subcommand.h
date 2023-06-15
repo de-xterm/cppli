@@ -234,6 +234,7 @@ namespace cppli::detail {
         }
     }
 
+    // TODO: static_assert for optional positions followed by required positionals
     template<typename arg_t, typename...arg_ts>
     constexpr std::size_t count_positionals() {
         constexpr bool is_positional = argument_info_t<std::remove_cvref_t<arg_t>>::is_positional;
@@ -394,6 +395,12 @@ namespace cppli::detail {
     dummy_t register_subcommand(const subcommand_name_t& name) {
         subcommand_inputs_info_t   info;
         subcommand_documentation_t docs {name.back()};
+
+        subcommand_name_t cumulative_name;
+        for(unsigned i = 0; i < name.command_names.size()-1; ++i) {
+            cumulative_name.command_names.push_back(name.command_names[i]);
+        }
+        subcommand_name_to_docs()[cumulative_name].subcommands.emplace(name.back());
 
         generate_input_info_and_docs(info, docs, func);
 
