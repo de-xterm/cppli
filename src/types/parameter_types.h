@@ -99,11 +99,12 @@ namespace cppli {
             bool value_;
 
         public:
-            static constexpr auto name = name_;
+            static constexpr auto name = name_.make_lowercase_and_convert_underscores();
             static constexpr auto short_name = short_name_;
             static constexpr auto documentation = documentation_;
 
             static constexpr auto has_short_name = (short_name_ != '\0');
+            static constexpr auto has_long_name  = true;
 
             flag(bool value) : value_(value) {}
 
@@ -127,7 +128,7 @@ namespace cppli {
                           "required options with optional arguments are not allowed because that wouldn't make sense");
 
         public:
-            static constexpr auto name = name_;
+            static constexpr auto name = name_.make_lowercase_and_convert_underscores();
             static constexpr auto type_string = type_::string;
             static constexpr auto short_name = short_name_;
             static constexpr auto documentation = documentation_;
@@ -136,6 +137,7 @@ namespace cppli {
             static constexpr auto argument_optional = argument_optional_;
 
             static constexpr auto has_short_name = (short_name_ != '\0');
+            static constexpr auto has_long_name  = true;
 
             operator type_() const {
                 static_assert((!optional_) && (!argument_optional_),
@@ -224,6 +226,7 @@ namespace cppli {
             static constexpr auto documentation = documentation_;
 
             static constexpr auto has_short_name = false;
+            static constexpr auto has_long_name  = false;
 
 
             positional(const std::string& value) : value_(value) {}
