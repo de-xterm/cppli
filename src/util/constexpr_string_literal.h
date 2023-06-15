@@ -11,18 +11,72 @@ namespace cppli::detail {
             return c;
         }
     }
-
-    constexpr char tolower(char c) {
-        if((c >= 65) && (c <= 90)) { // is an uppercase char
-            return (c+32);
-        }
-        else {
-            return c;
+    
+    constexpr bool isupper(char c) {
+        switch(c) {
+            default: return false;
+            case 'A': return true;
+            case 'B': return true;
+            case 'C': return true;
+            case 'D': return true;
+            case 'E': return true;
+            case 'F': return true;
+            case 'G': return true;
+            case 'H': return true;
+            case 'I': return true;
+            case 'J': return true;
+            case 'K': return true;
+            case 'L': return true;
+            case 'M': return true;
+            case 'N': return true;
+            case 'O': return true;
+            case 'P': return true;
+            case 'Q': return true;
+            case 'R': return true;
+            case 'S': return true;
+            case 'T': return true;
+            case 'U': return true;
+            case 'V': return true;
+            case 'W': return true;
+            case 'X': return true;
+            case 'Y': return true;
+            case 'Z': return true;
         }
     }
 
-    template<typename string_t>
-    decltype(auto) tolower_and_convert_underscores(string_t&& str) {
+    constexpr char tolower(char c) { // yes, this is the only way.
+        switch(c) {                  // The C++ standard does not guarantee that 'a', 'b', 'c'... etc. map to contiguous integer values.
+            default: return c;
+            case 'A': return 'a';
+            case 'B': return 'b';
+            case 'C': return 'c';
+            case 'D': return 'd';
+            case 'E': return 'e';
+            case 'F': return 'f';
+            case 'G': return 'g';
+            case 'H': return 'h';
+            case 'I': return 'i';
+            case 'J': return 'j';
+            case 'K': return 'k';
+            case 'L': return 'l';
+            case 'M': return 'm';
+            case 'N': return 'n';
+            case 'O': return 'o';
+            case 'P': return 'p';
+            case 'Q': return 'q';
+            case 'R': return 'r';
+            case 'S': return 's';
+            case 'T': return 't';
+            case 'U': return 'u';
+            case 'V': return 'v';
+            case 'W': return 'w';
+            case 'X': return 'x';
+            case 'Y': return 'y';
+            case 'Z': return 'z';
+        }
+    }
+
+    /*std::string tolower_and_convert_underscores(std::string str) {
         for(auto& c : str) {
             if(c == '_') {
                 c = '-';
@@ -32,8 +86,8 @@ namespace cppli::detail {
             }
         }
 
-        return std::forward<string_t>(str);
-    }
+        return std::move(str);
+    }*/
 
     // source for string_literal: https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
     template<size_t N>
@@ -85,5 +139,16 @@ namespace cppli::detail {
             return std::move(ret);
         }
     };
+    
+    template<string_literal literal>
+    constexpr bool contains_uppercase() {
+        bool contains = false;
+        
+        for(std::size_t i = 0; i < literal.size(); ++i) {
+            contains |= isupper(literal.value[i]);
+        }
+
+        return contains;
+    }
 
 }

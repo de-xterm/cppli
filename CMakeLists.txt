@@ -33,6 +33,8 @@ target_link_libraries(Test_Executable PRIVATE Catch2)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(Test_Executable PRIVATE /Zc:preprocessor)
     target_compile_options(cppli PRIVATE /Zc:preprocessor)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(Test_Executable PRIVATE -Werror=return-type)
 endif()
 
 add_test(Test Test_Executable)

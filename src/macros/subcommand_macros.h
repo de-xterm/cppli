@@ -24,7 +24,10 @@ namespace cppli::detail {
     #define cppli_internal_FOR_EACH_AGAIN() cppli_internal_FOR_EACH_HELPER
 
 
-    #define cppli_internal_STRINGIFY(S) #S
+    #define cppli_internal_STRINGIFY(S) cppli_internal_STRINGIFY_impl(S)
+    #define cppli_internal_STRINGIFY_impl(S) #S
+
+    #define cppli_internal_STRINGIFY_WITH_COMMA(S) cppli_internal_STRINGIFY(S),
 
 
     #define ONE_ARG_CAT(arg1) arg1

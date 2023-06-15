@@ -7,7 +7,8 @@ namespace cppli::detail {
 
 #define CPPLI_SUBCOMMAND(name, DOCUMENTATION, /*parameters*/...) \
 extern "C" void cppli_internal_CAT(CPPLI_GENERATED, name) (__VA_ARGS__); \
-cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<cppli_internal_CAT(CPPLI_GENERATED, name)>({{cppli_internal_FOR_EACH(cppli_internal_STRINGIFY, name)}})) \
+static_assert(!::cppli::detail::contains_uppercase<cppli_internal_STRINGIFY(cppli_internal_CAT(name))>(), "subcommand names cannot contain uppercase characters"); \
+cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<cppli_internal_CAT(CPPLI_GENERATED, name)>({{cppli_internal_FOR_EACH(cppli_internal_STRINGIFY_WITH_COMMA, name)}})) \
 extern "C" void cppli_internal_CAT(CPPLI_GENERATED, name) (__VA_ARGS__)
 
 #define CPPLI_NAME(...) __VA_ARGS__

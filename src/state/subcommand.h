@@ -6,6 +6,7 @@
 #include <string>
 #include <optional>
 #include <set>
+#include <cassert>
 
 #include "parameter_types.h"
 
@@ -98,7 +99,7 @@ namespace cppli::detail {
     };
 
     struct subcommand_documentation_t {
-        subcommand_name_t  name;
+        std::string  name; // this is what we're sorting by
 
         std::set<flag_info_t>          flags; // using ordered set because we want to print commands alphabetically
         std::set<option_info_t>        options;
@@ -165,6 +166,9 @@ namespace cppli::detail {
                                 throw std::runtime_error("Error initializing (sub)command \"" + subcommand.name.back() + "\" option \"" + canonical_name + "\". Details: " + e.what());
                             }
                         }
+                    }
+                    else {
+                        assert(false);
                     }
                 }
             }
@@ -389,7 +393,7 @@ namespace cppli::detail {
     template<auto func>
     dummy_t register_subcommand(const subcommand_name_t& name) {
         subcommand_inputs_info_t   info;
-        subcommand_documentation_t docs;
+        subcommand_documentation_t docs {name.back()};
 
         generate_input_info_and_docs(info, docs, func);
 

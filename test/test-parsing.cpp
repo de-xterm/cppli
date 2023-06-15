@@ -1,4 +1,6 @@
 
+#include <iostream>
+
 #include "catch_test_macros.hpp"
 
 #include "arg_parsing.h"
@@ -10,8 +12,7 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
                  CPPLI_FLAG(force_reset, "Force the thing to rest the thing", f),
                  CPPLI_POSITIONAL(cppli::int_t, foo, "the foo positional"),
                  CPPLI_FLAG(recurse, "do the thing recursively", r),
-                 CPPLI_OPTION(cppli::string_t, color, "color", "set the color", c),
-                 CPPLI_OPTION(cppli::string_t, Color, "color", "set the color", c)) {
+                 CPPLI_OPTION(cppli::string_t, color, "color", "set the colo", c)) {
     if(force_reset) {
 
     }
@@ -29,5 +30,8 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
 
 
 TEST_CASE("arg parsing works") {
+
+
+    std::cout << cppli_internal_STRINGIFY(cppli_internal_CAT(CPPLI_GENERATED, name, foobar, baz));
    REQUIRE(true);
 }
