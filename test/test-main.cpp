@@ -7,7 +7,6 @@ int main( int argc, char* argv[] ) {
 
 
 
-    cppli::detail::parse(argc, argv);
     int result = Catch::Session().run( argc, argv );
 
     // your clean-up...

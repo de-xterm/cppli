@@ -30,8 +30,9 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
 
 
 TEST_CASE("arg parsing works") {
-
-
+    int argc = 3;
+    const char* argv[] = {"app", "repo", "init"};
+    cppli::run(argc, argv);
     std::cout << cppli_internal_STRINGIFY(cppli_internal_CAT(CPPLI_GENERATED, name, foobar, baz));
    REQUIRE(true);
 }

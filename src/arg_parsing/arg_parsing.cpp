@@ -6,33 +6,43 @@
 #include "arg_parsing.h"
 
 namespace cppli::detail {
-    enum parse_mode {
-        COMMAND,
-        ARG
-    };
-
-    std::vector<subcommand_inputs_t> parse(int argc, const char* const* const argv) {
+    std::vector<subcommand_t> parse(int argc, const char* const* const argv) {
                           // skip the program name
-        std::vector<subcommand_inputs_t> commands;
+        std::vector<subcommand_t> commands;
 
-        subcommand_name_t subcommand_name = {{argv[0]}};
+        subcommand_name_t subcommand_name/* = {{argv[0]}}*/;
 
         subcommand_inputs_t args;
 
         bool disambiguate_next_arg = false;
 
+        bool first_command = true;
+        std::string first_command_name = argv[0];
 
         for(unsigned arg_i = 1; arg_i < argc; ++arg_i) { // TODO: message when ignoring unrecognized options/flags/args
             std::string arg_string = argv[arg_i];
 
             if(is_valid_subcommand(subcommand_name, arg_string) && !disambiguate_next_arg) {
-                commands.push_back(std::move(args));
+                if(first_command) {
+                    /*subcommand_name_t temp;
+                    temp.command_names.emplace_back(argv[0]);
+
+                    for(const auto& e : subcommand_name.command_names) {
+                        temp.command_names.push_back(e);
+                    }*/
+
+                    commands.push_back({{{argv[0]}}, args});
+                    first_command = false;
+                }
+                else {
+                    commands.push_back({subcommand_name, args});
+                }
                 args = {};
             }
             else {
                 if((arg_string.substr(0,2) == "--") && !disambiguate_next_arg) { // long flag (these are ez)
                                                     // we need this check so that we can handle the case where "--" is the thing we're trying to disambiguate. Ex: "program -- --"
-                    if((arg_string.size() == 2) && (!disambiguate_next_arg)) { // if the whole string is just "--", then this arg is used to disambiguate the next
+                    if((arg_string.size() == 2) /*&& (!disambiguate_next_arg)*/) { // if the whole string is just "--", then this arg is used to disambiguate the next
                         disambiguate_next_arg = true; // ( "--" just means "the next arg is positional, even if it looks like an option/flag (starts with '-' or "--"), or a subcommand (matches a subcommand name))
                     }
                     else {

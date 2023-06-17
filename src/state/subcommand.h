@@ -107,6 +107,13 @@ namespace cppli::detail {
 
         std::set<std::string>          subcommands;
 
+        bool is_namespace = true;
+
+        subcommand_documentation_t() = default;
+
+
+        subcommand_documentation_t(const std::string& name);
+
         bool operator<(const subcommand_documentation_t& rhs) const;
     };
 
@@ -399,8 +406,11 @@ namespace cppli::detail {
         subcommand_name_t cumulative_name;
         for(unsigned i = 0; i < name.command_names.size()-1; ++i) {
             cumulative_name.command_names.push_back(name.command_names[i]);
+            if(!subcommand_name_to_docs().contains(cumulative_name)) {
+                subcommand_name_to_docs()[cumulative_name].name = cumulative_name.back();
+            }
+            subcommand_name_to_docs()[cumulative_name].subcommands.emplace(name.back());
         }
-        subcommand_name_to_docs()[cumulative_name].subcommands.emplace(name.back());
 
         generate_input_info_and_docs(info, docs, func);
 
