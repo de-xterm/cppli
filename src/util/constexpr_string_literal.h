@@ -133,7 +133,7 @@ namespace cppli::detail {
             std::string ret;
             ret.reserve(N);
 
-            for(std::size_t i = 0; i < N; ++i) {
+            for(std::size_t i = 0; i < N-1; ++i) {
                 ret.push_back(value[i]);
             }
             return std::move(ret);

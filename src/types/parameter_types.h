@@ -161,16 +161,17 @@ namespace cppli {
 
             option() = default;
 
-            option(const std::optional<std::string>& str)requires(argument_optional_) {
+            option(std::optional<std::string> str) requires(argument_optional_) {
                 if (str.has_value()) {
-                    value_ = *str;
-                } else {
+                    value_ = std::move(*str);
+                }
+                else {
                     value_ = std::nullopt;
                 }
             }
 
-            option(const std::optional<std::string>& str)requires (!argument_optional_)
-                    : value_(*str), // emptiness check happens elsewhere
+            option(std::optional<std::string> str) requires (!argument_optional_)
+                    : value_(std::move(*str)), // emptiness check happens elsewhere
                       was_included_(true) {}
 
             option(const option&) = default;
@@ -231,7 +232,7 @@ namespace cppli {
             static constexpr auto has_long_name  = false;
 
 
-            positional(const std::string& value) : value_(value) {}
+            positional(std::string value) : value_(std::move(value)) {}
 
             operator type_() const {
                 static_assert(!optional_,

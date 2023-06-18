@@ -136,11 +136,20 @@ namespace cppli::detail {
 
     bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name);
 
+    bool is_namespace(const subcommand_name_t& subcommand);
+
+    bool main_command_is_namespace();
 
     template<typename T>
     /*add_const_ref_if_string_t<T>::*/T process_argument(unsigned cumulative_positional_index, const subcommand_t& subcommand) {
 
         std::string canonical_name = T::name.string();
+
+        std::optional<std::string> short_name;
+
+        if constexpr(T::has_short_name) {
+            short_name = std::string{T::short_name};
+        }
 
         using arg_info_t = argument_info_t<T>; // no need for remove_cvref, we do that before calling process_argument
         if constexpr(arg_info_t::is_option) {
@@ -152,6 +161,14 @@ namespace cppli::detail {
                         }
                         catch(std::runtime_error& e) {
                             throw std::runtime_error("Error initializing (sub)command \"" + subcommand.name.back() + "\" option \"" + canonical_name + "\". Details: " + e.what());
+                        }
+                    }
+                    else if(short_name && subcommand.inputs.options_to_values.at(*short_name)) {
+                        try {
+                            return {subcommand.inputs.options_to_values.at(*short_name)}; // no need for has_value check here; returning an empty optional is valid
+                        }
+                        catch(std::runtime_error& e) {
+                            throw std::runtime_error("Error initializing (sub)command \"" + subcommand.name.back() + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\"). Details: " + e.what());
                         }
                     }
                     else {
@@ -174,36 +191,64 @@ namespace cppli::detail {
                             }
                         }
                     }
+                    else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
+                        if(!subcommand.inputs.options_to_values.at(*short_name).has_value()) {
+                            throw std::runtime_error("(sub)command \"" + subcommand.name.back() + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\") requires an argument, but one was not provided (expected an argument of type " + T::type_string.string() + "."
+                                                     "Note that this option is optional, so it is valid to omit it entirely, but the option's argument is required, so if the option is provided, it must come with an argument");
+                        }
+                        else {
+                            try {
+                                return {subcommand.inputs.options_to_values.at(*short_name)}; // no need for has_value check here; returning an empty optional is valid
+                            }
+                            catch(std::runtime_error& e) {
+                                throw std::runtime_error("Error initializing (sub)command \"" + subcommand.name.back() + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\"). Details: " + e.what());
+                            }
+                        }
+                    }
                     else {
-                        assert(false);
+                        return {};
                     }
                 }
             }
             else {
-                if(!subcommand.inputs.options_to_values.contains(canonical_name)) {
+                if(!subcommand.inputs.options_to_values.contains(canonical_name) &&
+                   (short_name && !subcommand.inputs.options_to_values.contains(*short_name))) {
+
                     throw std::runtime_error(std::string("(sub)command \"") + subcommand.name.back() + "\" was not provided with required option \"" + canonical_name + '"');
                 }
-                else if(!subcommand.inputs.options_to_values.at(canonical_name).has_value()) {
+                else if(!subcommand.inputs.options_to_values.at(canonical_name).has_value() ||
+                        (short_name && !subcommand.inputs.options_to_values.at(*short_name).has_value())) {
+
                     throw std::runtime_error(std::string("(sub)command \"") + subcommand.name.back() + "\" option \"" + canonical_name + "\" requires an argument, but one was not provided "
                                                          "(expected an argument of type " + T::type_string.make_lowercase_and_convert_underscores().string() + ')');
                 }
                 else {
-                    try {
-                        return {subcommand.inputs.options_to_values.at(canonical_name)};
+                    if(subcommand.inputs.options_to_values.contains(canonical_name)) {
+                        try {
+                            return {subcommand.inputs.options_to_values.at(canonical_name)};
+                        }
+                        catch(std::runtime_error& e) {
+                            throw std::runtime_error("Error initializing (sub)command \"" + subcommand.name.back() + "\" option \"" + canonical_name + "\". Details: " + e.what());
+                        }
                     }
-                    catch(std::runtime_error& e) {
-                        throw std::runtime_error("Error initializing (sub)command \"" + subcommand.name.back() + "\" option \"" + canonical_name + "\". Details: " + e.what());
+                    else { // has_short_name is guaranteed to be true at this point
+                        try {
+                            return {subcommand.inputs.options_to_values.at(*short_name)};
+                        }
+                        catch(std::runtime_error& e) {
+                            throw std::runtime_error("Error initializing (sub)command \"" + subcommand.name.back() + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\"). Details: " + e.what());
+                        }
                     }
                 }
-                // if !contains -> error
             }
         }
         else if constexpr(arg_info_t::is_flag) {
-            return subcommand.inputs.flags.contains(canonical_name);
+            return subcommand.inputs.flags.contains(canonical_name) ||
+                   (short_name && subcommand.inputs.flags.contains(*short_name));
         }
         else /*if constexpr(arg_info_t::is_positional)*/ {
-            if((cumulative_positional_index > subcommand.inputs.positional_args.size()) && (!T::optional)) {
-                throw std::runtime_error(std::string("(sub)command \"") + subcommand.name.back() + "\" required positional argument \"" + canonical_name + "\" was not provided (expected an argument of type \"" + static_cast<std::string>(T::type_string.make_lowercase_and_convert_underscores()) + ')');
+            if((cumulative_positional_index >= subcommand.inputs.positional_args.size()) && (!T::optional)) {
+                throw std::runtime_error(std::string("(sub)command \"") + subcommand.name.back() + "\" required positional argument \"" + canonical_name + "\" was not provided (expected an argument of type " + T::type_string.string() + ')');
             }
             try {
                 return {subcommand.inputs.positional_args[cumulative_positional_index]};

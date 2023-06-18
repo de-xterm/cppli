@@ -65,11 +65,13 @@ namespace cppli::detail {
     }
 
     bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name) {
-        return subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
+        return subcommand_name_to_inputs_info().contains(subcommand) &&
+               subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
     }
 
     bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name) {
-        return subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
+        return subcommand_name_to_inputs_info().contains(subcommand) &&
+               subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
     }
 
     bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name) {
@@ -77,6 +79,14 @@ namespace cppli::detail {
             return subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.at(option_name);
         }
         return false;
+    }
+
+    bool is_namespace(const subcommand_name_t& subcommand) {
+        return subcommand_name_to_docs().at(subcommand).is_namespace;
+    }
+
+    bool main_command_is_namespace() {
+        return true; // TODO: actual implementation
     }
 
     positional_info_t::positional_info_t(const std::string& type, const std::string& name,

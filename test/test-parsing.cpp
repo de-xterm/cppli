@@ -14,25 +14,29 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
                  CPPLI_FLAG(recurse, "do the thing recursively", r),
                  CPPLI_OPTION(cppli::string_t, color, "color", "set the colo", c)) {
     if(force_reset) {
-
+        std::cout << "force true!\n";
     }
 
-    if(foo == 30) {
-
+    if(recurse) {
+        std::cout << "recurse true!\n";
     }
 
-    if(color.has_value()) {
+    std::cout << "foo int: " << foo << '\n';
 
-    }
+    color.access_value_if_present([&](const auto& val) {
+        std::cout << "color: " << (std::string)val;
+    });
 
 }
 
 
 
 TEST_CASE("arg parsing works") {
-    int argc = 3;
-    const char* argv[] = {"app", "repo", "init"};
-    cppli::run(argc, argv);
-    std::cout << cppli_internal_STRINGIFY(cppli_internal_CAT(CPPLI_GENERATED, name, foobar, baz));
+
+    //}
+    //catch(std::exception& e) {
+   //     std::cerr << e.what();
+        //REQUIRE(false);
+   // }
    REQUIRE(true);
 }
