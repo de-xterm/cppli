@@ -12,65 +12,7 @@ namespace cppli::detail {
         }
     }
 
-    constexpr bool isletter(char c) {
-        switch(c) {
-            case 'a':
-            case 'b':
-            case 'c':
-            case 'd':
-            case 'e':
-            case 'f':
-            case 'g':
-            case 'h':
-            case 'i':
-            case 'j':
-            case 'k':
-            case 'l':
-            case 'm':
-            case 'n':
-            case 'o':
-            case 'p':
-            case 'q':
-            case 'r':
-            case 's':
-            case 't':
-            case 'u':
-            case 'v':
-            case 'w':
-            case 'x':
-            case 'y':
-            case 'z':
-            case 'A':
-            case 'B':
-            case 'C':
-            case 'D':
-            case 'E':
-            case 'F':
-            case 'G':
-            case 'H':
-            case 'I':
-            case 'J':
-            case 'K':
-            case 'L':
-            case 'M':
-            case 'N':
-            case 'O':
-            case 'P':
-            case 'Q':
-            case 'R':
-            case 'S':
-            case 'T':
-            case 'U':
-            case 'V':
-            case 'W':
-            case 'X':
-            case 'Y':
-            case 'Z': return true;
-            default: return false;
-        }
-    }
-
-    constexpr bool isupper(char c) {
+    constexpr bool isuppercase(char c) {
         switch(c) {
             case 'A':
             case 'B':
@@ -132,6 +74,10 @@ namespace cppli::detail {
             case 'z': return true;
             default: return false;
         }
+    }
+
+    constexpr bool isletter(char c) {
+        return isuppercase(c) || islowercase(c);
     }
 
     constexpr char tolower(char c) { // yes, this is the only way.
@@ -269,7 +215,7 @@ namespace cppli::detail {
         bool contains = false;
 
         for(std::size_t i = 0; i < literal.size(); ++i) {
-            contains |= isupper(literal.value[i]);
+            contains |= isuppercase(literal.value[i]);
         }
 
         return contains;
