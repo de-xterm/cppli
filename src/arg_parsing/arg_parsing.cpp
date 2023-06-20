@@ -30,7 +30,7 @@ namespace cppli::detail {
         std::string first_command_name = argv[0];
 
         bool in_namespace = main_command_is_namespace();
-        commands.push_back({{{argv[0]}}, args});
+        commands.push_back({{argv[0]}, args});
 
         std::string command_or_subcommand = "command";
 
@@ -169,7 +169,7 @@ namespace cppli::detail {
                             }
                             else {
                                 std::cerr << "Character '" << char_string << "' in flag/option group \"" << arg_string << "\" " // TODO: can't I make this nonfatal?
-                                                         "did not form a valid flag or option for " << command_or_subcommand << " \"" << current_subcommand_name_string << "\"\n";
+                                                         "did not form a valid flag or option for " << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and will therefore be ignored\n";
                             }
                         }
                     }

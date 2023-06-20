@@ -11,36 +11,126 @@ namespace cppli::detail {
             return c;
         }
     }
-    
+
+    constexpr bool isletter(char c) {
+        switch(c) {
+            case 'a':
+            case 'b':
+            case 'c':
+            case 'd':
+            case 'e':
+            case 'f':
+            case 'g':
+            case 'h':
+            case 'i':
+            case 'j':
+            case 'k':
+            case 'l':
+            case 'm':
+            case 'n':
+            case 'o':
+            case 'p':
+            case 'q':
+            case 'r':
+            case 's':
+            case 't':
+            case 'u':
+            case 'v':
+            case 'w':
+            case 'x':
+            case 'y':
+            case 'z':
+            case 'A':
+            case 'B':
+            case 'C':
+            case 'D':
+            case 'E':
+            case 'F':
+            case 'G':
+            case 'H':
+            case 'I':
+            case 'J':
+            case 'K':
+            case 'L':
+            case 'M':
+            case 'N':
+            case 'O':
+            case 'P':
+            case 'Q':
+            case 'R':
+            case 'S':
+            case 'T':
+            case 'U':
+            case 'V':
+            case 'W':
+            case 'X':
+            case 'Y':
+            case 'Z': return true;
+            default: return false;
+        }
+    }
+
     constexpr bool isupper(char c) {
         switch(c) {
-            default: return false;
-            case 'A': return true;
-            case 'B': return true;
-            case 'C': return true;
-            case 'D': return true;
-            case 'E': return true;
-            case 'F': return true;
-            case 'G': return true;
-            case 'H': return true;
-            case 'I': return true;
-            case 'J': return true;
-            case 'K': return true;
-            case 'L': return true;
-            case 'M': return true;
-            case 'N': return true;
-            case 'O': return true;
-            case 'P': return true;
-            case 'Q': return true;
-            case 'R': return true;
-            case 'S': return true;
-            case 'T': return true;
-            case 'U': return true;
-            case 'V': return true;
-            case 'W': return true;
-            case 'X': return true;
-            case 'Y': return true;
+            case 'A':
+            case 'B':
+            case 'C':
+            case 'D':
+            case 'E':
+            case 'F':
+            case 'G':
+            case 'H':
+            case 'I':
+            case 'J':
+            case 'K':
+            case 'L':
+            case 'M':
+            case 'N':
+            case 'O':
+            case 'P':
+            case 'Q':
+            case 'R':
+            case 'S':
+            case 'T':
+            case 'U':
+            case 'V':
+            case 'W':
+            case 'X':
+            case 'Y':
             case 'Z': return true;
+            default: return false;
+        }
+    }
+
+    constexpr bool islowercase(char c) {
+        switch(c) {
+            case 'a':
+            case 'b':
+            case 'c':
+            case 'd':
+            case 'e':
+            case 'f':
+            case 'g':
+            case 'h':
+            case 'i':
+            case 'j':
+            case 'k':
+            case 'l':
+            case 'm':
+            case 'n':
+            case 'o':
+            case 'p':
+            case 'q':
+            case 'r':
+            case 's':
+            case 't':
+            case 'u':
+            case 'v':
+            case 'w':
+            case 'x':
+            case 'y':
+            case 'z': return true;
+            default: return false;
         }
     }
 
@@ -76,6 +166,23 @@ namespace cppli::detail {
         }
     }
 
+    constexpr bool is_numeral(char c) {
+        switch(c) {
+            default: return false;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            return true;
+        }
+    }
+
     /*std::string tolower_and_convert_underscores(std::string str) {
         for(auto& c : str) {
             if(c == '_') {
@@ -92,7 +199,8 @@ namespace cppli::detail {
     // source for string_literal: https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
     template<size_t N>
     struct string_literal {
-        constexpr string_literal(const char (&str)[N]) {
+        template<std::size_t N_>
+        constexpr string_literal(const char (&str)[N_]) {
             std::copy(str, str+N, value);
         }
 
@@ -133,17 +241,33 @@ namespace cppli::detail {
             std::string ret;
             ret.reserve(N);
 
-            for(std::size_t i = 0; i < N-1; ++i) {
+            for(std::size_t i = 0; i < N; ++i) {
                 ret.push_back(value[i]);
             }
             return std::move(ret);
         }
     };
-    
+
+    template<std::size_t N>
+    string_literal(const char (&)[N]) -> string_literal<N-1>;
+
+    template<string_literal literal>
+    constexpr bool all_lowercase_numeral_or_hyphen() {
+        bool all_valid = true;
+
+        for(std::size_t i = 0; i < literal.size(); ++i) {
+            all_valid &= (islowercase(literal.value[i]) ||
+                          is_numeral(literal.value[i])  ||
+                          (literal.value[i] == '-'));
+        }
+
+        return all_valid;
+    }
+
     template<string_literal literal>
     constexpr bool contains_uppercase() {
         bool contains = false;
-        
+
         for(std::size_t i = 0; i < literal.size(); ++i) {
             contains |= isupper(literal.value[i]);
         }

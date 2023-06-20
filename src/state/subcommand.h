@@ -7,6 +7,7 @@
 #include <optional>
 #include <set>
 #include <cassert>
+#include <iostream>
 
 #include "parameter_types.h"
 
@@ -18,39 +19,17 @@ namespace cppli::detail {
     };
 
 
-    struct subcommand_name_t {
-        std::vector<std::string> command_names;
-
-
-        const std::string& back() const {
-            return command_names.back();
-        }
-
-        bool operator==(const subcommand_name_t&) const = default;
-    };
+    using subcommand_name_t = std::vector<std::string>;
 
     /// this is just boost::hash_combine, but I don't want to drag boost into this library just for hash_combine
     template<typename T>
     std::size_t hash_combine(std::size_t& seed, const T& val) {
         return (seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2));
     }
-}
-
-namespace std {
-    template<>
-    struct hash<cppli::detail::subcommand_name_t> {
-        std::size_t operator()(const auto& name) const noexcept {
-            std::size_t hash = 0;
-            for(const auto& e : name.command_names) {
-                cppli::detail::hash_combine(hash, e);
-            }
-
-            return hash;
-        }
+    
+    struct subcommand_name_hash_t {
+        std::size_t operator()(const subcommand_name_t& name) const noexcept;
     };
-}
-
-namespace cppli::detail {
 
     struct subcommand_t {
         subcommand_name_t name;
@@ -122,9 +101,9 @@ namespace cppli::detail {
         std::unordered_map<std::string, bool> option_argument_is_optional;
     };
 
-    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t>&   subcommand_name_to_inputs_info();
-    std::unordered_map<subcommand_name_t, subcommand_func_t>&          subcommand_name_to_func();
-    std::unordered_map<subcommand_name_t, subcommand_documentation_t>& subcommand_name_to_docs();
+    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>&   subcommand_name_to_inputs_info();
+    std::unordered_map<subcommand_name_t, subcommand_func_t,        subcommand_name_hash_t>&   subcommand_name_to_func();
+    std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
 
     /// if arg appended to parent_command_names forms a valid subcommand,
     /// pushes back arg to parent_command_names and returns true.
@@ -138,6 +117,7 @@ namespace cppli::detail {
 
     bool is_namespace(const subcommand_name_t& subcommand);
 
+    void set_program_name_and_description(std::string&& name, std::string&& description);
     bool main_command_is_namespace();
 
     template<typename T>
@@ -319,10 +299,17 @@ namespace cppli::detail {
         static void call_func(const subcommand_t& subcommand) {
             constexpr auto positionals_count = count_positionals<arg_ts...>();
             if(positionals_count < subcommand.inputs.positional_args.size()) {
-                throw std::runtime_error("Too many positional arguments to (sub)command \"" + subcommand.name.back() +
-                                         "\" (expected " + std::to_string(positionals_count) + ", got " + std::to_string(subcommand.inputs.positional_args.size()) + ')');
+                std::cerr << "Too many positional arguments given to (sub)command \"" << subcommand.name.back() <<
+                                         "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << "). Excess positional argument will be ignored\n";
             }
             call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::call_func(subcommand);
+        }
+    };
+
+    template<auto func>
+    struct call_func_wrapper_t<void(*)(), func> { // we need all this ugly partial specializations so that we can deduce arg_ts and indices
+        static void call_func(const subcommand_t& subcommand) {
+            func();
         }
     };
 
@@ -443,14 +430,18 @@ namespace cppli::detail {
         }
     }
 
+    inline void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, void(*func)() = nullptr) {
+        // do nothing
+    }
+
     template<auto func>
     dummy_t register_subcommand(const subcommand_name_t& name) {
         subcommand_inputs_info_t   info;
         subcommand_documentation_t docs {name.back()};
 
         subcommand_name_t cumulative_name;
-        for(unsigned i = 0; i < name.command_names.size()-1; ++i) {
-            cumulative_name.command_names.push_back(name.command_names[i]);
+        for(unsigned i = 0; i < name.size()-1; ++i) {
+            cumulative_name.push_back(name[i]);
             if(!subcommand_name_to_docs().contains(cumulative_name)) {
                 subcommand_name_to_docs()[cumulative_name].name = cumulative_name.back();
             }

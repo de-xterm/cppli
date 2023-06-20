@@ -25,6 +25,8 @@ namespace cppli {
         static constexpr detail::string_literal string = "string";
     };
 
+    std::ostream& operator<<(std::ostream& os, const string_t& s);
+
     struct int_t {
         int val;
 
@@ -37,7 +39,7 @@ namespace cppli {
             }
         }
 
-        operator int() const {
+        operator const int&() const {
             return val;
         }
 
@@ -52,11 +54,11 @@ namespace cppli {
                 val = std::stof(str);
             }
             catch(std::exception& e) {
-                throw std::runtime_error("Could not form a valid integer from string \"" + str + '\"');
+                throw std::runtime_error("Could not form a valid decimal from string \"" + str + '\"');
             }
         }
 
-        operator float() {
+        operator const float&() const {
             return val;
         }
 
@@ -87,6 +89,12 @@ namespace cppli {
             using wrapped_t = float;
         };
 
+        template<>
+        struct wrapper_type_info_t<string_t> {
+            static constexpr bool is_wrapper_type = true;
+            using wrapped_t = std::string;
+        };
+
         template<typename T>
         static constexpr bool is_wrapper_type = wrapper_type_info_t<T>::is_wrapper_type;
 
@@ -94,9 +102,11 @@ namespace cppli {
         using wrapper_type_wrapped_t = typename wrapper_type_info_t<T>::wrapped_t;
         //}
 
-        template<string_literal name_, string_literal documentation_, char short_name_>
+        template<string_literal name_, string_literal documentation_, char short_name_ = '\0'>
         class flag {
             bool value_;
+
+            static_assert(short_name_ == '\0' || isletter(short_name_), "flag short name must be a letter");
 
         public:
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
@@ -124,6 +134,7 @@ namespace cppli {
             optional_or_raw_type value_;
             bool was_included_ = false;
 
+            static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
             static_assert(!(argument_optional_ && (!optional_)),
                           "required options with optional arguments are not allowed because that wouldn't make sense");
 
@@ -139,14 +150,14 @@ namespace cppli {
             static constexpr auto has_short_name = (short_name_ != '\0');
             static constexpr auto has_long_name  = true;
 
-            operator type_() const {
+            operator const type_&() const {
                 static_assert((!optional_) && (!argument_optional_),
                               "option implicit conversion to underlying type is only allowed if the option in question is required (not optional) and has a required (not optional) argument");
 
                 return value_;
             }
 
-            operator detail::wrapper_type_wrapped_t<type_>()
+            operator const detail::wrapper_type_wrapped_t<type_>&() const
             requires(detail::is_wrapper_type<type_>) {
                 static_assert((!optional_) && (!argument_optional_),
                               "option implicit conversion to underlying type is only allowed if the option in question is required (not optional) and has a required (not optional) argument");
@@ -234,20 +245,22 @@ namespace cppli {
 
             positional(std::string value) : value_(std::move(value)) {}
 
-            operator type_() const {
+            operator const type_&() const {
                 static_assert(!optional_,
                               "positional implicit conversion to underlying type is only allowed if the positional argument in question is required (not optional)");
 
                 return value_;
             }
 
-            operator detail::wrapper_type_wrapped_t<type_>() const requires(detail::is_wrapper_type<type_>) {
+            operator const detail::wrapper_type_wrapped_t<type_>&() const
+            requires(detail::is_wrapper_type<type_>) {
                 static_assert(!optional_,
                               "positional implicit conversion to underlying type is only allowed if the positional argument in question is required (not optional)");
 
                 if constexpr(detail::is_wrapper_type<type_>) {
                     return value_;
-                } else {
+                }
+                else {
                     return dummy_t{};
                 }
             }

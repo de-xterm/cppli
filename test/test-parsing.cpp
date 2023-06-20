@@ -10,7 +10,7 @@
 CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
                  "does a thing",
                  CPPLI_FLAG(force_reset, "Force the thing to rest the thing", f),
-                 CPPLI_POSITIONAL(cppli::int_t, foo, "the foo positional"),
+                 CPPLI_POSITIONAL(cppli::string_t, foo, "the foo positional"),
                  CPPLI_FLAG(recurse, "do the thing recursively", r),
                  CPPLI_OPTION(cppli::string_t, color, "color", "set the colo", c)) {
     if(force_reset) {
@@ -24,11 +24,15 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
     std::cout << "foo int: " << foo << '\n';
 
     color.access_value_if_present([&](const auto& val) {
-        std::cout << "color: " << (std::string)val;
+        std::cout << "color: " << val;
     });
 
 }
 
+CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove),
+                 "delete the repo") {
+    std::cout << "delete called\n";
+}
 
 
 TEST_CASE("arg parsing works") {
