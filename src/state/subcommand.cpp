@@ -48,7 +48,7 @@ namespace cppli::detail {
                                                               is_optional(is_optional),
                                                               argument_is_optional(argument_is_optional) {}
 
-    subcommand_documentation_t::subcommand_documentation_t(const std::string& name) : name(name), is_namespace(false) {}
+    subcommand_documentation_t::subcommand_documentation_t(const std::string& name, const char* description) : name(name), description(description), is_namespace(false) {}
 
     bool subcommand_documentation_t::operator<(const subcommand_documentation_t& rhs) const {
         return (name.back() < rhs.name.back());

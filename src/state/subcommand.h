@@ -79,6 +79,7 @@ namespace cppli::detail {
 
     struct subcommand_documentation_t {
         std::string  name; // this is what we're sorting by
+        std::string description;
 
         std::set<flag_info_t>          flags; // using ordered set because we want to print commands alphabetically
         std::set<option_info_t>        options;
@@ -91,7 +92,7 @@ namespace cppli::detail {
         subcommand_documentation_t() = default;
 
 
-        subcommand_documentation_t(const std::string& name);
+        subcommand_documentation_t(const std::string& name, const char* description);
 
         bool operator<(const subcommand_documentation_t& rhs) const;
     };
@@ -413,7 +414,7 @@ namespace cppli::detail {
 
             info.option_argument_is_optional.emplace(type::name.string(), type::argument_optional);
 
-            if(type::short_name) {
+            if constexpr(type::short_name) {
                 info.option_argument_is_optional.emplace(std::string{type::short_name}, type::argument_optional);
             }
         }
@@ -435,9 +436,9 @@ namespace cppli::detail {
     }
 
     template<auto func>
-    dummy_t register_subcommand(const subcommand_name_t& name) {
+    dummy_t register_subcommand(const subcommand_name_t& name, const char* description) {
         subcommand_inputs_info_t   info;
-        subcommand_documentation_t docs {name.back()};
+        subcommand_documentation_t docs {name.back(), description};
 
         subcommand_name_t cumulative_name;
         for(unsigned i = 0; i < name.size()-1; ++i) {
@@ -445,7 +446,7 @@ namespace cppli::detail {
             if(!subcommand_name_to_docs().contains(cumulative_name)) {
                 subcommand_name_to_docs()[cumulative_name].name = cumulative_name.back();
             }
-            subcommand_name_to_docs()[cumulative_name].subcommands.emplace(name.back());
+            subcommand_name_to_docs()[cumulative_name].subcommands.emplace(name[i+1]);
         }
 
         generate_input_info_and_docs(info, docs, func);

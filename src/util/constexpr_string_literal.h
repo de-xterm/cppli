@@ -114,7 +114,6 @@ namespace cppli::detail {
 
     constexpr bool is_numeral(char c) {
         switch(c) {
-            default: return false;
             case '0':
             case '1':
             case '2':
@@ -126,6 +125,7 @@ namespace cppli::detail {
             case '8':
             case '9':
             return true;
+            default: return false;
         }
     }
 
