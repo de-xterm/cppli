@@ -1,9 +1,8 @@
 #pragma once
 
 #include "subcommand_macros.h"
-#include "subcommand.h"
 #include "arg_parsing.h"
-
+#include "command_registration.h"
 
 namespace cppli {
 
