@@ -54,12 +54,12 @@ namespace cppli {
             return std::move(ret);
         }
 
-        std::string get_documentation_string_impl(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned recursion, unsigned current_recursion_level) {
+        std::string get_documentation_string_impl(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned recursion, unsigned current_recursion_level, const std::string& prefix, bool is_last) {
             using namespace detail;
             const auto& docs = subcommand_name_to_docs()[name];
 
             std::string indent = std::string(current_recursion_level*8, ' ');
-            std::string ret = indent;
+            std::string ret/* = indent*/ = prefix;
 
             struct arg_name_and_docs_t {
                 std::string name,
@@ -73,15 +73,16 @@ namespace cppli {
                 ret += docs.name;
                 if(docs.description.size()) {
                     ret += "\n";
-                    ret += indent;
+                    ret += prefix;
                     ret += "    Description:\n";
-                    ret += indent;
+                    ret += prefix;
                     ret += "        ";
-                    ret == docs.description;
+                    ret += docs.description; // was  ret == docs.description;
+
                 }
             }
             else {
-                ret += "(Subcommand) ";
+                ret += "+---(Subcommand) ";
                 std::vector<arg_name_and_docs_t> positional_doc_strings;
                 std::vector<arg_name_and_docs_t> flag_doc_strings;
                 std::vector<arg_name_and_docs_t> option_doc_strings;
@@ -132,23 +133,26 @@ namespace cppli {
 
                 if ((verbosity == NAME_AND_DESCRIPTION) || (verbosity > NAME_AND_ARGS)) {
                     ret += '\n';
-                    ret += indent;
+                    ret += prefix;
                     ret += "    Description:\n";
-                    ret += indent;
+                    ret += prefix;
                     ret += "        ";
                     ret += docs.description;
                 }
 
                 if (verbosity == NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS) {
                     if(positional_doc_strings.size()) {
-                        ret += "\n\n";
-                        ret += indent;
+                        ret += "\n";
+                        ret += prefix;
+                        ret += "\n";
+                        ret += prefix;
+
 
                         ret += "    Positionals:\n";
                     }
 
                     for (const auto& e: positional_doc_strings) {
-                        ret += indent;
+                        ret += prefix;
                         ret += "        ";
                         ret += e.name;
                         ret += ": ";
@@ -157,16 +161,17 @@ namespace cppli {
                     }
 
                     if (positional_doc_strings.size()) {
+                        ret += prefix;
                         ret += '\n';
                     }
 
                     if(flag_doc_strings.size()) {
-                        ret += indent;
+                        ret += prefix;
                         ret += "    Flags:\n";
                     }
 
                     for (const auto& e: flag_doc_strings) {
-                        ret += indent;
+                        ret += prefix;
                         ret += "        ";
                         ret += e.name;
                         ret += ": ";
@@ -174,23 +179,24 @@ namespace cppli {
                         ret += '\n';
                     }
 
-                    if (flag_doc_strings.size()) {
+                    if (positional_doc_strings.size() || flag_doc_strings.size()) {
+                        ret += prefix;
                         ret += '\n';
                     }
 
                     if(option_doc_strings.size()) {
-                        ret += indent;
+                        ret += prefix;
                         ret += "    Options:\n";
                     }
 
                     for (const auto& e: option_doc_strings) {
-                        ret += indent;
+                        ret += prefix;
                         ret += "        ";
                         ret += e.name;
                         ret += ": ";
                         ret += e.docs;
 
-                        if(&option_doc_strings.back() != &e) {
+                        if(&option_doc_strings.back() == &e) {
                             ret += '\n';
                         }
                     }
@@ -199,19 +205,42 @@ namespace cppli {
 
             if(current_recursion_level+1 <= recursion) {
                 if(docs.subcommands.size()) {
-                    ret += indent;
-                    ret += "\n    Subcommands:";
-                    ret += indent;
-                    ret += "        ";
+                    ret += '\n';
+                    ret += prefix;
+                    ret += "    Subcommands:\n";
+                    ret += prefix;
+
+                    //ret += prefix;
+                    //ret += "        ";
                     std::vector subcommand_name = name;
                     subcommand_name.resize(subcommand_name.size()+1);
                     for(const auto& e : docs.subcommands) {
                         subcommand_name.back() = e;
-                        ret += "\n";
+                        //ret += "    |\n";
+
                         if(&e != &*docs.subcommands.begin()) {
-                            ret += '\n';
+                            //ret += "    |\n";
+                            //ret += prefix;
                         }
-                        ret += get_documentation_string_impl(subcommand_name, verbosity, recursion, current_recursion_level+1);
+
+                        bool next_node_is_last;
+                        std::string new_prefix = prefix;
+                        if(&e == &*(--docs.subcommands.end())){
+                            new_prefix += (is_last ? "    " : "    |");
+                            next_node_is_last = true;
+                        }
+                        else {
+                            new_prefix += "    |";
+                            next_node_is_last = false;
+                        }
+
+                        ret += get_documentation_string_impl(subcommand_name, verbosity, recursion, current_recursion_level+1, new_prefix, next_node_is_last);
+
+                        //if(next_node_is_last) {
+                            ret += prefix;
+                            ret += '\n';
+                            //ret += prefix;
+                        //}
                     }
                 }
             }
@@ -221,6 +250,6 @@ namespace cppli {
     }
 
     std::string get_documentation_string(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned recursion) {
-        return detail::get_documentation_string_impl(name, verbosity, recursion, 0);
+        return detail::get_documentation_string_impl(name, verbosity, recursion, 0, "", true);
     }
 }

@@ -29,9 +29,18 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
 
 }
 
+CPPLI_SUBCOMMAND(CPPLI_NAME(repo, clone),
+                 "clone a repo",
+                 CPPLI_POSITIONAL(cppli::int_t, WHO, "the int")) {}
+
 CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove),
                  "delete the repo") {
     std::cout << "delete called\n";
+}
+
+CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove, bar),
+                 "do another thing") {
+std::cout << "delete called\n";
 }
 
 
