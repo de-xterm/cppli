@@ -26,7 +26,6 @@ namespace cppli::detail {
 
         bool disambiguate_next_arg = false;
 
-        bool first_command = true;
         std::string first_command_name = argv[0];
 
         bool in_namespace = main_command_is_namespace();
@@ -185,6 +184,6 @@ namespace cppli::detail {
             commands.back().inputs = std::move(args);
         //}
 
-        return std::move(commands);
+        return commands;
     }
 }

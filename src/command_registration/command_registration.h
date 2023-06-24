@@ -297,7 +297,7 @@ void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_doc
 
         info.option_argument_is_optional.emplace(type::name.string(), type::argument_optional);
 
-        if constexpr(type::short_name) {
+        if constexpr(type::short_name != '\0') {
             info.option_argument_is_optional.emplace(std::string{type::short_name}, type::argument_optional);
         }
     }

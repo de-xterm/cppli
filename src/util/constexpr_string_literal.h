@@ -190,7 +190,7 @@ namespace cppli::detail {
             for(std::size_t i = 0; i < N; ++i) {
                 ret.push_back(value[i]);
             }
-            return std::move(ret);
+            return ret;
         }
     };
 
