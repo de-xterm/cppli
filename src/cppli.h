@@ -12,18 +12,22 @@ namespace cppli {
 
         detail::set_program_name_and_description(program_name.string(), description.string());
 
-        auto commands_vec = detail::parse(argc, argv);
+        auto parse_ret = detail::parse(argc, argv);
 
-        bool runnable_command_found = false;
-        for(unsigned i = 1; i < commands_vec.size(); ++i) {
-            if((detail::subcommand_name_to_func().contains(commands_vec[i].name))) {
-                runnable_command_found = true;
-                (detail::subcommand_name_to_func()[commands_vec[i].name])(commands_vec[i]);
+        if(!parse_ret.printed_help) {
+            const auto& commands_vec = parse_ret.subcommands;
+
+            bool runnable_command_found = false;
+            for(unsigned i = 1; i < commands_vec.size(); ++i) {
+                if((detail::subcommand_name_to_func().contains(commands_vec[i].name))) {
+                    runnable_command_found = true;
+                    (detail::subcommand_name_to_func()[commands_vec[i].name])(commands_vec[i]);
+                }
             }
-        }
 
-        if(!runnable_command_found) {
-            std::cerr << "The input did not form any runnable commands\n";
+            if(!runnable_command_found) {
+                std::cerr << "The input did not form any runnable commands\n";
+            }
         }
     }
 

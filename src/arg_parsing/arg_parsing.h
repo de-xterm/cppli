@@ -3,5 +3,10 @@
 #include "subcommand.h"
 
 namespace cppli::detail {
-    std::vector<subcommand_t> parse(int argc, const char* const* const argv);
+    struct parse_ret_t {
+        std::vector<subcommand_t> subcommands;
+        bool printed_help;
+    };
+
+    parse_ret_t parse(int argc, const char* const* const argv);
 }

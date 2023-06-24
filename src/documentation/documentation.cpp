@@ -2,6 +2,9 @@
 #include "documentation.h"
 
 namespace cppli {
+    documentation_verbosity default_help_verbosity = NAME_AND_DESCRIPTION;
+    unsigned default_help_recursion_level          = -1;
+
     namespace detail {
         std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs() {
             static std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t> subcommand_name_to_docs_;

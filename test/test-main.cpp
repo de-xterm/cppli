@@ -7,7 +7,7 @@ int main( int argc, char* argv[] ) {
 
     //int argc = 5;
     // try {
-    std::cout << cppli::get_documentation_string({"repo"}, cppli::NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS, 2);
+    //std::cout << cppli::get_documentation_string({"repo", "remove", "bar"}, cppli::NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS, 2);
     cppli::run<"program", "it does a thing">(argc, argv);
 
     //int result = Catch::Session().run( argc, argv );

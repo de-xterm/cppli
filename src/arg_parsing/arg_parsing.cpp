@@ -4,9 +4,10 @@
 #include <iostream>
 
 #include "arg_parsing.h"
+#include "documentation.h"
 
 namespace cppli::detail {
-    std::vector<subcommand_t> parse(int argc, const char* const* const argv) {
+    parse_ret_t parse(int argc, const char* const* const argv) {
 
         if(argc == 0) {
             std::cerr << "argc == 0. This is very terrible and unrecoverable\n";
@@ -50,10 +51,10 @@ namespace cppli::detail {
                 args = {};
             }
             else {
-                if(in_namespace) {
+                /*if(in_namespace) {
                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                     continue;
-                }
+                }*/
                 if((arg_string.substr(0,2) == "--") && !disambiguate_next_arg) { // long flag (these are ez)
                                                     // we need this check so that we can handle the case where "--" is the thing we're trying to disambiguate. Ex: "program -- --"
                     if((arg_string.size() == 2) /*&& (!disambiguate_next_arg)*/) { // if the whole string is just "--", then this arg is used to disambiguate the next
@@ -75,7 +76,17 @@ namespace cppli::detail {
                                 args.flags.emplace(option_name);
                             }
                             else {
-                                std::cerr << "Flag/option \"" << option_name << "\" (from \"" << arg_string << "\") was not recognized by " << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and is therefore being ignored\n";
+                                if(option_name == "help") {
+                                    std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
+                                    return {{}, true};
+                                }
+                                else if(in_namespace) {
+                                    std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                                    continue;
+                                }
+                                else {
+                                    std::cerr << "Flag/option \"" << option_name << "\" (from \"" << arg_string << "\") was not recognized by " << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and is therefore being ignored\n";
+                                }
                             }
                         }
                         else {
@@ -99,7 +110,17 @@ namespace cppli::detail {
                                 args.flags.emplace(option_or_flag_name);
                             }
                             else {
-                                throw std::runtime_error(command_or_subcommand + " \"" + current_subcommand_name_string + "\" does not accept a flag or option \"" + arg_string + '\"');
+                                if(option_or_flag_name == "help") {
+                                    std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
+                                    return {{}, true};
+                                }
+                                else if(in_namespace) {
+                                    std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                                    continue;
+                                }
+                                else {
+                                    std::cerr << command_or_subcommand << " \"" << current_subcommand_name_string << "\" does not accept a flag or option \"" << arg_string << "\". It will be ignored\n";
+                                }
                             }
                         }
                     }
@@ -129,6 +150,14 @@ namespace cppli::detail {
                                 }
                                 else if(subcommand_takes_option(subcommand_name, char_string)) {
                                     args.options_to_values.emplace(char_string, std::nullopt);
+                                }
+                                else if(char_string == "h") {
+                                    std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
+                                    return {{}, true};
+                                }
+                                else if(in_namespace) {
+                                    std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                                    continue;
                                 }
                                 else {
                                     std::cerr << "Flag/option \"" << char_string << "\" (from flag/option group \"" << arg_string << "\") was not recognized by" << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and is therefore being ignored\n";
@@ -166,6 +195,14 @@ namespace cppli::detail {
                             else if(subcommand_takes_flag(subcommand_name, char_string)) {
                                 args.flags.emplace(char_string);
                             }
+                            else if(char_string == "h") {
+                                std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
+                                return {{}, true};
+                            }
+                            else if(in_namespace) {
+                                std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                                continue;
+                            }
                             else {
                                 std::cerr << "Character '" << char_string << "' in flag/option group \"" << arg_string << "\" " // TODO: can't I make this nonfatal?
                                                          "did not form a valid flag or option for " << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and will therefore be ignored\n";
@@ -174,8 +211,18 @@ namespace cppli::detail {
                     }
                 }
                 else { // positional arg
-                    disambiguate_next_arg = false;
-                    args.positional_args.emplace_back(std::move(arg_string));
+                    if(arg_string == "help") {
+                        std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
+                        return {{}, true};
+                    }
+                    else if(in_namespace) {
+                        std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                        continue;
+                    }
+                    else {
+                        disambiguate_next_arg = false;
+                        args.positional_args.emplace_back(std::move(arg_string));
+                    }
                 }
             }
         }
@@ -184,6 +231,6 @@ namespace cppli::detail {
             commands.back().inputs = std::move(args);
         //}
 
-        return commands;
+        return {std::move(commands), false};
     }
 }

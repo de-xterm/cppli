@@ -4,6 +4,16 @@
 #include <subcommand.h>
 
 namespace cppli {
+    enum documentation_verbosity {
+        NAME_ONLY,
+        NAME_AND_DESCRIPTION,
+        NAME_AND_ARGS,
+        NAME_DESCRIPTION_AND_ARGS,
+        NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS
+    };
+
+    extern documentation_verbosity default_help_verbosity;
+    extern unsigned default_help_recursion_level;
 
     namespace detail {
         struct flag_documentation_t {
@@ -67,14 +77,6 @@ namespace cppli {
 
         std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
     }
-
-    enum documentation_verbosity {
-        NAME_ONLY,
-        NAME_AND_DESCRIPTION,
-        NAME_AND_ARGS,
-        NAME_DESCRIPTION_AND_ARGS,
-        NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS
-    };
 
     std::string get_documentation_string(const detail::subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion);
 
