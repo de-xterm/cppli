@@ -90,11 +90,11 @@ namespace cppli {
             }
             else {
                 ret +=  "(Subcommand) ";
+                ret += docs.name;
+
                 std::vector<arg_name_and_docs_t> positional_doc_strings;
                 std::vector<arg_name_and_docs_t> flag_doc_strings;
                 std::vector<arg_name_and_docs_t> option_doc_strings;
-
-                ret += docs.name;
 
                 if (verbosity >= NAME_AND_ARGS) {
                     ret += ' ';
@@ -138,8 +138,9 @@ namespace cppli {
                     }
                 }
 
+                ret += '\n';
+
                 if ((verbosity == NAME_AND_DESCRIPTION) || (verbosity > NAME_AND_ARGS)) {
-                    ret += '\n';
                     ret += indent;
                     ret += FOUR_SPACES "Description:\n";
                     ret += indent;
@@ -198,11 +199,8 @@ namespace cppli {
 
             if(current_recursion_level+1 <= recursion) {
                 if(docs.subcommands.size()) {
-                    // ret += '\n';
                     ret += indent;
                     ret += FOUR_SPACES "Subcommands:\n";
-                    //ret += indent;
-
 
                     std::vector subcommand_name = name;
                     subcommand_name.resize(subcommand_name.size()+1);
@@ -211,11 +209,19 @@ namespace cppli {
 
                         ret += get_documentation_string_impl(subcommand_name, verbosity, recursion, current_recursion_level+1);
 
-                        ret += indent;
-                        ret += '\n';
+
+                        if((verbosity != NAME_ONLY) &&
+                           (verbosity != NAME_AND_ARGS) &&
+                           (&e != &*(--docs.subcommands.end()))) {
+                            ret += indent;
+                            ret += '\n';
+                        }
                     }
                 }
             }
+
+            #undef FOUR_SPACES
+            #undef EIGHT_SPACES
 
             return ret;
         }
