@@ -2,6 +2,11 @@
 
 #include "cppli.h"
 
+CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove, bar, baz),
+                 "do yet another thing") {
+}
+
+
 int main( int argc, char* argv[] ) {
     // your setup ...
 

@@ -45,10 +45,6 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove, bar),
 std::cout << "delete called\n";
 }
 
-CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove, bar, baz),
-                 "do yet another thing") {
-}
-
 TEST_CASE("arg parsing works") {
 
     //}

@@ -2,7 +2,7 @@
 #include "documentation.h"
 
 namespace cppli {
-    documentation_verbosity default_help_verbosity = NAME_AND_DESCRIPTION;
+    documentation_verbosity default_help_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
     unsigned default_help_recursion_level          = -1;
 
     namespace detail {
@@ -94,8 +94,9 @@ namespace cppli {
                 std::vector<arg_name_and_docs_t> flag_doc_strings;
                 std::vector<arg_name_and_docs_t> option_doc_strings;
 
+                ret += docs.name;
+
                 if (verbosity >= NAME_AND_ARGS) {
-                    ret += docs.name;
                     ret += ' ';
 
                     for (const auto& e: docs.positionals) {

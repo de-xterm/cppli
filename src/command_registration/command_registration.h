@@ -321,7 +321,7 @@ inline void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcomm
 template<auto func>
 dummy_t register_subcommand(const subcommand_name_t& name, const char* description) {
     subcommand_inputs_info_t   info;
-    subcommand_documentation_t docs {name.back(), description};
+    subcommand_documentation_t docs(name.back(), description);
 
     subcommand_name_t cumulative_name;
     for(unsigned i = 0; i < name.size()-1; ++i) {
@@ -336,7 +336,7 @@ dummy_t register_subcommand(const subcommand_name_t& name, const char* descripti
 
     subcommand_name_to_func().emplace(name, call_func<func>);
     subcommand_name_to_inputs_info().emplace(name, std::move(info));
-    subcommand_name_to_docs().emplace(name, std::move(docs));
+    subcommand_name_to_docs().insert_or_assign(name, std::move(docs));
 
     return {};
 }
