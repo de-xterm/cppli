@@ -18,7 +18,7 @@ namespace cppli {
     namespace detail {
         struct flag_documentation_t {
             std::string name,
-                    documentation;
+                        documentation;
 
             char short_name;
 
@@ -29,9 +29,9 @@ namespace cppli {
 
         struct option_documentation_t {
             std::string type,
-                    name,
-                    argument_text,
-                    documentation;
+                        name,
+                        argument_text,
+                        documentation;
 
             char short_name;
 
@@ -76,11 +76,12 @@ namespace cppli {
         };
 
         std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
+        std::set<std::string>& top_level_subcommands(); // TODO: remove this if it doesn't turn out to be necessary
     }
 
     std::string get_documentation_string(const detail::subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion);
 
     /// returns documentation for the main command
-    std::string get_documentation_string(documentation_verbosity verbosity, unsigned recursion);
+    std::string get_documentation_string(documentation_verbosity verbosity, unsigned max_recursion_level);
 
 }

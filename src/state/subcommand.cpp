@@ -58,12 +58,20 @@ namespace cppli::detail {
         return true; // TODO: actual implementation
     }
 
-    static std::string program_name,
-                       program_description;
+    static std::string program_name_,
+                       program_description_;
+
+    const std::string& program_name() {
+        return program_name_;
+    }
+
+    const std::string& program_description() {
+        return program_description_;
+    }
 
     void set_program_name_and_description(std::string&& name, std::string&& description) {
-        program_name        = std::move(name);
-        program_description = std::move(description);
+        program_name_        = std::move(name);
+        program_description_ = std::move(description);
     }
 
 

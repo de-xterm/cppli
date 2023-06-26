@@ -57,7 +57,11 @@ namespace cppli::detail {
 
     bool is_namespace(const subcommand_name_t& subcommand);
 
-    void set_program_name_and_description(std::string&& name, std::string&& description);
+    void set_program_name_and_description(std::string&& name, std::string&& description); // todo: these should probably be in documentation.h/cpp
+
+    const std::string& program_name();
+    const std::string& program_description();
+
     bool main_command_is_namespace();
 
 

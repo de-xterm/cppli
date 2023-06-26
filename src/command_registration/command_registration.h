@@ -332,6 +332,10 @@ dummy_t register_subcommand(const subcommand_name_t& name, const char* descripti
         subcommand_name_to_docs()[cumulative_name].subcommands.emplace(name[i+1]);
     }
 
+    if(name.size() == 1) {
+        top_level_subcommands().emplace(name);
+    }
+
     generate_input_info_and_docs(info, docs, func);
 
     subcommand_name_to_func().emplace(name, call_func<func>);

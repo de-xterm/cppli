@@ -12,6 +12,11 @@ namespace cppli {
             return subcommand_name_to_docs_;
         }
 
+        std::set<std::string>& top_level_subcommands() {
+            static std::set<std::string> ret;
+            return ret;
+        }
+
         bool flag_documentation_t::operator<(const flag_documentation_t& rhs) const {
             return (name < rhs.name);
         }
@@ -57,7 +62,12 @@ namespace cppli {
             return ret;
         }
 
-        std::string get_documentation_string_impl(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned recursion, unsigned current_recursion_level) {
+        struct name_and_description_t {
+            std::string name,
+                        description;
+        };
+
+        std::string get_documentation_string_impl(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, unsigned current_recursion_level, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
 
             #define FOUR_SPACES "    "
             #define EIGHT_SPACES "        "
@@ -76,7 +86,12 @@ namespace cppli {
             };
 
             if(docs.is_namespace) {
-                ret += "(Namespace) ";
+                if(main_command_override_name_and_description.has_value()) {
+                    ret += "(Main Namespace) ";
+                }
+                else {
+                    ret += "(Namespace) ";
+                }
                 ret += docs.name;
                 if(docs.description.size()) {
                     ret += "\n";
@@ -89,7 +104,12 @@ namespace cppli {
                 ret += '\n';
             }
             else {
-                ret +=  "(Subcommand) ";
+                if(main_command_override_name_and_description.has_value()) {
+                    ret += "(Main Command) ";
+                }
+                else {
+                    ret += "(Subcommand) ";
+                }
                 ret += docs.name;
 
                 std::vector<arg_name_and_docs_t> positional_doc_strings;
@@ -145,7 +165,12 @@ namespace cppli {
                     ret += FOUR_SPACES "Description:\n";
                     ret += indent;
                     ret += EIGHT_SPACES;
-                    ret += docs.description;
+                    if(main_command_override_name_and_description.has_value()) {
+                        ret += main_command_override_name_and_description->description;
+                    }
+                    else {
+                        ret += docs.description;
+                    }
                     ret += '\n';
                 }
 
@@ -197,7 +222,7 @@ namespace cppli {
                 }
             }
 
-            if(current_recursion_level+1 <= recursion) {
+            if(current_recursion_level+1 <= max_recursion_level) {
                 if(docs.subcommands.size()) {
                     ret += indent;
                     ret += FOUR_SPACES "Subcommands:\n";
@@ -207,7 +232,7 @@ namespace cppli {
                     for(const auto& e : docs.subcommands) {
                         subcommand_name.back() = e;
 
-                        ret += get_documentation_string_impl(subcommand_name, verbosity, recursion, current_recursion_level+1);
+                        ret += get_documentation_string_impl(subcommand_name, verbosity, max_recursion_level, current_recursion_level + 1);
 
 
                         if((verbosity != NAME_ONLY) &&
@@ -227,7 +252,11 @@ namespace cppli {
         }
     }
 
-    std::string get_documentation_string(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned recursion) {
-        return detail::get_documentation_string_impl(name, verbosity, recursion, 0);
+    std::string get_documentation_string(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level) {
+        return detail::get_documentation_string_impl(name, verbosity, max_recursion_level, 0);
+    }
+
+    std::string get_documentation_string(documentation_verbosity verbosity, unsigned max_recursion_level) {
+        return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, detail::name_and_description_t{detail::program_name(), detail::program_description()});
     }
 }
