@@ -332,8 +332,8 @@ dummy_t register_subcommand(const subcommand_name_t& name, const char* descripti
         subcommand_name_to_docs()[cumulative_name].subcommands.emplace(name[i+1]);
     }
 
-    if(name.size() == 1) {
-        top_level_subcommands().emplace(name);
+    if(name.front() != "MAIN") {
+        subcommand_name_to_docs()[{"MAIN"}].subcommands.emplace(name.front());
     }
 
     generate_input_info_and_docs(info, docs, func);

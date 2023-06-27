@@ -24,10 +24,16 @@ namespace cppli::detail {
 
 
     bool is_valid_subcommand(subcommand_name_t& parent_command_names, const std::string& arg) {
-        auto temp = parent_command_names;
-        temp.push_back(arg);
-        if(subcommand_name_to_docs().contains(temp) || (temp.size() == 0)) {
-            parent_command_names = std::move(temp);
+        if(parent_command_names.size()) {
+            auto temp = parent_command_names;
+            temp.push_back(arg);
+            if(subcommand_name_to_docs().contains(temp)/* || (temp.size() == 0)*/) {
+                parent_command_names = std::move(temp);
+                return true;
+            }
+        }
+        else if(subcommand_name_to_docs().at({"MAIN"}).subcommands.contains(arg)) {
+            parent_command_names.push_back(arg);
             return true;
         }
         return false;

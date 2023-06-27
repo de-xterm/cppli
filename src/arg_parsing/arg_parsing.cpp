@@ -18,10 +18,14 @@ namespace cppli::detail {
             std::exit(-1);
         }
 
+        /*if(program_name() != argv[0]) { // TODO: switch to enable/disable this warning. I'm commenting it out for now because it's annoying
+            std::cerr << "The name used to invoke the program (\"" << argv[0] << "\") was not the same as the program's documented name (\"" << program_name() << "\")\n";
+        }*/
+
         // skip the program name
         std::vector<subcommand_t> commands;
 
-        subcommand_name_t subcommand_name/* = {{argv[0]}}*/;
+        subcommand_name_t subcommand_name = {"MAIN"};
 
         subcommand_inputs_t args;
 

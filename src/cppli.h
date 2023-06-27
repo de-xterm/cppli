@@ -12,6 +12,9 @@ namespace cppli {
 
         detail::set_program_name_and_description(program_name.string(), description.string());
 
+        detail::subcommand_name_to_docs()[{"MAIN"}].name = program_name;
+        detail::subcommand_name_to_docs()[{"MAIN"}].description = description;
+
         auto parse_ret = detail::parse(argc, argv);
 
         if(!parse_ret.printed_help) {
@@ -39,7 +42,7 @@ namespace cppli {
         #define CPPLI_SUBCOMMAND(name, DESCRIPTION, /*parameters*/...) \
         extern "C" void cppli_internal_CAT(CPPLI_GENERATED, name) (__VA_OPT__(__VA_ARGS__)); \
         static_assert(!::cppli::detail::contains_uppercase<cppli_internal_STRINGIFY(cppli_internal_CAT(name))>(), "subcommand names cannot contain uppercase characters"); \
-        cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<cppli_internal_CAT(CPPLI_GENERATED, name)>({cppli_internal_FOR_EACH(cppli_internal_STRINGIFY_WITH_COMMA, name)}, DESCRIPTION)) \
+        cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<cppli_internal_CAT(CPPLI_GENERATED, name)>({cppli_internal_FOR_EACH(cppli_internal_STRINGIFY_WITH_COMMA, MAIN, name)}, DESCRIPTION)) \
         extern "C" void cppli_internal_CAT(CPPLI_GENERATED, name) (__VA_ARGS__)
 
         #define CPPLI_NAME(...) __VA_ARGS__

@@ -71,12 +71,17 @@ namespace cppli {
 
             #define FOUR_SPACES "    "
             #define EIGHT_SPACES "        "
-            
+
             using namespace detail;
             const auto& docs = subcommand_name_to_docs()[name];
 
             std::string indent = std::string(current_recursion_level*8, ' ');
             std::string ret = indent;
+
+            if(main_command_override_name_and_description.has_value()) {
+                ret += "Options or arguments surrounded by square brackets are optional, ones surrounded by angular brackets are required.\n";
+            }
+
 
             struct arg_name_and_docs_t {
                 std::string name,
@@ -253,7 +258,13 @@ namespace cppli {
     }
 
     std::string get_documentation_string(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level) {
-        return detail::get_documentation_string_impl(name, verbosity, max_recursion_level, 0);
+        if((name == detail::subcommand_name_t{"MAIN"}) ||
+           (name == detail::subcommand_name_t{})) {
+            return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, detail::name_and_description_t{detail::program_name(), detail::program_description()});
+        }
+        else {
+            return detail::get_documentation_string_impl(name, verbosity, max_recursion_level, 0);
+        }
     }
 
     std::string get_documentation_string(documentation_verbosity verbosity, unsigned max_recursion_level) {
