@@ -21,6 +21,11 @@ namespace cppli {
             const auto& commands_vec = parse_ret.subcommands;
 
             bool runnable_command_found = false;
+            if(!detail::subcommand_name_to_docs()[{"MAIN"}].is_namespace) {
+                (detail::subcommand_name_to_func()[{"MAIN"}])(commands_vec[0]);
+                runnable_command_found = true;
+            }
+
             for(unsigned i = 1; i < commands_vec.size(); ++i) {
                 if((detail::subcommand_name_to_func().contains(commands_vec[i].name))) {
                     runnable_command_found = true;
@@ -30,14 +35,18 @@ namespace cppli {
 
             if(!runnable_command_found) {
                 std::cerr << "The input did not form any runnable commands\n";
+                // TODO: print help here?
             }
         }
     }
 
     namespace detail {
         #define CPPLI_NAMESPACE(NAME, DESCRIPTION)
-        #define CPPLI_MAIN_COMMAND(/*parameters*/...) \
 
+        #define CPPLI_MAIN_COMMAND(/*parameters*/...) \
+        extern "C" void CPPLI_GENERATED_MAIN (__VA_OPT__(__VA_ARGS__)); \
+        cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<CPPLI_GENERATED_MAIN>({"MAIN"}, "")) \
+        extern "C" void CPPLI_GENERATED_MAIN (__VA_ARGS__)
 
         #define CPPLI_SUBCOMMAND(name, DESCRIPTION, /*parameters*/...) \
         extern "C" void cppli_internal_CAT(CPPLI_GENERATED, name) (__VA_OPT__(__VA_ARGS__)); \

@@ -52,7 +52,14 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove, bar, baz),
 CPPLI_SUBCOMMAND(CPPLI_NAME(foo),
                  "top level foo subcommand",
                  CPPLI_FLAG(force, "force the thing", f)) {
+    std::cout << "do nothing\n";
+}
 
+CPPLI_MAIN_COMMAND(CPPLI_POSITIONAL(cppli::int_t, foo, "the foo")) {
+    std::cout << "Main entered!\n";
+    //foo.access_value_if_present([&](const auto& val) {
+        std::cout << "foo value: " << foo;
+    //});
 }
 
 TEST_CASE("arg parsing works") {

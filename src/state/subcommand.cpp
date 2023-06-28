@@ -89,4 +89,10 @@ namespace cppli::detail {
 
         return hash;
     }
+
+    bool subcommand_inputs_t::is_empty() const {
+        return ((flags.size() == 0) &&
+                (options_to_values.size() == 0) &&
+                (positional_args.size() == 0));
+    }
 }

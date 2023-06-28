@@ -16,6 +16,8 @@ namespace cppli::detail {
         std::vector<std::string> positional_args;
         std::unordered_map<std::string, std::optional<std::string>> options_to_values;
         std::unordered_set<std::string> flags;
+
+        bool is_empty() const;
     };
 
     using subcommand_name_t = std::vector<std::string>;

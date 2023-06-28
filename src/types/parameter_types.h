@@ -17,6 +17,8 @@ namespace cppli {
 
         // TODO: set up perfect forwarding
         string_t(const std::string& str) : val(str) {}
+        string_t() = default;
+
 
         operator const std::string&() const {
             return val;
@@ -39,7 +41,9 @@ namespace cppli {
             }
         }
 
-        operator const int&() const {
+        int_t() = default;
+
+            operator const int&() const {
             return val;
         }
 
@@ -57,6 +61,7 @@ namespace cppli {
                 throw std::runtime_error("Could not form a valid decimal from string \"" + str + '\"');
             }
         }
+        float_t() = default;
 
         operator const float&() const {
             return val;
@@ -244,6 +249,7 @@ namespace cppli {
 
 
             positional(std::string value) : value_(std::move(value)) {}
+            positional() = default;
 
             operator const type_&() const {
                 static_assert(!optional_,

@@ -23,25 +23,25 @@ namespace cppli::detail {
         }*/
 
         // skip the program name
-        std::vector<subcommand_t> commands;
-
         subcommand_name_t subcommand_name = {"MAIN"};
 
         subcommand_inputs_t args;
+
+        std::vector<subcommand_t> commands{{subcommand_name, args}};
 
         bool disambiguate_next_arg = false;
 
         std::string first_command_name = argv[0];
 
-        bool in_namespace = main_command_is_namespace();
-        commands.push_back({{argv[0]}, args});
+        bool in_namespace = is_namespace({"MAIN"});
+        //commands.push_back({{program_name()}, args});
 
         std::string command_or_subcommand = "command";
 
         std::string current_subcommand_name_string = argv[0];
 
 
-        for(unsigned arg_i = 1; arg_i < argc; ++arg_i) { // TODO: message when ignoring unrecognized options/flags/args
+        for(unsigned arg_i = 1; arg_i < argc; ++arg_i) {
             std::string arg_string = argv[arg_i];
 
             if(is_valid_subcommand(subcommand_name, arg_string) && !disambiguate_next_arg) {
@@ -50,9 +50,10 @@ namespace cppli::detail {
                 command_or_subcommand = "subcommand";
                 current_subcommand_name_string = arg_string;
 
-                commands.push_back({subcommand_name, args});
-
+                commands.back().inputs = std::move(args);
                 args = {};
+
+                commands.push_back({subcommand_name});
             }
             else {
                 /*if(in_namespace) {
