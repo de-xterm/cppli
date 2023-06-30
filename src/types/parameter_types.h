@@ -51,7 +51,8 @@ namespace cppli {
         public:
             using type = type_;
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
-            static constexpr auto type_string = conversions::conversion_t<type_>::name;
+            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
+            static constexpr auto cppli_type_string = type_string;
             static constexpr auto short_name = short_name_;
             static constexpr auto documentation = documentation_;
             static constexpr auto argument_text = argument_text_;
@@ -150,7 +151,8 @@ namespace cppli {
         public:
             using type = type_;
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
-            static constexpr auto type_string = conversions::conversion_t<type_>::name;
+            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
+            static constexpr auto cppli_type_string = type_string;
             static constexpr auto short_name = short_name_;
             static constexpr auto documentation = documentation_;
             static constexpr auto argument_text = argument_text_;
@@ -174,7 +176,7 @@ namespace cppli {
             using type = type_;
 
             static constexpr auto name = name_;
-            static constexpr auto type_string = conversions::conversion_t<type_>::name;
+            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
             static constexpr auto optional = true;
             static constexpr auto documentation = documentation_;
 
@@ -225,8 +227,9 @@ namespace cppli {
             using type = type_;
 
             static constexpr auto name = name_;
-            static constexpr auto type_string = conversions::conversion_t<type_>::name;
-            static constexpr auto optional = true;
+            static constexpr auto type_string = conversions::conversion_t<type_>::type_string; // TODO: delete one of these
+            static constexpr auto cppli_type_string = type_string;
+            static constexpr auto optional = false;
             static constexpr auto documentation = documentation_;
 
             static constexpr auto has_short_name = false;

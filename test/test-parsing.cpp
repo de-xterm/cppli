@@ -79,7 +79,7 @@ namespace cppli::conversions {
             return ret;
         }
 
-        static constexpr detail::string_literal name = "comma separated list of strings";
+        static constexpr detail::string_literal type_string = "comma separated list of strings";
     };
 }
 
@@ -95,19 +95,19 @@ struct custom_t {
     custom_t(const custom_t&) = delete;
     custom_t& operator=(const custom_t&) = delete;
 
-    static constexpr cppli::detail::string_literal cppli_name = "custom type integer";
+    static constexpr cppli::detail::string_literal cppli_type_string = "custom type integer";
 };
 
+template<typename T>
+struct type_info;
 
-
-CPPLI_MAIN_COMMAND(CPPLI_POSITIONAL(custom_t, foovec, "the foo")) {
+/*
+CPPLI_MAIN_COMMAND(CPPLI_POSITIONAL(int, foo_int, "the foo")) {
     std::cout << "Main entered!\n";
-    //foo.access_value_if_present([&](const auto& val) {
 
-    std::cout << "whaaa: " << foovec.i+1 << '\n';
-    //});
+    std::cout << "whaaa: " << foo_int+1 << '\n';
 }
-
+*/
 
 
 TEST_CASE("arg parsing works") {

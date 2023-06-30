@@ -16,7 +16,7 @@ namespace cppli {
                 return T(str);
             }
 
-            static constexpr detail::string_literal name = T::cppli_name;
+            static constexpr detail::string_literal type_string = T::cppli_type_string;
         };
 
         template<>
@@ -33,7 +33,7 @@ namespace cppli {
                 }
             }
 
-            static constexpr detail::string_literal name = "integer";
+            static constexpr detail::string_literal type_string = "integer";
         };
 
         template<>
@@ -46,7 +46,7 @@ namespace cppli {
                 return str[0];
             }
 
-            static constexpr detail::string_literal name = "character";
+            static constexpr detail::string_literal type_string = "character";
         };
 
         template<>
@@ -63,7 +63,7 @@ namespace cppli {
                 }
             }
 
-            static constexpr detail::string_literal name = "decimal";
+            static constexpr detail::string_literal type_string = "decimal";
         };
 
         template<>
@@ -72,7 +72,7 @@ namespace cppli {
                 return str;
             }
 
-            static constexpr detail::string_literal name = "string";
+            static constexpr detail::string_literal type_string = "string";
         };
 
     }

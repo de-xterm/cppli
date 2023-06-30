@@ -43,7 +43,7 @@ namespace cppli {
         #define CPPLI_NAMESPACE(NAME, DESCRIPTION)
 
         #define CPPLI_MAIN_COMMAND(/*parameters*/...) \
-        extern "C" void CPPLI_GENERATED_MAIN (__VA_OPT__(__VA_ARGS__)); \
+        extern "C" void CPPLI_GENERATED_MAIN (__VA_ARGS__); \
         cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<CPPLI_GENERATED_MAIN>({"MAIN"}, "")) \
         extern "C" void CPPLI_GENERATED_MAIN (__VA_ARGS__)
 
@@ -69,6 +69,7 @@ namespace cppli {
 
         /// the optional last argument is a single character short name
         #define CPPLI_OPTIONAL_ARGUMENT_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+        __VA_OPT__(static_assert(isletter(__VA_ARGS__)[0]))                                               \
         const ::cppli::detail::option<TYPE, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
 
         #define CPPLI_POSITIONAL(TYPE, NAME, DESCRIPTION) \
