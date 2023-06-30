@@ -7,110 +7,14 @@
 #include <stdexcept>
 
 #include "constexpr_string_literal.h"
+#include "conversions.h"
 
 namespace cppli {
 
-   // using string_t = std::string;
-
-    struct string_t {
-        std::string val;
-
-        // TODO: set up perfect forwarding
-        string_t(const std::string& str) : val(str) {}
-        string_t() = default;
-
-
-        operator const std::string&() const {
-            return val;
-        }
-
-        static constexpr detail::string_literal string = "string";
-    };
-
-    std::ostream& operator<<(std::ostream& os, const string_t& s);
-
-    struct int_t {
-        int val;
-
-        int_t(const std::string& str) {
-            try {
-                val = std::stoi(str);
-            }
-            catch(std::exception& e) {
-                throw std::runtime_error("Could not form a valid integer from string \"" + str + '\"');
-            }
-        }
-
-        int_t() = default;
-
-            operator const int&() const {
-            return val;
-        }
-
-        static constexpr detail::string_literal string = "integer";
-    };
-
-    struct float_t {
-        float val;
-
-        float_t(const std::string& str) {
-            try {
-                val = std::stof(str);
-            }
-            catch(std::exception& e) {
-                throw std::runtime_error("Could not form a valid decimal from string \"" + str + '\"');
-            }
-        }
-        float_t() = default;
-
-        operator const float&() const {
-            return val;
-        }
-
-        static constexpr detail::string_literal string = "decimal";
-    };
-
     namespace detail {
-        struct dummy_t {
-        };
-
-        //namespace detail {
-        template<typename T>
-        struct wrapper_type_info_t {
-            static constexpr bool is_wrapper_type = false;
-
-            using wrapped_t = dummy_t;
-        };
-
-        template<>
-        struct wrapper_type_info_t<int_t> {
-            static constexpr bool is_wrapper_type = true;
-            using wrapped_t = int;
-        };
-
-        template<>
-        struct wrapper_type_info_t<float_t> {
-            static constexpr bool is_wrapper_type = true;
-            using wrapped_t = float;
-        };
-
-        template<>
-        struct wrapper_type_info_t<string_t> {
-            static constexpr bool is_wrapper_type = true;
-            using wrapped_t = std::string;
-        };
-
-        template<typename T>
-        static constexpr bool is_wrapper_type = wrapper_type_info_t<T>::is_wrapper_type;
-
-        template<typename T>
-        using wrapper_type_wrapped_t = typename wrapper_type_info_t<T>::wrapped_t;
-        //}
-
+        // placeholder class
         template<string_literal name_, string_literal documentation_, char short_name_ = '\0'>
         class flag {
-            bool value_;
-
             static_assert(short_name_ == '\0' || isletter(short_name_), "flag short name must be a letter");
 
         public:
@@ -121,16 +25,17 @@ namespace cppli {
             static constexpr auto has_short_name = (short_name_ != '\0');
             static constexpr auto has_long_name  = true;
 
-            flag(bool value) : value_(value) {}
-
-            operator bool() const {
-                return value_;
-            }
+            flag() = default;
         };
 
         template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
                 bool optional_, bool argument_optional_,
                 char short_name_ = '\0'>
+        class option;
+
+        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
+                bool optional_, bool argument_optional_,
+                char short_name_>
         class option {
             /// type_ if default_value == no_default_value, otherwise std::optional<type_>
             using optional_or_raw_type = std::conditional_t<optional_ || argument_optional_, std::optional<type_>, type_>;
@@ -144,8 +49,9 @@ namespace cppli {
                           "required options with optional arguments are not allowed because that wouldn't make sense");
 
         public:
+            using type = type_;
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
-            static constexpr auto type_string = type_::string;
+            static constexpr auto type_string = conversions::conversion_t<type_>::name;
             static constexpr auto short_name = short_name_;
             static constexpr auto documentation = documentation_;
             static constexpr auto argument_text = argument_text_;
@@ -160,19 +66,6 @@ namespace cppli {
                               "option implicit conversion to underlying type is only allowed if the option in question is required (not optional) and has a required (not optional) argument");
 
                 return value_;
-            }
-
-            operator const detail::wrapper_type_wrapped_t<type_>&() const
-            requires(detail::is_wrapper_type<type_>) {
-                static_assert((!optional_) && (!argument_optional_),
-                              "option implicit conversion to underlying type is only allowed if the option in question is required (not optional) and has a required (not optional) argument");
-
-                if constexpr(detail::is_wrapper_type<type_>) {
-                    return value_;
-                }
-                else {
-                    return dummy_t{};
-                }
             }
 
             option() = default;
@@ -229,98 +122,203 @@ namespace cppli {
 
                 return value_.value_or(alternative);
             }
+
+            const type_& get() const {
+                if constexpr(optional_) {
+                    return *value_;
+                }
+                else {
+                    return value_;
+                }
+            }
+
+            const type_& operator*() const {
+                return get();
+            }
+
+            const type_* operator->() const {
+                return &get();
+            }
+        };
+
+        // just a wrapper type for docs
+        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
+                char short_name_>
+        class option<type_, name_, documentation_, argument_text_, false, false, short_name_> {
+            static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
+
+        public:
+            using type = type_;
+            static constexpr auto name = name_.make_lowercase_and_convert_underscores();
+            static constexpr auto type_string = conversions::conversion_t<type_>::name;
+            static constexpr auto short_name = short_name_;
+            static constexpr auto documentation = documentation_;
+            static constexpr auto argument_text = argument_text_;
+            static constexpr auto optional = false;
+            static constexpr auto argument_optional = false;
+
+            static constexpr auto has_short_name = (short_name_ != '\0');
+            static constexpr auto has_long_name  = true;
         };
 
         template<typename type_, bool optional_, string_literal name_, string_literal documentation_>
-        class positional {
-            using optional_or_raw_type = std::conditional_t<optional_, std::optional<type_>, type_>;
+        class positional;
+
+        template<typename type_, string_literal name_, string_literal documentation_>
+        class positional<type_, true, name_, documentation_> {
 
         private:
-            optional_or_raw_type value_;
+            std::optional<type_> value_;
 
         public:
+            using type = type_;
+
             static constexpr auto name = name_;
-            static constexpr auto type_string = type_::string;
-            static constexpr auto optional = optional_;
+            static constexpr auto type_string = conversions::conversion_t<type_>::name;
+            static constexpr auto optional = true;
             static constexpr auto documentation = documentation_;
 
             static constexpr auto has_short_name = false;
             static constexpr auto has_long_name  = false;
 
 
-            positional(std::string value) : value_(std::move(value)) {}
+            positional(const std::string& value) : value_(conversions::conversion_t<type_>()(value)) {}
             positional() = default;
 
             operator const type_&() const {
-                static_assert(!optional_,
-                              "positional implicit conversion to underlying type is only allowed if the positional argument in question is required (not optional)");
-
                 return value_;
             }
 
-            operator const detail::wrapper_type_wrapped_t<type_>&() const
-            requires(detail::is_wrapper_type<type_>) {
-                static_assert(!optional_,
-                              "positional implicit conversion to underlying type is only allowed if the positional argument in question is required (not optional)");
-
-                if constexpr(detail::is_wrapper_type<type_>) {
-                    return value_;
-                }
-                else {
-                    return dummy_t{};
-                }
-            }
-
             bool has_value() const {
-                static_assert(optional_,
-                              "positional::has_value is only available if the positional argument in question is optional");
-
                 return value_.has_value();
             }
 
             /// call func with value if has_value() is true, does nothing otherwise
             template<typename func_t>
             void access_value_if_present(func_t&& func) const {
-                static_assert(optional_,
-                              "positional::access_value_if_present is only available if the positional argument in question is optional");
-
                 if (has_value()) {
                     func(*value_);
                 }
             }
 
             type_ value_or(const type_& alternative) const {
-                static_assert(optional_,
-                              "positional::value_or is only available if the positional argument in question is optional");
-
                 return value_.value_or(alternative);
+            }
+
+            const type_& get() const {
+                return *value_;
+            }
+
+            const type_& operator*() const {
+                return get();
+            }
+
+            const type_* operator->() const {
+                return &get();
             }
         };
 
+        // this partial specialization is just a wrapper for documentation
+        template<typename type_, string_literal name_, string_literal documentation_>
+        class positional<type_, false, name_, documentation_> {
+        public:
+            using type = type_;
+
+            static constexpr auto name = name_;
+            static constexpr auto type_string = conversions::conversion_t<type_>::name;
+            static constexpr auto optional = true;
+            static constexpr auto documentation = documentation_;
+
+            static constexpr auto has_short_name = false;
+            static constexpr auto has_long_name  = false;
+
+            positional() = default;
+        };
+
         template<typename T>
-        struct argument_info_t;
+        struct argument_info_t {
+            static constexpr bool is_raw_type = true;
+            static constexpr bool is_flag = false;
+            static constexpr bool is_option = false;
+            static constexpr bool is_positional = false;
+
+
+            static constexpr bool has_long_name = false;
+            static constexpr bool has_short_name = false;
+        };
 
         template<string_literal name_, char short_name_, string_literal documentation_>
         struct argument_info_t<flag<name_, documentation_, short_name_>> {
+            static constexpr bool is_raw_type = false;
             static constexpr bool is_flag = true;
             static constexpr bool is_option = false;
             static constexpr bool is_positional = false;
+
+            static constexpr bool has_long_name  = true;
+            static constexpr bool has_short_name = (short_name_ != '\0');
         };
 
         template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
                 bool optional_, bool argument_optional_,
                 char short_name_>
         struct argument_info_t<option<type_, name_, documentation_, argument_text_, optional_, argument_optional_, short_name_>> {
+            static constexpr bool is_raw_type = false;
             static constexpr bool is_flag = false;
             static constexpr bool is_option = true;
             static constexpr bool is_positional = false;
+
+            static constexpr bool has_long_name = true;
+            static constexpr bool has_short_name = (short_name_ != '\0');
         };
 
         template<typename type_, bool optional_, string_literal name_, string_literal documentation_>
         struct argument_info_t<positional<type_, optional_, name_, documentation_>> {
+            static constexpr bool is_raw_type = false;
             static constexpr bool is_flag = false;
             static constexpr bool is_option = false;
             static constexpr bool is_positional = true;
+
+            static constexpr bool has_long_name = false;
+            static constexpr bool has_short_name = false;
         };
+
+        template<typename T>
+        struct raw_type_if_required_helper_t {
+            using type = T;
+        };
+
+        template<typename type_, string_literal name_, string_literal documentation_>
+        struct raw_type_if_required_helper_t<positional<type_, false, name_, documentation_>> {
+            using type = typename type_::type;
+        };
+
+        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
+                char short_name_>
+        struct raw_type_if_required_helper_t<option<type_, name_, documentation_, argument_text_, false, false, short_name_>> {
+            using type = typename type_::type;
+        };
+
+        template<typename T>
+        using raw_type_if_required_t = typename raw_type_if_required_helper_t<std::remove_cvref_t<T>>::type;
+
+        template<string_literal name_, string_literal documentation_, char short_name_>
+        std::ostream& operator<<(std::ostream& os, const detail::flag<name_, documentation_, short_name_>& s) {
+            os << *s;
+            return os;
+        }
+
+        template<typename T, bool optional, string_literal name, string_literal docs>
+        std::ostream& operator<<(std::ostream& os, const detail::positional<T, optional, name, docs>& s) {
+            os << *s;
+            return os;
+        }
+
+        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
+                bool optional_, bool argument_optional_,
+                char short_name_>
+        std::ostream& operator<<(std::ostream& os, const detail::option<type_, name_, documentation_, argument_text_, optional_, argument_optional_, short_name_>& s) {
+            os << *s;
+            return os;
+        }
     }
 }

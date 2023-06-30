@@ -10,10 +10,10 @@
 CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
                  "does a thing",
                  CPPLI_FLAG(force_reset, "Force the thing to rest the thing", f),
-                 CPPLI_POSITIONAL(cppli::string_t, foo, "the foo positional"),
-                 CPPLI_POSITIONAL(cppli::int_t, bar, "the bar positional"),
+                 CPPLI_POSITIONAL(std::string, foo, "the foo positional"),
+                 CPPLI_POSITIONAL(int, bar, "the bar positional"),
                  CPPLI_FLAG(recurse, "do the thing recursively", r),
-                 CPPLI_OPTION(cppli::string_t, color, "color", "set the colo", c)) {
+                 CPPLI_OPTION(std::string, color, "color", "set the colo", c)) {
 
     if(force_reset) {
         std::cout << "force true!\n";
@@ -33,7 +33,7 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, init),
 
 CPPLI_SUBCOMMAND(CPPLI_NAME(repo, clone),
                  "clone a repo",
-                 CPPLI_POSITIONAL(cppli::int_t, WHO, "the int")) {}
+                 CPPLI_POSITIONAL(int, WHO, "the int")) {}
 
 CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove),
                  "delete the repo") {
@@ -55,12 +55,60 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(foo),
     std::cout << "do nothing\n";
 }
 
-CPPLI_MAIN_COMMAND(CPPLI_POSITIONAL(cppli::int_t, foo, "the foo")) {
+
+namespace cppli::conversions {
+    template<>
+    struct conversion_t<std::vector<std::string>> {
+        auto operator()(const std::string& str) const {
+            std::vector<std::string> ret;
+
+            std::string current;
+            for(char c : str) {
+                if(c == ',') {
+                    ret.push_back(std::move(current));
+                    current = {};
+                }
+                else {
+                    current.push_back(c);
+                }
+            }
+            if(current.size()) {
+                ret.push_back(std::move(current));
+            }
+
+            return ret;
+        }
+
+        static constexpr detail::string_literal name = "comma separated list of strings";
+    };
+}
+
+struct custom_t {
+    int i;
+    custom_t(const std::string& str) {
+        i = std::stoi(str);
+    }
+
+    custom_t(custom_t&&) = delete;
+    custom_t& operator=(custom_t&&) = delete;
+
+    custom_t(const custom_t&) = delete;
+    custom_t& operator=(const custom_t&) = delete;
+
+    static constexpr cppli::detail::string_literal cppli_name = "custom type integer";
+};
+
+
+
+CPPLI_MAIN_COMMAND(CPPLI_POSITIONAL(custom_t, foovec, "the foo")) {
     std::cout << "Main entered!\n";
     //foo.access_value_if_present([&](const auto& val) {
-        std::cout << "foo value: " << foo;
+
+    std::cout << "whaaa: " << foovec.i+1 << '\n';
     //});
 }
+
+
 
 TEST_CASE("arg parsing works") {
 
