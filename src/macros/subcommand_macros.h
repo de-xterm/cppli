@@ -29,8 +29,6 @@ namespace cppli::detail {
 
     #define cppli_internal_STRINGIFY_WITH_COMMA(S) cppli_internal_STRINGIFY(S),
 
-    #define cppli_internal_RAW_TYPE_IF_REQUIRED_T(EXPR) ::cppli::detail:;raw_type_if_required_t<decltype(EXPR)>
-
     #define ONE_ARG_CAT(arg1) arg1
 
     #define NOT_ONE_ARG_CAT(...) \

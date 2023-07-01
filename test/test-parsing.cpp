@@ -42,7 +42,7 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove),
 
 CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove, bar),
                  "do another thing") {
-std::cout << "delete called\n";
+    std::cout << "delete called\n";
 }
 
 CPPLI_SUBCOMMAND(CPPLI_NAME(repo, remove, bar, baz),
@@ -101,13 +101,15 @@ struct custom_t {
 template<typename T>
 struct type_info;
 
-/*
-CPPLI_MAIN_COMMAND(CPPLI_POSITIONAL(int, foo_int, "the foo")) {
+
+CPPLI_MAIN_COMMAND(CPPLI_VARIADIC(int, foovec, "list of integers")) {
     std::cout << "Main entered!\n";
 
-    std::cout << "whaaa: " << foo_int+1 << '\n';
+    for(const auto& e : foovec) {
+        std::cout << e+1 << '\n';
+    }
 }
-*/
+
 
 
 TEST_CASE("arg parsing works") {

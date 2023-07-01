@@ -46,13 +46,21 @@ namespace cppli {
 
         struct positional_documentation_t {
             std::string type,
-                    name,
-                    documentation;
+                        name,
+                        documentation;
 
             positional_documentation_t(const std::string& type, const std::string& name, const std::string& documentation,
                                        bool optional);
 
             bool optional;
+        };
+
+        struct variadic_documentation_t {
+            std::string type,
+                        name,
+                        documentation;
+
+            variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation);
         };
 
         struct subcommand_documentation_t {
@@ -62,13 +70,13 @@ namespace cppli {
             std::set<flag_documentation_t>          flags; // using ordered set because we want to print commands alphabetically
             std::set<option_documentation_t>        options;
             std::vector<positional_documentation_t> positionals;
+            std::optional<variadic_documentation_t> variadic; // not vector because only one is allowed
 
             std::set<std::string>          subcommands;
 
             bool is_namespace = true;
 
             subcommand_documentation_t() = default;
-
 
             subcommand_documentation_t(const std::string& name, const char* description);
 

@@ -1,13 +1,17 @@
 # Commandline Rules
 
+## Introduction
+This file contains everything you need to know about the kinds of commandlines you can build with cppli. This file focuses on 
+
 ## Terms
 First off, here's what I mean. To my understanding, a lot of these words have somewhat vague meanings, so I'm 
 * Argument: when I say argument, I'm referring to the actual space separated strings passed to `main`; the things in `argv`
-* Position Arguments: These are arguments passed to a (sub)command *not* preceded by `-` or `--`. 
-I call them positional because their meaning is determined based on their relative order. In the command `mv f1 f2`, I would call `f1` and `f2` to be positional args
+* Positional Arguments: These are arguments passed to a (sub)command *not* preceded by `-` or `--`. 
+I call them positional because their meaning is determined based on their relative position. In the command `mv f1 f2`, I would call `f1` and `f2` to be positional args
 * Flag: a boolean value specified with a hyphen followed by single character (`-f`) or two hyphens followed by two or more characters (`--force`). 
 Flags don't take arguments (unlike options)
-* Option: a value that 
+* Option: a value that
+* 
 
 ## Flags and Options
 
@@ -35,7 +39,7 @@ An option's argument can also be optional, like this:
 `program --color=blue`  
 `program --color blue // DOESN'T DO WHAT YOU EXPECT`  
 Note that you have to use the `=` syntax (or, with short options, the connected [`-cblue`] syntax) with optional option arguments,
-because if there were a space after the option, the parser would assume that the option argument had been omitted and that the following token argument is an unrelated positional argument.
+because if there were a space after the option, the parser would assume that the option argument had been omitted and that the following argument is an unrelated positional.
 
 So with the example inputs above, under assumption 1, `program --color` could simply be equivalent to `program --color=green`, or whatever the default color is  
 Under assumption 2, the inclusion of `--color` could mean something more general like "do colorized output, but with what", but 

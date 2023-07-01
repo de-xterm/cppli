@@ -238,13 +238,28 @@ namespace cppli {
             positional() = default;
         };
 
+        template<typename type_, string_literal name_, string_literal documentation_>
+        class variadic {
+        public:
+            using type = type_;
+
+            static constexpr auto name = name_;
+            static constexpr auto type_string = conversions::conversion_t<type_>::type_string; // TODO: delete one of these
+            static constexpr auto cppli_type_string = type_string;
+            static constexpr auto optional = false;
+            static constexpr auto documentation = documentation_;
+
+            static constexpr auto has_short_name = false;
+            static constexpr auto has_long_name  = false;
+        };
+
         template<typename T>
         struct argument_info_t {
             static constexpr bool is_raw_type = true;
             static constexpr bool is_flag = false;
             static constexpr bool is_option = false;
             static constexpr bool is_positional = false;
-
+            static constexpr bool is_variadic = false;
 
             static constexpr bool has_long_name = false;
             static constexpr bool has_short_name = false;
@@ -256,6 +271,7 @@ namespace cppli {
             static constexpr bool is_flag = true;
             static constexpr bool is_option = false;
             static constexpr bool is_positional = false;
+            static constexpr bool is_variadic = false;
 
             static constexpr bool has_long_name  = true;
             static constexpr bool has_short_name = (short_name_ != '\0');
@@ -269,6 +285,7 @@ namespace cppli {
             static constexpr bool is_flag = false;
             static constexpr bool is_option = true;
             static constexpr bool is_positional = false;
+            static constexpr bool is_variadic = false;
 
             static constexpr bool has_long_name = true;
             static constexpr bool has_short_name = (short_name_ != '\0');
@@ -280,9 +297,22 @@ namespace cppli {
             static constexpr bool is_flag = false;
             static constexpr bool is_option = false;
             static constexpr bool is_positional = true;
+            static constexpr bool is_variadic = false;
 
             static constexpr bool has_long_name = false;
             static constexpr bool has_short_name = false;
+        };
+
+        template<typename type_, string_literal name_, string_literal documentation_>
+        struct argument_info_t<variadic<type_, name_, documentation_>> {
+                static constexpr bool is_raw_type = false;
+                static constexpr bool is_flag = false;
+                static constexpr bool is_option = false;
+                static constexpr bool is_positional = false;
+                static constexpr bool is_variadic = true;
+
+                static constexpr bool has_long_name = false;
+                static constexpr bool has_short_name = false;
         };
 
         template<typename T>

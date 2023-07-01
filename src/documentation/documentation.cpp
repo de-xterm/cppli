@@ -41,9 +41,12 @@ namespace cppli {
 
         positional_documentation_t::positional_documentation_t(const std::string& type, const std::string& name,
                                                                const std::string& documentation, bool optional) : type(type), name(name),
-                                                                                                                  documentation(
-                                                                                                                          documentation),
+                                                                                                                  documentation(documentation),
                                                                                                                   optional(optional) {}
+
+        variadic_documentation_t::variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation) : type(type),
+                                                                                                                                                 name(name),
+                                                                                                                                                 documentation(documentation) {}
 
 
         subcommand_documentation_t::subcommand_documentation_t(const std::string& name, const char* description) : name(name), description(description), is_namespace(false) {}
@@ -79,7 +82,8 @@ namespace cppli {
             std::string ret = indent;
 
             if(main_command_override_name_and_description.has_value()) {
-                ret += "Options or arguments surrounded by square brackets are optional, ones surrounded by angular brackets are required.\n";
+                ret += "Options or arguments surrounded by square brackets are optional, ones surrounded by angular brackets are required.\n"
+                       "Arguments of the form [arg:type...] are variadic (as indicated by the \"...\") and can receive any number of arguments (including 0)\n";
             }
 
 
@@ -121,6 +125,7 @@ namespace cppli {
                 std::vector<arg_name_and_docs_t> flag_doc_strings;
                 std::vector<arg_name_and_docs_t> option_doc_strings;
 
+                std::string variadic_str;
                 if (verbosity >= NAME_AND_ARGS) {
                     ret += ' ';
 
@@ -130,6 +135,17 @@ namespace cppli {
                         ret += ' ';
 
                         positional_doc_strings.emplace_back(std::move(temp), e.documentation);
+                    }
+
+                    if(docs.variadic) {
+                        variadic_str += "[";
+                        variadic_str += docs.variadic->name;
+                        variadic_str += ":";
+                        variadic_str += docs.variadic->type;
+                        variadic_str += "...]";
+
+                        ret += variadic_str;
+                        ret += ' ';
                     }
 
                     for (const auto& e: docs.flags) {
@@ -192,6 +208,16 @@ namespace cppli {
                             ret += e.docs;
                             ret += '\n';
                         }
+                    }
+
+                    if(docs.variadic) {
+                        ret += indent;
+                        ret += FOUR_SPACES "Variadic:\n";
+                        ret += EIGHT_SPACES;
+                        ret += variadic_str;
+                        ret += ": ";
+                        ret += docs.variadic->documentation;
+                        ret += '\n';
                     }
 
                     if(flag_doc_strings.size()) {

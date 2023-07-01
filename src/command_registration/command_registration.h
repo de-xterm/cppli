@@ -61,7 +61,7 @@ namespace cppli::detail {
                     }
                 }
             }
-            else { // positional
+            else if constexpr(argument_info_t<last>::is_positional) { // positional
                 --cumulative_positional_index; // because we've already skipped over the actual parameter for the positional, cumulative_positional_index will be too big
                 if((cumulative_positional_index >= subcommand.inputs.positional_args.size())) {
                     throw std::runtime_error(main_command_or_subcommand + " \""  + subcommand_name_to_docs()[subcommand.name].name + "\" required positional argument \"" + canonical_name + "\" was not provided (expected an argument of type " + conversions::conversion_t<T>::type_string.string() + ')');
@@ -74,6 +74,18 @@ namespace cppli::detail {
                         throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" positional argument \"" + canonical_name + "\". Details: " + e.what());
                     }
                 }
+            }
+            else { // variadic
+                T ret; // T is a vector
+                for(unsigned i = cumulative_positional_index; i < subcommand.inputs.positional_args.size(); ++i) {
+                    try {
+                        ret.emplace_back(conversions::conversion_t<typename last::type>()(subcommand.inputs.positional_args[i]));
+                    }
+                    catch(std::runtime_error& e) {
+                        throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" variadic argument pack \"" + canonical_name + "\" at argument index " + std::to_string(i) + ". Details: " + e.what());
+                    }
+                }
+                return ret;
             }
         }
         else {
@@ -107,7 +119,6 @@ namespace cppli::detail {
                         else {
                             return {}; // default constructor for optional option with optional argument inits to empty optional and was_included to false
                         }
-                        //arg_info_t::is
                     }
                     else {
                         if(subcommand.inputs.options_to_values.contains(canonical_name)) {
@@ -150,7 +161,7 @@ namespace cppli::detail {
             else if constexpr(arg_info_t::is_flag) {
                 return {}; // dummy
             }
-            else /*if constexpr(arg_info_t::is_positional)*/ {
+            else if constexpr(arg_info_t::is_positional) {
                 if constexpr(T::optional) {
                     if((cumulative_positional_index >= subcommand.inputs.positional_args.size())) {
                         return {};
@@ -167,6 +178,9 @@ namespace cppli::detail {
                 else {
                     return {}; // dummy
                 }
+            }
+            else { // is variadic
+                return {};
             }
         }
     }
@@ -225,6 +239,21 @@ namespace cppli::detail {
         }
     }
 
+    template<typename arg_t, typename...arg_ts>
+    constexpr bool pack_contains_variadic() {
+        if constexpr(argument_info_t<arg_t>::is_variadic) {
+            return true;
+        }
+        else {
+            if constexpr(sizeof...(arg_ts) > 0) {
+                return pack_contains_variadic<arg_ts...>();
+            }
+            else {
+                return false;
+            }
+        }
+    }
+
     template<std::size_t max_index, typename...arg_ts>
     static constexpr std::size_t count_positionals_before_index_v = count_positionals_before_index_func<0, max_index, arg_ts...>();
 
@@ -244,10 +273,12 @@ namespace cppli::detail {
     template<typename return_t, typename...arg_ts, auto func>
     struct call_func_wrapper_t<return_t(*)(arg_ts...), func> { // we need all these ugly partial specializations so that we can deduce arg_ts and indices
         static void call_func(const subcommand_t& subcommand) {
-            constexpr auto positionals_count = count_positionals<false, arg_ts...>();
-            if(positionals_count < subcommand.inputs.positional_args.size()) {
-                std::cerr << "Too many positional arguments given to " << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << subcommand_name_to_docs()[subcommand.name].name <<
-                          "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << "). Excess positional argument will be ignored\n";
+            if constexpr(!pack_contains_variadic<std::remove_cvref_t<arg_ts>...>()) {
+                constexpr auto positionals_count = count_positionals<false, arg_ts...>();
+                if(positionals_count < subcommand.inputs.positional_args.size()) {
+                    std::cerr << "Too many positional arguments given to " << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << subcommand_name_to_docs()[subcommand.name].name <<
+                              "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << "). Excess positional argument will be ignored\n";
+                }
             }
             call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::call_func(subcommand);
         }
@@ -365,17 +396,22 @@ namespace cppli::detail {
                     info.option_argument_is_optional.emplace(std::string{type::short_name}, type::argument_optional);
                 }
             }
-            else { // positional
+            else if constexpr(arg_info_t::is_positional) { // positional
                 documentation.positionals.emplace_back(type::type_string.string(),
                                                        type::name.string(),
                                                        type::documentation.string(),
 
                                                        type::optional);
             }
-
-            if constexpr(sizeof...(arg_ts) > 0) {
-                generate_input_info_and_docs<return_t, arg_ts...>(info, documentation);
+            else { // variadic
+                documentation.variadic = variadic_documentation_t{type::type_string.string(),
+                                          type::name.string(),
+                                          type::documentation.string()};
             }
+        }
+
+        if constexpr(sizeof...(arg_ts) > 0) {
+            generate_input_info_and_docs<return_t, arg_ts...>(info, documentation);
         }
     }
 
@@ -412,6 +448,8 @@ namespace cppli::detail {
             subcommand_name_to_docs()[name].flags = std::move(docs.flags);
             subcommand_name_to_docs()[name].options = std::move(docs.options);
             subcommand_name_to_docs()[name].positionals = std::move(docs.positionals);
+            subcommand_name_to_docs()[name].variadic = std::move(docs.variadic);
+
             subcommand_name_to_docs()[name].is_namespace = false;
 
             // can't do a full assignment because that would wipe subcommands

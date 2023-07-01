@@ -31,6 +31,8 @@ namespace cppli::detail {
 
         bool disambiguate_next_arg = false;
 
+        bool invalid_input_to_namespace = false;
+
         std::string first_command_name = argv[0];
 
         bool in_namespace = is_namespace({"MAIN"});
@@ -56,7 +58,7 @@ namespace cppli::detail {
                 commands.push_back({subcommand_name});
             }
             else {
-                /*if(in_namespace) {
+                /*if(in_namespace) { // I forgot why this doesn't work
                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                     continue;
                 }*/
@@ -87,6 +89,7 @@ namespace cppli::detail {
                                 }
                                 else if(in_namespace) {
                                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                                    invalid_input_to_namespace = true;
                                     continue;
                                 }
                                 else {
@@ -121,6 +124,7 @@ namespace cppli::detail {
                                 }
                                 else if(in_namespace) {
                                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                                    invalid_input_to_namespace = true;
                                     continue;
                                 }
                                 else {
@@ -162,6 +166,7 @@ namespace cppli::detail {
                                 }
                                 else if(in_namespace) {
                                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                                    invalid_input_to_namespace = true;
                                     continue;
                                 }
                                 else {
@@ -206,6 +211,7 @@ namespace cppli::detail {
                             }
                             else if(in_namespace) {
                                 std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                                invalid_input_to_namespace = true;
                                 continue;
                             }
                             else {
@@ -222,6 +228,7 @@ namespace cppli::detail {
                     }
                     else if(in_namespace) {
                         std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                        invalid_input_to_namespace = true;
                         continue;
                     }
                     else {
@@ -229,6 +236,20 @@ namespace cppli::detail {
                         args.positional_args.emplace_back(std::move(arg_string));
                     }
                 }
+            }
+        }
+        if(is_namespace(commands.back().name)) {
+            /*if(invalid_input_to_namespace) {
+                std::cout << "Here is its help page:\n";
+            }
+            else {*/
+            if(!invalid_input_to_namespace) { // TODO: make it configurable whether invalid input to namespace just gives a warning, or causes the program to stop and print help
+                std::cout << '\"' << commands.back().name.back()
+                          << "\" is a namespace, so using it on its own doesn't do anything. Here is its help page:\n";
+                //}
+                std::cout << get_documentation_string(commands.back().name, default_help_verbosity,
+                                                      default_help_recursion_level);
+                return {{}, true};
             }
         }
 
