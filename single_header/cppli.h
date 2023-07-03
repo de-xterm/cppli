@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #pragma once
 
 
@@ -2111,3 +2112,6 @@ namespace cppli {
         const ::cppli::detail::variadic<TYPE, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
     }
 }
+=======
+
+>>>>>>> Wiped single_header/cppli.h again
