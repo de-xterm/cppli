@@ -1,7 +1,8 @@
 #pragma once
 
 #include <string>
-#include <subcommand.h>
+
+#include "subcommand.h"
 
 namespace cppli {
     enum documentation_verbosity {

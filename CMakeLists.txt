@@ -15,6 +15,7 @@ MACRO(HEADER_DIRECTORIES return_list pattern) #recursively adds all directories 
     LIST(REMOVE_DUPLICATES dir_list)
     SET(${return_list} ${dir_list})
 ENDMACRO()
+
 HEADER_DIRECTORIES(PROJECT_HEADERS src/)
 
 file(GLOB_RECURSE COMMON_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
@@ -22,19 +23,26 @@ add_library(cppli ${COMMON_SOURCES})
 target_include_directories(cppli PRIVATE ${PROJECT_HEADERS})
 
 
-file(GLOB_RECURSE TEST_SOURCES ${PROJECT_SOURCE_DIR}/test/*.cpp) #globbing expressions intentionally excludes main, because these sources will be linked to test too
-add_executable(Test_Executable ${TEST_SOURCES} ${COMMON_SOURCES})
-target_include_directories(Test_Executable PRIVATE ${PROJECT_HEADERS} lib/Catch2/src/catch2)
+file(GLOB_RECURSE TEST_SOURCES ${PROJECT_SOURCE_DIR}/test/*.cpp)
+add_executable(testexe ${TEST_SOURCES} ${COMMON_SOURCES})
+target_include_directories(testexe PRIVATE ${PROJECT_HEADERS} lib/Catch2/src/catch2)
 
+
+file(GLOB_RECURSE TEST_SOURCES ${PROJECT_SOURCE_DIR}/test/*.cpp)
+add_executable(testexe-singleheader ${TEST_SOURCES} )
+target_include_directories(testexe-singleheader PRIVATE single_header lib/Catch2/src/catch2)
+target_compile_definitions(testexe-singleheader PRIVATE CPPLI_SINGLE_HEADER)
 
 add_subdirectory(lib/Catch2)
-target_link_libraries(Test_Executable PRIVATE Catch2)
+target_link_libraries(testexe PRIVATE Catch2)
+target_link_libraries(testexe-singleheader PRIVATE Catch2)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_options(Test_Executable PRIVATE /Zc:preprocessor)
+    target_compile_options(testexe PRIVATE /Zc:preprocessor)
     target_compile_options(cppli PRIVATE /Zc:preprocessor)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(Test_Executable PRIVATE -Werror=return-type )
+    target_compile_options(testexe PRIVATE -Werror=return-type )
 endif()
 
-add_test(Test Test_Executable)
+add_test(Test testexe)
+add_test(Test-singleheader testexe-singleheader )

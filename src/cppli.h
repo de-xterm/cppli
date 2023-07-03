@@ -4,6 +4,13 @@
 #include "arg_parsing.h"
 #include "command_registration.h"
 
+#ifdef CPPLI_IMPLEMENTATION
+    #include "arg_parsing.cpp"
+    #include "documentation.cpp"
+    #include "subcommand.cpp"
+#endif
+
+
 namespace cppli {
     template<detail::string_literal program_name, detail::string_literal description>
     void run(int argc, const char* const* const argv) {

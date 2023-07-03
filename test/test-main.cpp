@@ -1,5 +1,9 @@
 #include "catch_session.hpp"
 
+#ifdef CPPLI_SINGLE_HEADER
+    #define CPPLI_IMPLEMENTATION
+#endif
+
 #include "cppli.h"
 
 
