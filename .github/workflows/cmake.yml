@@ -92,6 +92,9 @@ jobs:
         fetch-depth: 0 # need fetch-depth and ref, otherwise checkout won't get the latest version of single_header/cppli.h
         ref: main      # this solution comes from https://github.com/actions/checkout/issues/439#issuecomment-965968956
 
+    - name: Install ninja-build tool
+      uses: seanmiddleditch/gha-setup-ninja@v3
+      
     - name: Restore cached build files 
       id: cache-build-restore
       uses: actions/cache/restore@v3
