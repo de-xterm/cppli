@@ -2,6 +2,7 @@
 
 # this is a simple script for expanding a file's includes in order to produce a single header library
 # it only considers includes made with quotes, not ones with angular brackets (so as not to in
+
 # usage: amalgamate.py <header whose includes we're going to expand> <output header> <directory containing project files (.cpp and .h)>
 
 # This script is hardcoded to fit the specific needs of this library, and it probably won't work for all libraries without some troubleshooting
