@@ -3,7 +3,10 @@
 
 #include "catch_test_macros.hpp"
 
-#include "arg_parsing.h"
+#ifndef CPPLI_SINGLE_HEADER
+  #include "arg_parsing.h"
+#endif
+
 #include "cppli.h"
 
 
