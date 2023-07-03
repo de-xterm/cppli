@@ -38,7 +38,7 @@ jobs:
       if: steps.cache-build-restore.outputs.cache-hit != 'true'
       run: |
         echo Could not restore cache; rerunning cmake configuration
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
       
     - name: Build
       # Build your program with the given configuration
@@ -102,7 +102,7 @@ jobs:
       if: steps.cache-build-restore.outputs.cache-hit != 'true'
       run: |
         echo Could not restore cache; rerunning cmake configuration
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
       
     - name: Build
       # Build your program with the given configuration
