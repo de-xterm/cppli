@@ -24,6 +24,9 @@ jobs:
       with:
         submodules: 'recursive'
         
+    - name: Install ninja-build tool
+      uses: seanmiddleditch/gha-setup-ninja@v3
+        
     - name: Restore cached build files 
       id: cache-build-restore
       uses: actions/cache/restore@v3
