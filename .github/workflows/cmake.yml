@@ -37,7 +37,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       if: steps.cache-build-restore.outputs.cache-hit != 'true'
       run: |
-        echo Could not restore cache; rerunning cmake configuration
+        echo "Could not restore cache; rerunning cmake configuration"
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
       
     - name: Build
@@ -101,7 +101,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       if: steps.cache-build-restore.outputs.cache-hit != 'true'
       run: |
-        echo Could not restore cache; rerunning cmake configuration
+        echo "Could not restore cache; rerunning cmake configuration"
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
       
     - name: Build
