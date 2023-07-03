@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3
         
@@ -86,6 +87,7 @@ jobs:
     needs: amalgamate-and-commit
     
     steps:
+    
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3
       
