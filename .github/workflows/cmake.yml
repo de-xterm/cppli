@@ -43,7 +43,7 @@ jobs:
     
     steps:
     - name: Amalgamate files into single header
-      run: amalgamate.py src/cppli.h single_header/cppli.h src/
+      run: ./amalgamate.py src/cppli.h single_header/cppli.h src/
     
     - name: Commit generated header
       uses: EndBug/add-and-commit@v9.1.3
