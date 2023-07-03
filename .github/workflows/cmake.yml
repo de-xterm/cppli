@@ -42,7 +42,10 @@ jobs:
     needs: build-and-test
     
     steps:
+    - uses: actions/checkout@v3 # no need for recursive 
+    
     - name: Amalgamate files into single header
+    
       working-directory: ${{github.workspace}}
       run: ./amalgamate.py src/cppli.h single_header/cppli.h src/
     
