@@ -26,8 +26,6 @@ jobs:
       with:
         path: ${{github.workspace}}
         key: ${{runner.os}}-build
-        
-    - run: ls  
              
     - uses: actions/checkout@v3
       with:
@@ -48,7 +46,6 @@ jobs:
     - name: Build
       # Build your program with the given configuration
       run: |
-        ls
         cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe        
 
     - name: Save build files to cache
@@ -90,11 +87,17 @@ jobs:
     needs: amalgamate-and-commit
     
     steps:
-
+    - name: Restore cached build files 
+      id: cache-build-restore
+      uses: actions/cache/restore@v3
+      with:
+        path: ${{github.workspace}}
+        key: ${{runner.os}}-build
              
     - uses: actions/checkout@v3
       with:
         submodules: 'recursive'        
+        clean: false 
         
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3    
@@ -111,6 +114,12 @@ jobs:
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe-singleheader
 
+    - name: Save build files to cache
+      id: cache-build-save
+      uses: actions/cache/save@v3
+      with:
+        path: ${{github.workspace}}
+        key: ${{runner.os}}-build
 
     - name: Test
       working-directory: ${{github.workspace}}/build
