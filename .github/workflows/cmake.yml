@@ -26,6 +26,8 @@ jobs:
       with:
         path: ${{github.workspace}}
         key: ${{runner.os}}-build
+        
+        run: ls  
              
     - uses: actions/checkout@v3
       with:
