@@ -23,24 +23,28 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: 'recursive'
-
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
+        
     - name: Restore cached build files 
       id: cache-build-restore
       uses: actions/cache/restore@v3
       with:
         path: ${{github.workspace}}/build
         key: ${{runner.os}}-build
-        
+             
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      if: steps.cache-build-restore.outputs.cache-hit != 'true'
+      run: |
+        echo Could not restore cache; rerunning cmake configuration
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe        
 
-    - name: Restore cached build files 
+    - name: Save cached build files 
       id: cache-build-save
       uses: actions/cache/save@v3
       with:
@@ -85,14 +89,31 @@ jobs:
         fetch-depth: 0 # need fetch-depth and ref, otherwise checkout won't get the latest version of single_header/cppli.h
         ref: main      # this solution comes from https://github.com/actions/checkout/issues/439#issuecomment-965968956
 
+    - name: Restore cached build files 
+      id: cache-build-restore
+      uses: actions/cache/restore@v3
+      with:
+        path: ${{github.workspace}}/build
+        key: ${{runner.os}}-build
+             
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
+      if: steps.cache-build-restore.outputs.cache-hit != 'true'
+      run: |
+        echo Could not restore cache; rerunning cmake configuration
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe-singleheader
+
+    - name: Save cached build files 
+      id: cache-build-save
+      uses: actions/cache/save@v3
+      with:
+        path: ${{github.workspace}}/build
+        key: ${{runner.os}}-build
 
     - name: Test
       working-directory: ${{github.workspace}}/build
