@@ -46,6 +46,7 @@ jobs:
     
     - name: Amalgamate files into single header
       run: |
+          pwd
           chmod +x ./amalgamate.py
           ./amalgamate.py src/cppli.h single_header/cppli.h src/
     
