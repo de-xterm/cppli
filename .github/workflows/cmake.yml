@@ -14,7 +14,7 @@ env:
   GH_TOKEN: ${{ github.token }}
 
 jobs:
-  build-and-test:    
+  build-and-test:
     strategy:
       matrix:
         compiler: [g++, clang++, msvc]
@@ -77,14 +77,15 @@ jobs:
         cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe
         
     - name: delete old cache
-      continue-on-error: true
+      shell: bash
 
       run: |
-        gh api \
-        --method DELETE \
+        curl -L \
+        -X DELETE \
         -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer <YOUR-TOKEN>"\
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        /repos/de-xterm/cppli/actions/caches?key=${{matrix.os}}-${{matrix.compiler}}-build
+        https://api.github.com/repos/de-xterm/cppli/actions/caches?key=${{matrix.os}}-${{matrix.compiler}}-build
 
     - name: Save build files to cache
       id: cache-build-save
