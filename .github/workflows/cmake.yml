@@ -101,7 +101,7 @@ jobs:
       uses: actions/cache/restore@v3
       with:
         path: ${{github.workspace}}
-        key: ${{runner.os}}-build
+        key: ${{runner.os}}-build-singleheader
              
     - uses: actions/checkout@v3
       with:
@@ -137,7 +137,7 @@ jobs:
       uses: actions/cache/save@v3
       with:
         path: ${{github.workspace}}
-        key: ${{runner.os}}-build
+        key: ${{runner.os}}-build-singleheader
 
     - name: Test
       working-directory: ${{github.workspace}}/build
