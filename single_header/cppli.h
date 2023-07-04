@@ -2032,6 +2032,7 @@ namespace cppli::detail {
 //end of "subcommand.cpp" include
 #endif
 
+////
 
 namespace cppli {
     template<detail::string_literal program_name, detail::string_literal description>
