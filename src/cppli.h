@@ -10,6 +10,7 @@
     #include "subcommand.cpp"
 #endif
 
+////
 
 namespace cppli {
     template<detail::string_literal program_name, detail::string_literal description>
