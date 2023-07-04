@@ -42,8 +42,8 @@ jobs:
       uses: actions/cache/restore@v3
       with:
         path: ${{github.workspace}}
-        key: ${{runner.os}}-build
-             
+        key: ${{matrix.os}}-${{matrix.compiler}}-build
+        
     - uses: actions/checkout@v3
       with:
         submodules: 'recursive'        
@@ -55,23 +55,24 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      if: steps.cache-build-restore.outputs.cache-hit != 'true'
+      if: steps.cache-build-restore.outputs.cache-hit != 'true' && (${{matrix.os}} != 'windows-latest')
       run: |
         echo "Could not restore cache; rerunning cmake configuration"
         cmake -DCMAKE_CXX_COMPILER=${{matrix.compiler}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
+        
+    - name: Configure CMake (windows only)
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      if: (steps.cache-build-restore.outputs.cache-hit != 'true') && (${{matrix.os}} == 'windows-latest')
+      run: |
+        echo "Could not restore cache; rerunning cmake configuration"
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
       
     - name: Build
       # Build your program with the given configuration
-      if: ${{matrix.os}} != 'windows-latest'
       run: |
         cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe
         
-    - name: Windows only build
-      if: ${{matrix.os}} == 'windows-latest'
-      run: |
-        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe   
-        
-
     - name: delete old cache
       run: |
         curl -L \
@@ -86,7 +87,7 @@ jobs:
       uses: actions/cache/save@v3
       with:
         path: ${{github.workspace}}
-        key: ${{runner.os}}-build
+        key: ${{matrix.os}}-${{matrix.compiler}}-build
         
     - name: Test
       working-directory: ${{github.workspace}}/build
@@ -116,7 +117,28 @@ jobs:
         add: 'single_header/cppli.h'
         
   single-header-build-and-test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [g++, clang++, msvc]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        exclude:
+        - os: windows-latest
+          compiler: g++
+          
+        - os: windows-latest
+          compiler: clang++
+          
+        - os: ubuntu-latest
+          compiler: msvc
+          
+        - os: macos-latest
+          compiler: msvc
+        
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ${{matrix.os}}
+    
     needs: amalgamate-and-commit
     
     steps:
@@ -125,7 +147,7 @@ jobs:
       uses: actions/cache/restore@v3
       with:
         path: ${{github.workspace}}
-        key: ${{runner.os}}-build-singleheader
+        key: ${{matrix.os}}-${{matrix.compiler}}-build-singleheader
              
     - uses: actions/checkout@v3
       with:
@@ -138,7 +160,15 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      if: steps.cache-build-restore.outputs.cache-hit != 'true'
+      if: steps.cache-build-restore.outputs.cache-hit != 'true' && (${{matrix.os}} != 'windows-latest')
+      run: |
+        echo "Could not restore cache; rerunning cmake configuration"
+        cmake -DCMAKE_CXX_COMPILER=${{matrix.compiler}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
+        
+    - name: Configure CMake (windows only)
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      if: (steps.cache-build-restore.outputs.cache-hit != 'true') && (${{matrix.os}} == 'windows-latest')
       run: |
         echo "Could not restore cache; rerunning cmake configuration"
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
@@ -161,7 +191,7 @@ jobs:
       uses: actions/cache/save@v3
       with:
         path: ${{github.workspace}}
-        key: ${{runner.os}}-build-singleheader
+        key: ${{matrix.os}}-${{matrix.compiler}}-build-singleheader
 
     - name: Test
       working-directory: ${{github.workspace}}/build
