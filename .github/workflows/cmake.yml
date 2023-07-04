@@ -14,10 +14,27 @@ env:
 
 jobs:
   build-and-test:
+    strategy:
+      matrix:
+        compiler: [g++, clang++, msvc]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        exclude:
+        - os: windows-latest
+          compiler: g++
+          
+        - os: windows-latest
+          compiler: clang++
+          
+        - os: ubuntu-latest
+          compiler: msvc
+          
+        - os: macos-latest
+          compiler: msvc
+        
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-latest
+    runs-on: ${{matrix.os}}
 
     steps:
     - name: Restore cached build files 
@@ -45,8 +62,15 @@ jobs:
       
     - name: Build
       # Build your program with the given configuration
+      if: ${{matrix.os}} != 'windows-latest'
       run: |
-        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe        
+        cmake -DCMAKE_CXX_COMPILER=${{matrix.compiler}} --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe
+        
+    - name: Windows only build
+      if: ${{matrix.os}} == 'windows-latest'
+      run: |
+        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe   
+        
 
     - name: delete old cache
       run: |
