@@ -82,7 +82,7 @@ jobs:
         --method DELETE \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        /repos/OWNER/REPO/actions/caches?key=${{matrix.os}}-${{matrix.compiler}}-build
+        /repos/de-xterm/cppli/actions/caches?key=${{matrix.os}}-${{matrix.compiler}}-build
 
     - name: Save build files to cache
       id: cache-build-save
@@ -185,7 +185,7 @@ jobs:
         --method DELETE \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        /repos/OWNER/REPO/actions/caches?key=${{matrix.os}}-${{matrix.compiler}}-build-singleheader
+        /repos/de-xterm/cppli/actions/caches?key=${{matrix.os}}-${{matrix.compiler}}-build-singleheader
         
     - name: Save build files to cache
       id: cache-build-save
