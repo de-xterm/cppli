@@ -58,6 +58,7 @@ jobs:
       if: (steps.cache-build-restore.outputs.cache-hit != 'true') && (${{matrix.os}} != windows-latest)
       run: |
         echo "Could not restore cache; rerunning cmake configuration"
+        echo ${{matrix.os}}
         cmake -DCMAKE_CXX_COMPILER=${{matrix.compiler}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
         
     - name: Configure CMake (windows only)
