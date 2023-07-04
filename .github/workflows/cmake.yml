@@ -14,7 +14,7 @@ env:
   GH_TOKEN: ${{ github.token }}
 
 jobs:
-  build-and-test:
+  build-and-test:    
     strategy:
       matrix:
         compiler: [g++, clang++, msvc]
@@ -77,22 +77,14 @@ jobs:
         cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe
         
     - name: delete old cache
-      uses: actions/github-script@v6
-      with:
-        script: |
-          import { Octokit } from "https://cdn.skypack.dev/octokit";
+      continue-on-error: true
 
-          const octokit = new Octokit({
-            auth: ${{github.token}}
-          })
-
-          await octokit.request('DELETE /repos/de-xterm/cppli/actions/caches{?${{matrix.os}}-${{matrix.compiler}}-build,main}', {
-            owner: de-xterm,
-            repo: cppli,
-            headers: {
-              'X-GitHub-Api-Version': '2022-11-28'
-            }
-          })
+      run: |
+        gh api \
+        --method DELETE \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        /repos/de-xterm/cppli/actions/caches?key=${{matrix.os}}-${{matrix.compiler}}-build
 
     - name: Save build files to cache
       id: cache-build-save
@@ -190,6 +182,8 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cppli testexe-singleheader
 
     - name: delete old cache
+      continue-on-error: true
+
       run: |
         gh api \
         --method DELETE \
