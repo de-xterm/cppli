@@ -17,7 +17,7 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        compiler: [gcc]
+        compiler: [g++]
         os: [ubuntu-latest]
         exclude:
         - os: windows-latest
@@ -43,7 +43,7 @@ jobs:
       uses: actions/cache/restore@v3
       with:
         path: ${{github.workspace}}
-        key: ${{matrix.os}}-${{matrix.compiler}}-build
+        key: ubuntu-latest-gcc-build
         
     - uses: actions/checkout@v3
       with:
@@ -85,14 +85,14 @@ jobs:
         -H 'Accept: application/vnd.github+json' \
         -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
         -H 'X-GitHub-Api-Version: 2022-11-28' \
-        https://api.github.com/repos/de-xterm/cppli/actions/caches?key=ubuntu-latest-g++-build
+        https://api.github.com/repos/de-xterm/cppli/actions/caches?key=ubuntu-latest-gcc-build
         
     - name: Save build files to cache
       id: cache-build-save
       uses: actions/cache/save@v3
       with:
         path: ${{github.workspace}}
-        key: ${{matrix.os}}-${{matrix.compiler}}-build
+        key: ubuntu-latest-gcc-build
         
     - name: Test
       working-directory: ${{github.workspace}}/build
