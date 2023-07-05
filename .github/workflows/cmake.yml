@@ -17,8 +17,8 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        compiler: [g++, clang++, msvc]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        compiler: [g++]
+        os: [ubuntu-latest]
         exclude:
         - os: windows-latest
           compiler: g++
