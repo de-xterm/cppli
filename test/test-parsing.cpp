@@ -101,10 +101,6 @@ struct custom_t {
     static constexpr cppli::detail::string_literal cppli_type_string = "custom type integer";
 };
 
-template<typename T>
-struct type_info;
-
-
 CPPLI_MAIN_COMMAND(CPPLI_VARIADIC(int, foovec, "list of integers")) {
     std::cout << "Main entered!\n";
 

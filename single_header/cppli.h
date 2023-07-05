@@ -1366,6 +1366,15 @@ namespace cppli::detail {
 }
 //end of "command_registration.h" include
 
+#ifdef _MSC_VER
+    #ifndef _MSVC_TRADITIONAL
+        #error "CPPLI won't work on this version of MSVC, sorry! This version of MSVC you're using doesn't support the new preprocessor (/Zc:preprocessor)"
+    #elif _MSVC_TRADITIONAL == 1
+        #error "You're using the traditional preprocessor, which won't work with CPPLI. Recompile with /Zc:preprocessor"
+    #endif
+#endif
+
+
 #ifdef CPPLI_IMPLEMENTATION
 
 //included from file "arg_parsing.cpp"
