@@ -1,10 +1,3 @@
-#include "catch_session.hpp"
-
-#ifdef CPPLI_SINGLE_HEADER
-    #define CPPLI_IMPLEMENTATION
-#endif
-
-#include "cppli.h"
 
 
 int main( int argc, char* argv[] ) {
@@ -12,7 +5,7 @@ int main( int argc, char* argv[] ) {
 
     //int argc = 5;
     // try {
-    cppli::run<"program", "it does a thing">(argc, argv);
+    //cppli::run<"program", "it does a thing">(argc, argv);
 
     //int result = Catch::Session().run( argc, argv );
 
