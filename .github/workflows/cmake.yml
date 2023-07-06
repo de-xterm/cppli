@@ -79,7 +79,6 @@ jobs:
         ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/local/bin/gcc
         ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/local/bin/g++
                 
-        ls /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major}        
                 
         echo "/usr/local/Cellar/gcc/6.2.0/bin" >> $GITHUB_PATH
         
