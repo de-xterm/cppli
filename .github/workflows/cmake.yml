@@ -49,7 +49,7 @@ jobs:
         submodules: 'recursive'        
         clean: false
         
-    - uses: cppli/test@main
+    - uses: ./.github/actions/test
     
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3    
