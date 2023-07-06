@@ -71,8 +71,11 @@ jobs:
         echo "gcc directory contents: "
         ls /usr/local/Cellar/gcc/${version}/bin
         
-        ln -svf /usr/local/Cellar/gcc/${version}/bin/gcc /usr/bin/gcc
-        ln -svf /usr/local/Cellar/gcc/${version}/bin/g++ /usr/bin/g++
+        gcc_with_version_major=$(ls -v /usr/local/Cellar/gcc/${version}/bin/gcc | tail -n 1)
+        gxx_with_version_major=$(ls -v /usr/local/Cellar/gcc/${version}/bin/g++ | tail -n 1)
+        
+        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/bin/gcc
+        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/bin/g++
 
 
     - name: Configure CMake
@@ -201,9 +204,13 @@ jobs:
         
         ls /usr/local/Cellar/gcc/
         echo $(ls -v /usr/local/Cellar/gcc/ | tail -n 1)
+
+        gcc_with_version_major=$(ls -v /usr/local/Cellar/gcc/${version}/bin/gcc | tail -n 1)
+        gxx_with_version_major=$(ls -v /usr/local/Cellar/gcc/${version}/bin/g++ | tail -n 1)
+
         
-        ln -svf /usr/local/Cellar/gcc/${version}/bin/gcc /usr/bin/gcc
-        ln -svf /usr/local/Cellar/gcc/${version}/bin/g++ /usr/bin/g++
+        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/bin/gcc
+        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/bin/g++
    
     - name: Configure CMake
       shell: bash
