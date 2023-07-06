@@ -1,0 +1,11 @@
+name: say hi
+
+on: 
+  workflow_dispatch:
+  
+jobs:
+  hi_job:
+  runs_on: ubuntu-latest
+  
+  steps:
+  - name:
