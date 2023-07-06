@@ -76,7 +76,7 @@ jobs:
       run: |
         echo "Could not restore cache; rerunning cmake configuration"
         echo ${{matrix.os}}
-        cmake -DCMAKE_C_COMPILER=cl.exe -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
+        cmake -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
       
     - name: Build
       # Build your program with the given configuration
