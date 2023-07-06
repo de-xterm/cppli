@@ -62,7 +62,8 @@ jobs:
       run: |
         brew install gcc
         brew info gcc
-        echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile # so that the real gcc (/usr/local/bin/gcc) is found before the fake clang alias (/usr/bin/gcc)
+        cp /usr/bin/local/gcc /usr/bin/gcc
+        cp /usr/bin/local/g++ /usr/bin/g++
 
 
     - name: Configure CMake
@@ -186,8 +187,8 @@ jobs:
       run: |
         brew install gcc
         brew info gcc
-        echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile # so that the real gcc (/usr/local/bin/gcc) is found before the fake clang alias (/usr/bin/gcc)
-        
+        cp /usr/bin/local/gcc /usr/bin/gcc
+        cp /usr/bin/local/g++ /usr/bin/g++        
     - name: Configure CMake
       shell: bash
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
