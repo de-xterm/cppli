@@ -58,13 +58,9 @@ jobs:
       uses: ilammy/msvc-dev-cmd@v1
       
     - name: if apple, setup g++ 
-      if: ${{matrix.os == 'macos-latest'}}
+      if: ${{(matrix.os == 'macos-latest') && (matrix.compiler == 'gcc')}}
       run: |
-        brew update
-        brew upgrade
-        brew info gcc
         brew install gcc
-        brew cleanup
 
     - name: Configure CMake
       shell: bash
@@ -183,13 +179,9 @@ jobs:
       uses: ilammy/msvc-dev-cmd@v1
       
     - name: if apple, setup g++ 
-      if: ${{matrix.os == 'macos-latest'}}
+      if: ${{(matrix.os == 'macos-latest') && (matrix.compiler == 'gcc')}}
       run: |
-        brew update
-        brew upgrade
-        brew info gcc
         brew install gcc
-        brew cleanup
         
     - name: Configure CMake
       shell: bash
