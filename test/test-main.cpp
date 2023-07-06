@@ -1,6 +1,6 @@
 
 
-//int main( int argc, char* argv[] ) {
+int main() {
     // your setup ...
 
     //int argc = 5;
@@ -12,4 +12,4 @@
     // your clean-up...
 
     //return result;
-//}
+}
