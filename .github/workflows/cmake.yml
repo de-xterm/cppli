@@ -69,7 +69,7 @@ jobs:
         echo $(ls -v /usr/local/Cellar/gcc/ | tail -n 1)
         
         echo "gcc directory contents: "
-        ls /usr/local/Cellar/gcc/${version}/bin/gcc
+        ls /usr/local/Cellar/gcc/${version}/bin
         
         ln -svf /usr/local/Cellar/gcc/${version}/bin/gcc /usr/bin/gcc
         ln -svf /usr/local/Cellar/gcc/${version}/bin/g++ /usr/bin/g++
