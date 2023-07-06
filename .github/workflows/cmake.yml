@@ -14,6 +14,9 @@ env:
   GH_TOKEN: ${{ github.token }}
 
 jobs:
+  reusable-job:
+    uses: de-xterm/cppli/.github/workflows/test.yaml@main
+      
   build-and-test:
     strategy:
       matrix:
@@ -36,6 +39,7 @@ jobs:
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ${{matrix.os}}
+       
     steps:
     - name: Restore cached build files 
       id: cache-build-restore
@@ -48,9 +52,7 @@ jobs:
       with:
         submodules: 'recursive'        
         clean: false
-        
-    - uses: de-xterm/cppli/.github/workflows/test.yaml@main
-    
+            
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3    
       
