@@ -74,8 +74,8 @@ jobs:
         gcc_with_version_major=$(ls -v /usr/local/Cellar/gcc/${version}/bin/gcc-[0-9]* | tail -n 1)
         gxx_with_version_major=$(ls -v /usr/local/Cellar/gcc/${version}/bin/g++-[0-9]* | tail -n 1)
                 
-        cp /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/local/bin/gcc
-        cp /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/local/bin/g++
+        ln -svf ${gcc_with_version_major} /usr/local/bin/gcc
+        ln -svf ${gxx_with_version_major} /usr/local/bin/g++
                 
                 
         echo "/usr/local/Cellar/gcc/6.2.0/bin" >> $GITHUB_PATH
