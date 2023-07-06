@@ -8,11 +8,6 @@ on:
     - 'single_header/cppli.h'
   workflow_dispatch:  
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Debug
-  GH_TOKEN: ${{ github.token }}
-
 jobs:
   build-and-test:
     uses: de-xterm/cppli/.github/workflows/build-and-test.yaml@main
