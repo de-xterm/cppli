@@ -143,10 +143,10 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         exclude:
         - os: windows-latest
-          compiler: g++
+          compiler: gcc
           
         - os: windows-latest
-          compiler: clang++
+          compiler: clang
           
         - os: ubuntu-latest
           compiler: msvc
