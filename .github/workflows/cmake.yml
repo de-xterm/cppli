@@ -61,6 +61,7 @@ jobs:
       if: ${{(matrix.os == 'macos-latest') && (matrix.compiler == 'gcc')}}
       run: |
         brew install gcc
+        brew info gcc
 
     - name: Configure CMake
       shell: bash
