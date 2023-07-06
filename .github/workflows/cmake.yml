@@ -37,6 +37,7 @@ jobs:
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ${{matrix.os}}
     steps:
+    - uses: cppli/.github/workflows/test.yaml@main
     - name: Restore cached build files 
       id: cache-build-restore
       uses: actions/cache/restore@v3
