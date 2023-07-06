@@ -65,7 +65,8 @@ jobs:
         
         version=$(echo ls -v /usr/local/Cellar/gcc/ | tail -n 1)
         
-        echo "export PATH=/usr/local/Cellar/gcc/${version}/bin:$PATH" >> ~/.bash_profile
+        ln -vf /usr/local/Cellar/gcc/${version}/bin/gcc /usr/bin/gcc
+        ln -vf /usr/local/Cellar/gcc/${version}/bin/g++ /usr/bin/g++
 
 
     - name: Configure CMake
@@ -192,7 +193,8 @@ jobs:
         
         version=$(echo ls -v /usr/local/Cellar/gcc/ | tail -n 1)
         
-        echo "export PATH=/usr/local/Cellar/gcc/${version}/bin:$PATH" >> ~/.bash_profile
+        ln -vf /usr/local/Cellar/gcc/${version}/bin/gcc /usr/bin/gcc
+        ln -vf /usr/local/Cellar/gcc/${version}/bin/g++ /usr/bin/g++
    
     - name: Configure CMake
       shell: bash
