@@ -76,9 +76,8 @@ jobs:
         
         ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/local/Cellar/gcc/${version}/bin/gcc
         ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/local/Cellar/gcc/${version}/bin/g++
-        
-        export PATH=/usr/local/Cellar/gcc/6.2.0/bin/:$PATH
-        echo "export PATH=/usr/local/Cellar/gcc/6.2.0/bin/:$PATH" >> ~/.profile
+                
+        echo "/usr/local/Cellar/gcc/6.2.0/bin/:$(cat $GITHUB_PATH)" > $GITHUB_PATH
         
 
     - name: Configure CMake
@@ -214,8 +213,7 @@ jobs:
         ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/local/Cellar/gcc/${version}/bin/gcc
         ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/local/Cellar/gcc/${version}/bin/g++
         
-        export PATH=/usr/local/Cellar/gcc/6.2.0/bin/:$PATH
-        echo "export PATH=/usr/local/Cellar/gcc/6.2.0/bin/:$PATH" >> ~/.profile
+        echo "/usr/local/Cellar/gcc/6.2.0/bin/:$(cat $GITHUB_PATH)" > $GITHUB_PATH
    
     - name: Configure CMake
       shell: bash
