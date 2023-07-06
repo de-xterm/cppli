@@ -76,8 +76,10 @@ jobs:
         
         mkdir /usr/local/Cellar/gcc/bin
         
-        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/local/Cellar/gcc/bin/gcc
-        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/local/Cellar/gcc/bin/g++
+        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/local/bin/gcc
+        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/local/bin/g++
+                
+        ls /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major}        
                 
         echo "/usr/local/Cellar/gcc/6.2.0/bin" >> $GITHUB_PATH
         
@@ -88,7 +90,7 @@ jobs:
       if: ${{((steps.cache-build-restore.outputs.cache-hit != 'true') && (matrix.os == 'macos-latest') && (matrix.compiler == 'gcc'))}}
       run: |
         echo "Could not restore cache; rerunning cmake configuration"
-        cmake --log-level=VERBOSE -DCMAKE_C_COMPILER="/usr/local/Cellar/gcc/bin/gcc" -DCMAKE_CXX_COMPILER="/usr/local/Cellar/gcc/bin/g++" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
+        cmake --log-level=VERBOSE -DCMAKE_C_COMPILER="/usr/local/bin/gcc" -DCMAKE_CXX_COMPILER="/usr/local/bin/g++" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
 
     - name: Configure CMake
       shell: bash
