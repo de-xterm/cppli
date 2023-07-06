@@ -2,7 +2,6 @@ name: Test
 description: 'composite run action'
 
 runs:
-  using: "composite"
   steps: 
     - name: Echo
       shell: bash
