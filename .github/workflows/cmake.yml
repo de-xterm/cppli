@@ -74,8 +74,10 @@ jobs:
         gcc_with_version_major=$(ls -v /usr/local/Cellar/gcc/${version}/bin/gcc | tail -n 1)
         gxx_with_version_major=$(ls -v /usr/local/Cellar/gcc/${version}/bin/g++ | tail -n 1)
         
-        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/bin/gcc
-        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/bin/g++
+        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/local/Cellar/gcc/${version}/bin/gcc
+        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/local/Cellar/gcc/${version}/bin/g++
+        
+        echo "export PATH=/usr/local/Cellar/gcc/${version}/bin/:$PATH" >> ~/.bash_profile
 
 
     - name: Configure CMake
@@ -207,10 +209,11 @@ jobs:
 
         gcc_with_version_major=$(ls -v /usr/local/Cellar/gcc/${version}/bin/gcc | tail -n 1)
         gxx_with_version_major=$(ls -v /usr/local/Cellar/gcc/${version}/bin/g++ | tail -n 1)
-
         
-        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/bin/gcc
-        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/bin/g++
+        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/local/Cellar/gcc/${version}/bin/gcc
+        ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/local/Cellar/gcc/${version}/bin/g++
+        
+        echo "export PATH=/usr/local/Cellar/gcc/${version}/bin/:$PATH" >> ~/.bash_profile
    
     - name: Configure CMake
       shell: bash
