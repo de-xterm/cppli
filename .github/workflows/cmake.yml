@@ -77,7 +77,7 @@ jobs:
         ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/local/Cellar/gcc/${version}/bin/gcc
         ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/local/Cellar/gcc/${version}/bin/g++
                 
-        echo "/usr/local/Cellar/gcc/6.2.0/bin/:$(cat $GITHUB_PATH)" > $GITHUB_PATH
+        echo "/usr/local/Cellar/gcc/6.2.0/bin" >> $GITHUB_PATH
         
 
     - name: Configure CMake
@@ -87,6 +87,7 @@ jobs:
       if: ${{((steps.cache-build-restore.outputs.cache-hit != 'true') && (matrix.os != 'windows-latest'))}}
       run: |
         echo "Could not restore cache; rerunning cmake configuration"
+        echo "path: $PATH"
         actual_compiler_name=$(echo $(echo ${{matrix.compiler}} | sed -r 's/clang+/clang++/g') | sed -r 's/gcc+/g++/g') # replace gcc with g++ and clang with clang++
         echo ${actual_compiler_name}
         echo ${{matrix.os}}
@@ -213,7 +214,7 @@ jobs:
         ln -svf /usr/local/Cellar/gcc/${version}/bin/${gcc_with_version_major} /usr/local/Cellar/gcc/${version}/bin/gcc
         ln -svf /usr/local/Cellar/gcc/${version}/bin/${gxx_with_version_major} /usr/local/Cellar/gcc/${version}/bin/g++
         
-        echo "/usr/local/Cellar/gcc/6.2.0/bin/:$(cat $GITHUB_PATH)" > $GITHUB_PATH
+        echo "/usr/local/Cellar/gcc/6.2.0/bin" >> $GITHUB_PATH
    
     - name: Configure CMake
       shell: bash
