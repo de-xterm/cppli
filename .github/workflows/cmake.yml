@@ -36,7 +36,6 @@ jobs:
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ${{matrix.os}}
-
     steps:
     - name: Restore cached build files 
       id: cache-build-restore
@@ -52,6 +51,11 @@ jobs:
         
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3    
+      
+      
+    - name: if windows, setup MSVC
+      if: ${{matrix.compiler == 'msvc'}}
+      uses: ilammy/msvc-dev-cmd@v1
 
     - name: Configure CMake
       shell: bash
@@ -72,7 +76,7 @@ jobs:
       run: |
         echo "Could not restore cache; rerunning cmake configuration"
         echo ${{matrix.os}}
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
+        cmake -DCMAKE_C_COMPILER=cl.exe -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Ninja"
       
     - name: Build
       # Build your program with the given configuration
