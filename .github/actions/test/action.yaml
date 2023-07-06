@@ -1,11 +1,10 @@
-name: say-hi
+name: Test
+description: 'composite run action'
 
-on: 
-  workflow_call:
-  
-jobs:
-  hi-job:
-    runs-on: ubuntu-latest
-    steps:
-    - run: echo hi
-  
+runs:
+  using: "composite"
+  steps: 
+    - name: Echo
+      shell: bash
+      run: |
+        echo Heyyyyy
