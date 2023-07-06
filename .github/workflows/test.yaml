@@ -1,11 +1,12 @@
-name: say hi
+name: say-hi
 
 on: 
   workflow_dispatch:
   
 jobs:
-  hi_job:
-  runs_on: ubuntu-latest
+  hi-job:
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo hi
   
-  steps:
-  - name:
+
