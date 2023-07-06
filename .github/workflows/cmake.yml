@@ -65,8 +65,8 @@ jobs:
         
         version=$(echo ls -v /usr/local/Cellar/gcc/ | tail -n 1)
         
-        ln -f /usr/local/Cellar/gcc/${version}/bin/gcc /usr/bin/
-        ln -f /usr/local/Cellar/gcc/${version}/bin/g++ /usr/bin/
+        ln -vf /usr/local/Cellar/gcc/${version}/bin/gcc /usr/bin/
+        ln -vf /usr/local/Cellar/gcc/${version}/bin/g++ /usr/bin/
 
 
     - name: Configure CMake
@@ -193,8 +193,8 @@ jobs:
         
         version=$(echo ls -v /usr/local/Cellar/gcc/ | tail -n 1)
         
-        ln -f /usr/local/Cellar/gcc/${version}/bin/gcc /usr/bin/
-        ln -f /usr/local/Cellar/gcc/${version}/bin/g++ /usr/bin/
+        ln -vf /usr/local/Cellar/gcc/${version}/bin/gcc /usr/bin/
+        ln -vf /usr/local/Cellar/gcc/${version}/bin/g++ /usr/bin/
    
     - name: Configure CMake
       shell: bash
