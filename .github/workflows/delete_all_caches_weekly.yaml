@@ -1,4 +1,4 @@
-name: Do caches every tuesday at 10AM UTC
+name: Delete all caches every tuesday at 10AM UTC
 
 on:
   schedule:
