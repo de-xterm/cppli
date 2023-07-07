@@ -7,6 +7,7 @@ on:
     - 'docs/**'
     - 'single_header/cppli.h'
   workflow_dispatch:  
+  workflow_call:
 
 jobs:
   build-and-test:
