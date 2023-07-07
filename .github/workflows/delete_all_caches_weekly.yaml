@@ -15,11 +15,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
      - run: |
-        mkdir ${{github.workspace}}/.github/
-        cd ${{github.workspace}}/.github/
-        wget https://raw.githubusercontent.com/de-xterm/cppli/main/.github/delete_all_caches.sh #wget is probably faster than checking out the whole repo
-        chmod +x ./delete_all_caches.sh
-        ./delete_all_caches.sh
+        curl -L  -H "Accept: application/vnd.github+json"  -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/de-xterm/cppli/actions/caches > output.json
+
+        jq -r .actions_caches[].key output.json > plain.txt
+
+        while IFS= read -r line; do
+            curl -L  -X DELETE  -H "Accept: application/vnd.github+json"  -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/de-xterm/cppli/actions/caches?key=$line
+            echo deleted cache \"$line\"
+            echo
+        done < "plain.txt"
+        
+        rm plain.txt
+        rm output.json
+
         
   build-and-test-from-scratch:
     needs: delete-caches
