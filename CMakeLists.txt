@@ -39,10 +39,11 @@ target_link_libraries(testexe-singleheader PRIVATE Catch2)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(testexe PRIVATE /Zc:preprocessor)
+    target_compile_options(testexe-singleheader PRIVATE /Zc:preprocessor)
     target_compile_options(cppli PRIVATE /Zc:preprocessor)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(testexe PRIVATE -Werror=return-type )
+    target_compile_options(testexe PRIVATE -Werror=return-type)
 endif()
 
 add_test(Test testexe)
-add_test(Test-singleheader testexe-singleheader )
+add_test(Test-singleheader testexe-singleheader)
