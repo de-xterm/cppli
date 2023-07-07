@@ -1,0 +1,24 @@
+name: Do caches every tuesday at 10AM UTC
+
+on:
+  schedule:
+    - cron: "0 10 * * 2"
+    
+  workflow_dispatch:  
+  
+env:
+  BUILD_TYPE: Debug
+  GH_TOKEN: ${{ github.token }}        
+    
+jobs:
+  delete-caches:
+    runs-on: ubuntu-latest
+    steps:
+     - run: |
+        chmod +x ././github/delete_all_caches.sh
+        ././github/delete_all_caches.sh
+        
+  build-and-test-from-scratch:
+    uses: de-xterm/cppli/.github/workflows/build-test-and-generate-single-header.yml@main
+  
+  
