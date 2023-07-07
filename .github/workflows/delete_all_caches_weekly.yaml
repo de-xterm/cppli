@@ -15,8 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
      - run: |
-        chmod +x ${{github.workspace}}/.github/delete_all_caches.sh
-        ${{github.workspace}}/.github/delete_all_caches.sh
+        cd ${{github.workspace}}/.github/
+        wget https://raw.githubusercontent.com/de-xterm/cppli/main/.github/delete_all_caches.sh #wget is probably faster than checking out the whole repo
+        chmod +x ./delete_all_caches.sh
+        ./delete_all_caches.sh
         
   build-and-test-from-scratch:
     needs: delete-caches
