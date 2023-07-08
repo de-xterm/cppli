@@ -42,7 +42,7 @@ namespace cppli {
 
         private:
             optional_or_raw_type value_;
-            bool was_included_ = false;
+            bool was_included_ = false; // TODO: definitely don't have this available if argument is not optional
 
             static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
             static_assert(!(argument_optional_ && (!optional_)),
@@ -69,20 +69,36 @@ namespace cppli {
                 return value_;
             }
 
+            explicit operator bool() const {
+                return has_value();
+            }
+
             option() = default;
 
-            option(std::optional<std::string> str) requires(argument_optional_) {
+            /*option(type&& val) : value_(std::move(val)) {
+                if constexpr(argument_optional_) {
+                    was_included_ = true;
+                }
+            }
+
+            option(const type& val) : value_(val) {
+                if constexpr(argument_optional_) {
+                    was_included_ = true;
+                }
+            }*/
+
+            option(const std::optional<std::string>& str) requires(argument_optional_) : was_included_(true) {
                 if (str.has_value()) {
-                    value_ = std::move(*str);
+                    value_ = conversions::conversion_t<type_>()(*str);
                 }
                 else {
                     value_ = std::nullopt;
                 }
             }
 
-            option(std::optional<std::string> str) requires (!argument_optional_)
-                    : value_(std::move(*str)), // emptiness check happens elsewhere
-                      was_included_(true) {}
+            option(const std::optional<std::string>& str) requires (!argument_optional_)
+                    : value_(conversions::conversion_t<type_>()(*str))/*, // emptiness check happens elsewhere
+                      was_included_(true)*/ {} // no need to set was_included
 
             option(const option&) = default;
 

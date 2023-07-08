@@ -45,10 +45,10 @@ namespace cppli::detail {
     #define FINAL_CAT_AGAIN() FINAL_CAT_HELPER
     #define NOT_FINAL_CAT_AGAIN() cppli_internal_NOT_FINAL_CAT_HELPER
 
-    #define cppli_internal_UNIQUE_NAME cppli_internal_CAT(name, __COUNTER__)
+    #define cppli_internal_UNIQUE_NAME(NAME) cppli_internal_CAT(NAME, __COUNTER__)
 
     #define cppli_internal_EVALUATE_AT_FILE_SCOPE(EXPR)                        \
     namespace {                                                 \
-        ::cppli::detail::evaluate_at_file_scope_dummy_t cppli_internal_UNIQUE_NAME = EXPR;      \
+        ::cppli::detail::evaluate_at_file_scope_dummy_t cppli_internal_UNIQUE_NAME(cppli_DUMMY) = EXPR;      \
     }
 }
