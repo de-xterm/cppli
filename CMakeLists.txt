@@ -25,12 +25,12 @@ target_include_directories(cppli PRIVATE ${PROJECT_HEADERS})
 
 file(GLOB_RECURSE TEST_SOURCES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 add_executable(testexe ${TEST_SOURCES} ${COMMON_SOURCES})
-target_include_directories(testexe PRIVATE ${PROJECT_HEADERS} lib/Catch2/src/catch2)
+target_include_directories(testexe PRIVATE ${PROJECT_HEADERS} test lib/Catch2/src/catch2)
 
 
 file(GLOB_RECURSE TEST_SOURCES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 add_executable(testexe-singleheader ${TEST_SOURCES} )
-target_include_directories(testexe-singleheader PRIVATE single_header lib/Catch2/src/catch2)
+target_include_directories(testexe-singleheader PRIVATE test single_header lib/Catch2/src/catch2)
 target_compile_definitions(testexe-singleheader PRIVATE CPPLI_SINGLE_HEADER)
 
 add_subdirectory(lib/Catch2)

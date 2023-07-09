@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include "constexpr_string_literal.h"
+#include "exceptions.h"
 
 namespace cppli {
     namespace conversions {
@@ -26,10 +27,10 @@ namespace cppli {
                     return std::stoi(str);
                 }
                 catch(std::invalid_argument& e) {
-                    throw std::runtime_error("Could not form a valid integer from string \"" + str + "\"");
+                    throw user_error("Could not form a valid integer from string \"" + str + "\"");
                 }
                 catch(std::out_of_range& e) {
-                    throw std::runtime_error("Could not form a valid integer from string \"" + str + "\" because the resulting integer would be out of range");
+                    throw user_error("Could not form a valid integer from string \"" + str + "\" because the resulting integer would be out of range");
                 }
             }
 
@@ -40,7 +41,7 @@ namespace cppli {
         struct conversion_t<char> {
             int operator()(const std::string& str) const {
                 if(!str.size()) {
-                    throw std::runtime_error("Could not form a character from the given string because it was empty");
+                    throw user_error("Could not form a character from the given string because it was empty");
                 }
 
                 return str[0];
@@ -56,10 +57,10 @@ namespace cppli {
                     return std::stof(str);
                 }
                 catch(std::invalid_argument& e) {
-                    throw std::runtime_error("Could not form a valid decimal from string \"" + str + "\"");
+                    throw user_error("Could not form a valid decimal from string \"" + str + "\"");
                 }
                 catch(std::out_of_range& e) {
-                    throw std::runtime_error("Could not form a valid decimal from string \"" + str + "\" because the resulting integer would be out of range");
+                    throw user_error("Could not form a valid decimal from string \"" + str + "\" because the resulting integer would be out of range");
                 }
             }
 

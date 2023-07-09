@@ -2,6 +2,7 @@
 
 #include "subcommand.h"
 #include "documentation.h"
+#include "exceptions.h"
 
 namespace cppli::detail {
     template<typename T, typename last>
@@ -34,29 +35,29 @@ namespace cppli::detail {
                 if(!subcommand.inputs.options_to_values.contains(canonical_name) &&
                    (short_name && !subcommand.inputs.options_to_values.contains(*short_name))) {
 
-                    throw std::runtime_error(main_command_or_subcommand + " \""  + subcommand_name_to_docs()[subcommand.name].name + "\" was not provided with required option \"" + canonical_name + '"');
+                    throw user_error(main_command_or_subcommand + " \""  + subcommand_name_to_docs()[subcommand.name].name + "\" was not provided with required option \"" + canonical_name + '"');
                 }
-                else if(!subcommand.inputs.options_to_values.at(canonical_name).has_value() ||
-                        (short_name && !subcommand.inputs.options_to_values.at(*short_name).has_value())) {
+                else if((subcommand.inputs.options_to_values.contains(canonical_name) && !subcommand.inputs.options_to_values.at(canonical_name).has_value()) ||
+                        (short_name && subcommand.inputs.options_to_values.contains(*short_name) && !subcommand.inputs.options_to_values.at(*short_name).has_value())) {
 
-                    throw std::runtime_error(main_command_or_subcommand + " \""  + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + canonical_name + "\" requires an argument, but one was not provided "
+                    throw user_error(main_command_or_subcommand + " \""  + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + canonical_name + "\" requires an argument, but one was not provided "
                                                                                                                                                                        "(expected an argument of type " + conversions::conversion_t<T>::type_string.make_lowercase_and_convert_underscores().string() + ')');
                 }
-                else {
+                else { // by this point, none of the optionals we're interested in are empty
                     if(subcommand.inputs.options_to_values.contains(canonical_name)) {
                         try {
-                            return conversions::conversion_t<T>()(subcommand.inputs.options_to_values.at(canonical_name));
+                            return conversions::conversion_t<T>()(*subcommand.inputs.options_to_values.at(canonical_name));
                         }
-                        catch(std::runtime_error& e) {
-                            throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + canonical_name + "\". Details: " + e.what());
+                        catch(user_error& e) {
+                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + canonical_name + "\". Details: " + e.what());
                         }
                     }
                     else { // has_short_name is guaranteed to be true at this point
                         try {
-                            return conversions::conversion_t<T>()(subcommand.inputs.options_to_values.at(*short_name));
+                            return conversions::conversion_t<T>()(*subcommand.inputs.options_to_values.at(*short_name));
                         }
-                        catch(std::runtime_error& e) {
-                            throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\"). Details: " + e.what());
+                        catch(user_error& e) {
+                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\"). Details: " + e.what());
                         }
                     }
                 }
@@ -64,14 +65,14 @@ namespace cppli::detail {
             else if constexpr(argument_info_t<last>::is_positional) { // positional
                 --cumulative_positional_index; // because we've already skipped over the actual parameter for the positional, cumulative_positional_index will be too big
                 if((cumulative_positional_index >= subcommand.inputs.positional_args.size())) {
-                    throw std::runtime_error(main_command_or_subcommand + " \""  + subcommand_name_to_docs()[subcommand.name].name + "\" required positional argument \"" + canonical_name + "\" was not provided (expected an argument of type " + conversions::conversion_t<T>::type_string.string() + ')');
+                    throw user_error(main_command_or_subcommand + " \""  + subcommand_name_to_docs()[subcommand.name].name + "\" required positional argument \"" + canonical_name + "\" was not provided (expected an argument of type " + conversions::conversion_t<T>::type_string.string() + ')');
                 }
                 else {
                     try {
                         return conversions::conversion_t<T>()(subcommand.inputs.positional_args[cumulative_positional_index]);
                     }
-                    catch(std::runtime_error& e) {
-                        throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" positional argument \"" + canonical_name + "\". Details: " + e.what());
+                    catch(user_error& e) {
+                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" positional argument \"" + canonical_name + "\". Details: " + e.what());
                     }
                 }
             }
@@ -81,8 +82,8 @@ namespace cppli::detail {
                     try {
                         ret.emplace_back(conversions::conversion_t<typename last::type>()(subcommand.inputs.positional_args[i]));
                     }
-                    catch(std::runtime_error& e) {
-                        throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" variadic argument pack \"" + canonical_name + "\" at argument index " + std::to_string(i) + ". Details: " + e.what());
+                    catch(user_error& e) {
+                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" variadic argument pack \"" + canonical_name + "\" at argument index " + std::to_string(i) + ". Details: " + e.what());
                     }
                 }
                 return ret;
@@ -104,16 +105,16 @@ namespace cppli::detail {
                             try {
                                 return {subcommand.inputs.options_to_values.at(canonical_name)}; // no need for has_value check here; returning an empty optional is valid
                             }
-                            catch(std::runtime_error& e) {
-                                throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + canonical_name + "\". Details: " + e.what());
+                            catch(user_error& e) {
+                                throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + canonical_name + "\". Details: " + e.what());
                             }
                         }
                         else if(short_name && subcommand.inputs.options_to_values.at(*short_name)) {
                             try {
                                 return {subcommand.inputs.options_to_values.at(*short_name)}; // no need for has_value check here; returning an empty optional is valid
                             }
-                            catch(std::runtime_error& e) {
-                                throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\"). Details: " + e.what());
+                            catch(user_error& e) {
+                                throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\"). Details: " + e.what());
                             }
                         }
                         else {
@@ -123,27 +124,27 @@ namespace cppli::detail {
                     else {
                         if(subcommand.inputs.options_to_values.contains(canonical_name)) {
                             if(!subcommand.inputs.options_to_values.at(canonical_name).has_value()) {
-                                throw std::runtime_error(main_command_or_subcommand + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + canonical_name + "\" requires an argument, but one was not provided (expected an argument of type " + static_cast<std::string>(conversions::conversion_t<typename T::type>::type_string.make_lowercase_and_convert_underscores()) + ".""Note that this option is optional, so it is valid to omit it entirely, but the option's argument is required, so if the option is provided, it must come with an argument");
+                                throw user_error(main_command_or_subcommand + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + canonical_name + "\" requires an argument, but one was not provided (expected an argument of type " + static_cast<std::string>(conversions::conversion_t<typename T::type>::type_string.make_lowercase_and_convert_underscores()) + ".""Note that this option is optional, so it is valid to omit it entirely, but the option's argument is required, so if the option is provided, it must come with an argument");
                             }
                             else {
                                 try {
                                     return {*subcommand.inputs.options_to_values.at(canonical_name)}; // no need for has_value check here; returning an empty optional is valid
                                 }
-                                catch(std::runtime_error& e) {
-                                    throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + canonical_name + "\". Details: " + e.what());
+                                catch(user_error& e) {
+                                    throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + canonical_name + "\". Details: " + e.what());
                                 }
                             }
                         }
                         else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) { // TODO: evaluating short_name could use if constexpr
                             if(!subcommand.inputs.options_to_values.at(*short_name).has_value()) {
-                                throw std::runtime_error(main_command_or_subcommand + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\") requires an argument, but one was not provided (expected an argument of type " + conversions::conversion_t<T>::type_string.string() + ".""Note that this option is optional, so it is valid to omit it entirely, but the option's argument is required, so if the option is provided, it must come with an argument");
+                                throw user_error(main_command_or_subcommand + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\") requires an argument, but one was not provided (expected an argument of type " + conversions::conversion_t<T>::type_string.string() + ".""Note that this option is optional, so it is valid to omit it entirely, but the option's argument is required, so if the option is provided, it must come with an argument");
                             }
                             else {
                                 try {
                                     return {subcommand.inputs.options_to_values.at(*short_name)}; // no need for has_value check here; returning an empty optional is valid
                                 }
-                                catch(std::runtime_error& e) {
-                                    throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\"). Details: " + e.what());
+                                catch(user_error& e) {
+                                    throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" option \"" + *short_name + "\" (full name \"." + canonical_name + "\"). Details: " + e.what());
                                 }
                             }
                         }
@@ -168,8 +169,8 @@ namespace cppli::detail {
                         try {
                             return conversions::conversion_t<typename T::type>()(subcommand.inputs.positional_args[cumulative_positional_index]);
                         }
-                        catch(std::runtime_error& e) {
-                            throw std::runtime_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" positional argument \"" + canonical_name + "\". Details: " + e.what());
+                        catch(user_error& e) {
+                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" positional argument \"" + canonical_name + "\". Details: " + e.what());
                         }
                     }
                 }

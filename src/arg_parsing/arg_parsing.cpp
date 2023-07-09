@@ -110,7 +110,7 @@ namespace cppli::detail {
                                         ++arg_i; // we just ate the next arg, so don't process it again
                                     }
                                     else {
-                                        throw std::runtime_error('\"' + arg_string + "\" referred to an option with a required argument, but no argument followed\n");
+                                        throw user_error('\"' + arg_string + "\" referred to an option with a required argument, but no argument followed\n");
                                     }
                                 }
                             }
@@ -194,7 +194,7 @@ namespace cppli::detail {
                                             ++arg_i; // we just ate the next arg, so don't process it again
                                         }
                                         else {
-                                            throw std::runtime_error(std::string("The last character (") + arg_string[char_i] + ") in flag/option group \"" + arg_string + "\" referred to an option with a required argument, but no argument followed\n");
+                                            throw user_error(std::string("The last character (") + arg_string[char_i] + ") in flag/option group \"" + arg_string + "\" referred to an option with a required argument, but no argument followed\n");
                                         }
                                     }
                                 }
