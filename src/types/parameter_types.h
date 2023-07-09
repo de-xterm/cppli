@@ -62,11 +62,19 @@ namespace cppli {
             static constexpr auto has_short_name = (short_name_ != '\0');
             static constexpr auto has_long_name  = true;
 
-            operator const type_&() const {
+            /*operator const type_&() const {
                 static_assert((!optional_) && (!argument_optional_),
                               "option implicit conversion to underlying type is only allowed if the option in question is required (not optional) and has a required (not optional) argument");
 
                 return value_;
+            }*/
+
+            const std::optional<type>& std_optional() const {
+                return value_;
+            }
+
+            operator const std::optional<type>&() const {
+                return std_optional();
             }
 
             explicit operator bool() const {
@@ -74,18 +82,6 @@ namespace cppli {
             }
 
             option() = default;
-
-            /*option(type&& val) : value_(std::move(val)) {
-                if constexpr(argument_optional_) {
-                    was_included_ = true;
-                }
-            }
-
-            option(const type& val) : value_(val) {
-                if constexpr(argument_optional_) {
-                    was_included_ = true;
-                }
-            }*/
 
             option(const std::optional<std::string>& str) requires(argument_optional_) : was_included_(true) {
                 if (str.has_value()) {
@@ -203,9 +199,9 @@ namespace cppli {
             positional(const std::string& value) : value_(conversions::conversion_t<type_>()(value)) {}
             positional() = default;
 
-            operator const type_&() const {
+            /*operator const type_&() const {
                 return value_;
-            }
+            }*/
 
             bool has_value() const {
                 return value_.has_value();
@@ -223,16 +219,16 @@ namespace cppli {
                 return value_.value_or(alternative);
             }
 
-            const type_& get() const {
+            const type_& value() const {
                 return *value_;
             }
 
             const type_& operator*() const {
-                return get();
+                return value();
             }
 
             const type_* operator->() const {
-                return &get();
+                return &value();
             }
         };
 
@@ -330,25 +326,6 @@ namespace cppli {
                 static constexpr bool has_long_name = false;
                 static constexpr bool has_short_name = false;
         };
-
-        template<typename T>
-        struct raw_type_if_required_helper_t {
-            using type = T;
-        };
-
-        template<typename type_, string_literal name_, string_literal documentation_>
-        struct raw_type_if_required_helper_t<positional<type_, false, name_, documentation_>> {
-            using type = typename type_::type;
-        };
-
-        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
-                char short_name_>
-        struct raw_type_if_required_helper_t<option<type_, name_, documentation_, argument_text_, false, false, short_name_>> {
-            using type = typename type_::type;
-        };
-
-        template<typename T>
-        using raw_type_if_required_t = typename raw_type_if_required_helper_t<std::remove_cvref_t<T>>::type;
 
         template<string_literal name_, string_literal documentation_, char short_name_>
         std::ostream& operator<<(std::ostream& os, const detail::flag<name_, documentation_, short_name_>& s) {
