@@ -31,26 +31,11 @@ namespace cppli {
         template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
                 bool optional_, bool argument_optional_,
                 char short_name_ = '\0'>
-        class option;
-
-        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
-                bool optional_, bool argument_optional_,
-                char short_name_>
         class option {
-            /// type_ if default_value == no_default_value, otherwise std::optional<type_>
-            using optional_or_raw_type = std::conditional_t<optional_ || argument_optional_, std::optional<type_>, type_>;
-
-        private:
-            optional_or_raw_type value_;
-            bool was_included_ = false; // TODO: definitely don't have this available if argument is not optional
-
             static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
-            static_assert(!(argument_optional_ && (!optional_)),
-                          "required options with optional arguments are not allowed because that wouldn't make sense");
 
         public:
             using type = type_;
-
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
             static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
             static constexpr auto cppli_type_string = type_string;
@@ -62,23 +47,37 @@ namespace cppli {
 
             static constexpr auto has_short_name = (short_name_ != '\0');
             static constexpr auto has_long_name  = true;
+        };
+
+        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
+                char short_name_>
+        class option<type_, name_, documentation_, argument_text_,
+                true, true,
+                short_name_> {
+            /// type_ if default_value == no_default_value, otherwise std::optional<type_>
+        private:
+            std::optional<type_> value_;
+            bool was_included_ = false;
+
+            static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
+
+        public:
+            using type = type_;
+
+            static constexpr auto name = name_.make_lowercase_and_convert_underscores();
+            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
+            static constexpr auto cppli_type_string = type_string;
+            static constexpr auto short_name = short_name_;
+            static constexpr auto documentation = documentation_;
+            static constexpr auto argument_text = argument_text_;
+            static constexpr auto optional = true;
+            static constexpr auto argument_optional = true;
+
+            static constexpr auto has_short_name = (short_name_ != '\0');
+            static constexpr auto has_long_name  = true;
 
 
-            const std::optional<type>& std_optional() const {
-                return value_;
-            }
-
-            operator const std::optional<type>&() const {
-                return std_optional();
-            }
-
-            explicit operator bool() const {
-                return has_value();
-            }
-
-            option() = default;
-
-            option(const std::optional<std::string>& str) requires(argument_optional_) : was_included_(true) {
+            option(const std::optional<std::string>& str) : was_included_(true) {
                 if (str.has_value()) {
                     value_ = conversions::conversion_t<type_>()(*str);
                 }
@@ -87,87 +86,64 @@ namespace cppli {
                 }
             }
 
-            option(const std::optional<std::string>& str) requires (!argument_optional_)
-                    : value_(conversions::conversion_t<type_>()(*str))/*, // emptiness check happens elsewhere
-                      was_included_(true)*/ {} // no need to set was_included
+            option() = default;
 
             option(const option&) = default;
-
-            option& operator=(const option&) = default;
-
             option(option&&) = default;
 
+            option& operator=(const option&) = default;
             option& operator=(option&&) = default;
 
-            bool was_included() const {
-                static_assert(optional_, // TODO: shouldn't this be optional_ && argument_optional_?
-                              "option::was_included is only available if the option in question is optional");
+            const std::optional<type>& std_optional() const& {
+                return value_;
+            }
 
+            operator const std::optional<type>&() const& {
+                return std_optional();
+            }
+
+            explicit operator bool() const {
+                return has_value();
+            }
+
+
+            bool was_included() const {
                 return was_included_;
             }
 
             bool has_value() const {
-                static_assert(optional_ || argument_optional_,
-                              "option::has_value is only available if the option in question is optional or takes an optional argument");
-
                 return value_.has_value();
             }
 
             /// call func with value if has_value() is true, does nothing otherwise
             template<typename func_t>
             void access_value_if_present(func_t&& func) const {
-                static_assert(optional_ || argument_optional_,
-                              "option::access_value_if_present is only available if the option in question is optional or takes an optional argument. Use implicit conversion to underlying type instead");
-
-                if (has_value()) {
+                if(has_value()) {
                     func(*value_);
                 }
             }
 
-            type_ value_or(const type_& alternative) const { 
-                static_assert(optional_ || argument_optional_,
-                              "option::value_or is only available if the option in question is optional or takes an optional argument. Use implicit conversion to underlying type instead");
-
-                return value_.value_or(alternative);
+            template<typename U>
+            type value_or(U&& default_value) const& {
+                return value_.template value_or(std::forward<U>(default_value));
             }
 
-            const type_& get() const {
-                if constexpr(optional_) {
-                    return *value_;
-                }
-                else {
-                    return value_;
-                }
+            template<typename U>
+            constexpr type value_or(U&& default_value) && {
+                return value_.template value_or(std::forward<U>(default_value));
+            }
+
+            const type_& value() const& {
+                return *value_;
             }
 
             const type_& operator*() const {
-                return get();
+                return value();
             }
 
             const type_* operator->() const {
-                return &get();
+                return &value();
             }
-        };
-
-        // just a wrapper type for docs
-        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
-                char short_name_>
-        class option<type_, name_, documentation_, argument_text_, false, false, short_name_> {
-            static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
-
-        public:
-            using type = type_;
-            static constexpr auto name = name_.make_lowercase_and_convert_underscores();
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
-            static constexpr auto cppli_type_string = type_string;
-            static constexpr auto short_name = short_name_;
-            static constexpr auto documentation = documentation_;
-            static constexpr auto argument_text = argument_text_;
-            static constexpr auto optional = false;
-            static constexpr auto argument_optional = false;
-
-            static constexpr auto has_short_name = (short_name_ != '\0');
-            static constexpr auto has_long_name  = true;
         };
 
         template<typename type_, bool optional_, string_literal name_, string_literal documentation_>

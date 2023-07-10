@@ -22,6 +22,20 @@ namespace cppli {
 
         template<typename T>
         struct conversion_t<std::optional<T>> {
+            std::optional<T> operator()(const std::optional<std::string>& s) const {
+                if(s.has_value()) {
+                    if constexpr(std::is_constructible_v<T, const std::string&>) {
+                        return std::optional<T>(std::in_place, *s);
+                    }
+                    else {
+                        return std::optional<T>(conversion_t<T>()(*s));
+                    }
+                }
+                else {
+                    return std::nullopt;
+                }
+            }
+
             std::optional<T> operator()(const std::string& s) const {
                 if constexpr(std::is_constructible_v<T, const std::string&>) {
                     return std::optional<T>(std::in_place, s);
@@ -30,6 +44,8 @@ namespace cppli {
                     return std::optional<T>(conversion_t<T>()(s));
                 }
             }
+
+            static constexpr detail::string_literal type_string = conversion_t<T>::type_string;
         };
 
         template<>

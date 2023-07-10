@@ -40,7 +40,7 @@ namespace cppli::detail {
 
         std::string command_or_subcommand = "command";
 
-        std::string current_subcommand_name_string = argv[0];
+        std::string current_subcommand_name_string = to_string(subcommand_name);
 
 
         for(unsigned arg_i = 1; arg_i < argc; ++arg_i) {
@@ -50,7 +50,7 @@ namespace cppli::detail {
                 in_namespace = is_namespace(subcommand_name);
 
                 command_or_subcommand = "subcommand";
-                current_subcommand_name_string = arg_string;
+                current_subcommand_name_string = to_string(subcommand_name);
 
                 commands.back().inputs = std::move(args);
                 args = {};
