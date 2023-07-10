@@ -14,9 +14,6 @@ static bool foo_flag;
 
 static std::optional<int> size_option;
 
-template<typename T>
-struct type_info;
-
 
 CPPLI_SUBCOMMAND(postest,
                  "takes some flags and some options",

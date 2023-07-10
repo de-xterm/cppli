@@ -33,6 +33,9 @@ namespace cppli {
                 char short_name_ = '\0'>
         class option {
             static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
+            static_assert(!optional_ || std::is_constructible_v<type_, std::string> || std::is_move_constructible_v<type_>,
+                          "The type parameter of an optional option must be constructible from an std::string or have a move constructor available");
+
 
         public:
             using type = type_;
