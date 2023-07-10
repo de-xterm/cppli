@@ -22,7 +22,7 @@ namespace cppli::detail {
 
     using subcommand_name_t = std::vector<std::string>;
 
-    /// this is just boost::hash_combine, but I don't want to drag boost into this library just for hash_combine
+    /// this is just boost::hash_combine, but I don't want to drag boost into this library just for one function
     template<typename T>
     std::size_t hash_combine(std::size_t& seed, const T& val) {
         return (seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2));

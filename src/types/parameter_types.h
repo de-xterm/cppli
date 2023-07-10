@@ -50,6 +50,7 @@ namespace cppli {
 
         public:
             using type = type_;
+
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
             static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
             static constexpr auto cppli_type_string = type_string;
@@ -62,12 +63,6 @@ namespace cppli {
             static constexpr auto has_short_name = (short_name_ != '\0');
             static constexpr auto has_long_name  = true;
 
-            /*operator const type_&() const {
-                static_assert((!optional_) && (!argument_optional_),
-                              "option implicit conversion to underlying type is only allowed if the option in question is required (not optional) and has a required (not optional) argument");
-
-                return value_;
-            }*/
 
             const std::optional<type>& std_optional() const {
                 return value_;
@@ -180,13 +175,10 @@ namespace cppli {
 
         template<typename type_, string_literal name_, string_literal documentation_>
         class positional<type_, true, name_, documentation_> {
-
-        private:
-            std::optional<type_> value_;
+            static_assert(std::is_constructible_v<type_, std::string> || std::is_move_constructible_v<type_>,
+                          "The type parameter of an optional positional argument must be constructible from an std::string or have a move constructor available");
 
         public:
-            using type = type_;
-
             static constexpr auto name = name_;
             static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
             static constexpr auto optional = true;
@@ -194,42 +186,6 @@ namespace cppli {
 
             static constexpr auto has_short_name = false;
             static constexpr auto has_long_name  = false;
-
-
-            positional(const std::string& value) : value_(conversions::conversion_t<type_>()(value)) {}
-            positional() = default;
-
-            /*operator const type_&() const {
-                return value_;
-            }*/
-
-            bool has_value() const {
-                return value_.has_value();
-            }
-
-            /// call func with value if has_value() is true, does nothing otherwise
-            template<typename func_t>
-            void access_value_if_present(func_t&& func) const {
-                if (has_value()) {
-                    func(*value_);
-                }
-            }
-
-            type_ value_or(const type_& alternative) const {
-                return value_.value_or(alternative);
-            }
-
-            const type_& value() const {
-                return *value_;
-            }
-
-            const type_& operator*() const {
-                return value();
-            }
-
-            const type_* operator->() const {
-                return &value();
-            }
         };
 
         // this partial specialization is just a wrapper for documentation

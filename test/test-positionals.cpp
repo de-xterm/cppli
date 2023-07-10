@@ -14,14 +14,13 @@ static bool foo_flag;
 
 static std::optional<int> size_option;
 
-/*
-CPPLI_SUBCOMMAND(opttest,
+template<typename T>
+struct type_info;
+
+
+CPPLI_SUBCOMMAND(postest,
                  "takes some flags and some options",
-                 CPPLI_FLAG(foo, "foo flag", f)) {
+                 CPPLI_POSITIONAL(int, required, "required positional"),
+                 CPPLI_OPTIONAL_POSITIONAL(int, optional, "optional positional")) {
 
-    foo_flag = foo;
-
-    if(size) {
-    size_option = *size;
-    }
-}*/
+}

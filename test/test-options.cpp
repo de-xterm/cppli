@@ -26,6 +26,7 @@ CPPLI_SUBCOMMAND(opttest,
 
                  CPPLI_OPTION(std::string, color, "color", "color option", c),
                  CPPLI_OPTION(int, size, "color", "color option", s)) {
+
     foo_flag = foo;
     bar_flag = bar;
     baz_flag = baz;

@@ -64,15 +64,31 @@ namespace cppli::detail {
             }
             else if constexpr(argument_info_t<last>::is_positional) { // positional
                 --cumulative_positional_index; // because we've already skipped over the actual parameter for the positional, cumulative_positional_index will be too big
-                if((cumulative_positional_index >= subcommand.inputs.positional_args.size())) {
-                    throw user_error(main_command_or_subcommand + " \""  + subcommand_name_to_docs()[subcommand.name].name + "\" required positional argument \"" + canonical_name + "\" was not provided (expected an argument of type " + conversions::conversion_t<T>::type_string.string() + ')');
+
+                if constexpr(last::optional) {
+                    if(cumulative_positional_index < subcommand.inputs.positional_args.size()) {
+                        try {
+                            return conversions::conversion_t<T>()(subcommand.inputs.positional_args[cumulative_positional_index]);
+                        }
+                        catch(user_error& e) {
+                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" positional argument \"" + canonical_name + "\". Details: " + e.what());
+                        }
+                    }
+                    else {
+                        return {}; // empty optional
+                    }
                 }
                 else {
-                    try {
-                        return conversions::conversion_t<T>()(subcommand.inputs.positional_args[cumulative_positional_index]);
+                    if((cumulative_positional_index >= subcommand.inputs.positional_args.size())) {
+                        throw user_error(main_command_or_subcommand + " \""  + subcommand_name_to_docs()[subcommand.name].name + "\" required positional argument \"" + canonical_name + "\" was not provided (expected an argument of type " + conversions::conversion_t<T>::type_string.string() + ')');
                     }
-                    catch(user_error& e) {
-                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" positional argument \"" + canonical_name + "\". Details: " + e.what());
+                    else {
+                        try {
+                            return conversions::conversion_t<T>()(subcommand.inputs.positional_args[cumulative_positional_index]);
+                        }
+                        catch(user_error& e) {
+                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" positional argument \"" + canonical_name + "\". Details: " + e.what());
+                        }
                     }
                 }
             }
@@ -162,24 +178,14 @@ namespace cppli::detail {
             }
             else if constexpr(arg_info_t::is_positional) {
                 if constexpr(T::optional) {
-                    if((cumulative_positional_index >= subcommand.inputs.positional_args.size())) {
-                        return {};
-                    }
-                    else {
-                        try {
-                            return conversions::conversion_t<typename T::type>()(subcommand.inputs.positional_args[cumulative_positional_index]);
-                        }
-                        catch(user_error& e) {
-                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + subcommand_name_to_docs()[subcommand.name].name + "\" positional argument \"" + canonical_name + "\". Details: " + e.what());
-                        }
-                    }
+                    return {}; // dummy
                 }
                 else {
                     return {}; // dummy
                 }
             }
             else { // is variadic
-                return {};
+                return {}; // dummy
             }
         }
     }

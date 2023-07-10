@@ -92,7 +92,7 @@ namespace cppli {
         const ::cppli::detail::positional<TYPE, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
 
         #define CPPLI_OPTIONAL_POSITIONAL(TYPE, NAME, DESCRIPTION) \
-        const ::cppli::detail::positional<TYPE, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>& NAME
+        const ::cppli::detail::positional<TYPE, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
 
         #define CPPLI_VARIADIC(TYPE, NAME, DESCRIPTION) \
         const ::cppli::detail::variadic<TYPE, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME

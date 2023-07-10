@@ -20,6 +20,18 @@ namespace cppli {
             static constexpr detail::string_literal type_string = T::cppli_type_string;
         };
 
+        template<typename T>
+        struct conversion_t<std::optional<T>> {
+            std::optional<T> operator()(const std::string& s) const {
+                if constexpr(std::is_constructible_v<T, const std::string&>) {
+                    return std::optional<T>(std::in_place, s);
+                }
+                else {
+                    return std::optional<T>(conversion_t<T>()(s));
+                }
+            }
+        };
+
         template<>
         struct conversion_t<int> {
             int operator()(const std::string& str) const {
