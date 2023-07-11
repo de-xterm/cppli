@@ -8,5 +8,6 @@
 #include "cppli.h"
 
 int main(int argc, char** argv) {
+    cppli::excess_positionals_behavior = cppli::THROW;
     int result = Catch::Session().run(argc, argv);
 }

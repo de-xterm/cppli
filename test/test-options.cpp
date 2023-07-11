@@ -333,14 +333,10 @@ TEST_CASE("optional argument options work") {
                 REQUIRE(*color_option == "blue");
             }
 
-            /*SECTION("with space syntax") {
+            SECTION("space syntax throws a user_error because of unrecognized positional") {
                 const char* argv[] = {"program", "optargopttest", "--color", "blue"};
-                cppli::run<"program", "does stuff">(lengthof(argv), argv);
-
-                REQUIRE(was_included);
-                REQUIRE(color_option);
-                REQUIRE(*color_option == "blue");
-            }*/
+                REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+            }
         }
 
         SECTION("with short name") {
@@ -362,14 +358,10 @@ TEST_CASE("optional argument options work") {
                 }
             }
 
-            /*SECTION("with space syntax") {
+            SECTION("with space syntax") {
                 const char* argv[] = {"program", "optargopttest", "-c", "blue"};
-                cppli::run<"program", "does stuff">(lengthof(argv), argv);
-
-                REQUIRE(was_included);
-                REQUIRE(color_option);
-                REQUIRE(*color_option == "blue");
-            }*/
+                REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+            }
 
             SECTION("with connected syntax") {
                 const char* argv[] = {"program", "optargopttest", "-cred"};
@@ -380,12 +372,12 @@ TEST_CASE("optional argument options work") {
                 REQUIRE(*color_option == "red");
 
                 SECTION("works when the argument contains '='") {
-                    const char* argv[] = {"program", "optargopttest", "-co="};
+                    const char* argv[] = {"program", "optargopttest", "-csometext="};
                     cppli::run<"program", "does stuff">(lengthof(argv), argv);
 
                     REQUIRE(was_included);
                     REQUIRE(color_option);
-                    REQUIRE(*color_option == "=");
+                    REQUIRE(*color_option == "sometext=");
                 }
             }
         }

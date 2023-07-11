@@ -1,8 +1,11 @@
 #pragma once
 
+#include <sstream>
+
 #include "subcommand.h"
 #include "documentation.h"
 #include "exceptions.h"
+#include "configuration.h"
 
 namespace cppli::detail {
     template<typename T, typename last>
@@ -286,23 +289,26 @@ namespace cppli::detail {
             if constexpr(count_variadics<std::remove_cvref_t<arg_ts>...>() == 0) {
                 constexpr auto positionals_count = count_positionals<false, arg_ts...>();
                 if(positionals_count < subcommand.inputs.positional_args.size()) {
-                    std::cerr << "Unexpected positional argument" << ((subcommand.inputs.positional_args.size()-positionals_count) > 1 ? "s" : "");
+                    std::stringstream ss;
+                    ss << "Unexpected positional argument" << ((subcommand.inputs.positional_args.size()-positionals_count) > 1 ? "s" : "");
 
-                    std::cerr << ' ';
+                    ss << ' ';
 
                     for(unsigned i = positionals_count; i < subcommand.inputs.positional_args.size()-1; ++i) {
-                        std::cerr << '\"';
-                        std::cerr << subcommand.inputs.positional_args[i];
-                        std::cerr << "\", ";
+                        ss << '\"';
+                        ss << subcommand.inputs.positional_args[i];
+                        ss << "\", ";
                     }
-                    std::cerr << '\"';
-                    std::cerr << subcommand.inputs.positional_args[subcommand.inputs.positional_args.size()-1];
+                    ss << '\"';
+                    ss << subcommand.inputs.positional_args[subcommand.inputs.positional_args.size()-1];
 
-                    std::cerr << "\" given to " << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(subcommand.name) <<
-                    "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << "). Excess positional argument will be ignored\n";
+                    ss << "\" given to " << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(subcommand.name) <<
+                    "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << ").\n";
 
-                    std::cerr << "It's also possible that \"" << subcommand.inputs.positional_args[positionals_count] << "\" was supposed to be a subcommand, but was not recognized. "
+                    ss << "It's also possible that \"" << subcommand.inputs.positional_args[positionals_count] << "\" was supposed to be a subcommand, but was not recognized. "
                                  "You can run\n" << to_spaces_string(subcommand.name) << " help\nto view the available subcommands for this command\n";
+
+                    print_throw_or_do_nothing(excess_positionals_behavior, ss.str(), "Excess positional argument will be ignored\n");
                 }
             }
 
