@@ -718,6 +718,9 @@ namespace cppli::detail {
 
     std::string to_string(const subcommand_name_t& name);
 
+    std::string to_spaces_string(const subcommand_name_t& name);
+
+
     /// this is just boost::hash_combine, but I don't want to drag boost into this library just for one function
     template<typename T>
     std::size_t hash_combine(std::size_t& seed, const T& val) {
@@ -777,6 +780,8 @@ namespace cppli::detail {
 //end of "arg_parsing.h" include
 
 //included from file "command_registration.h"
+
+#include <sstream>
 
 
 //included from file "documentation.h"
@@ -875,6 +880,30 @@ namespace cppli {
 
 }
 //end of "documentation.h" include
+
+//included from file "configuration.h"
+
+#include <string>
+
+namespace cppli {
+    enum minor_error_behavior {
+        SILENT,
+        MESSAGE,
+        THROW
+    };
+
+    void print_throw_or_do_nothing(minor_error_behavior behavior,
+                                   const std::string& if_error_or_mesasge,
+                                   const std::string& only_if_message);
+
+    extern minor_error_behavior unrecognized_flag_behavior,
+                                flag_included_multiple_times_behavior,
+                                flag_given_an_argument,
+                                optional_included_multiple_times_with_same_argument_behavior,
+                                optional_included_multiple_times_with_different_arguments_behavior,
+                                excess_positionals_behavior;
+}
+//end of "configuration.h" include
 
 namespace cppli::detail {
     template<typename T, typename last>
@@ -1031,7 +1060,7 @@ namespace cppli::detail {
                                     throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what());
                                 }
                             }
-                            else if(short_name && subcommand.inputs.options_to_values.at(*short_name)) {
+                            else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
                                 try {
                                     return {subcommand.inputs.options_to_values.at(*short_name)}; // no need for has_value check here; returning an empty optional is valid
                                 }
@@ -1124,17 +1153,12 @@ namespace cppli::detail {
     }
 
     template<typename arg_t, typename...arg_ts>
-    constexpr bool pack_contains_variadic() {
-        if constexpr(argument_info_t<arg_t>::is_variadic) {
-            return true;
+    constexpr std::size_t count_variadics() {
+        if constexpr(sizeof...(arg_ts) > 0) {
+            return argument_info_t<arg_t>::is_variadic+count_variadics<arg_ts...>();
         }
         else {
-            if constexpr(sizeof...(arg_ts) > 0) {
-                return pack_contains_variadic<arg_ts...>();
-            }
-            else {
-                return false;
-            }
+            return 0;
         }
     }
 
@@ -1157,13 +1181,35 @@ namespace cppli::detail {
     template<typename return_t, typename...arg_ts, auto func>
     struct call_func_wrapper_t<return_t(*)(arg_ts...), func> { // we need all these ugly partial specializations so that we can deduce arg_ts and indices
         static void call_func(const subcommand_t& subcommand) {
-            if constexpr(!pack_contains_variadic<std::remove_cvref_t<arg_ts>...>()) {
+            constexpr auto variadic_count = count_variadics<std::remove_cvref_t<arg_ts>...>();
+            static_assert(variadic_count < 2, "A command can only have 0 or 1 variadics (two or more were found)");
+
+            if constexpr(count_variadics<std::remove_cvref_t<arg_ts>...>() == 0) {
                 constexpr auto positionals_count = count_positionals<false, arg_ts...>();
                 if(positionals_count < subcommand.inputs.positional_args.size()) {
-                    std::cerr << "Too many positional arguments given to " << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(subcommand.name) <<
-                              "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << "). Excess positional argument will be ignored\n";
+                    std::stringstream ss;
+                    ss << "Unexpected positional argument" << ((subcommand.inputs.positional_args.size()-positionals_count) > 1 ? "s" : "");
+
+                    ss << ' ';
+
+                    for(unsigned i = positionals_count; i < subcommand.inputs.positional_args.size()-1; ++i) {
+                        ss << '\"';
+                        ss << subcommand.inputs.positional_args[i];
+                        ss << "\", ";
+                    }
+                    ss << '\"';
+                    ss << subcommand.inputs.positional_args[subcommand.inputs.positional_args.size()-1];
+
+                    ss << "\" given to " << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(subcommand.name) <<
+                    "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << ").\n";
+
+                    ss << "It's also possible that \"" << subcommand.inputs.positional_args[positionals_count] << "\" was supposed to be a subcommand, but was not recognized. "
+                                 "You can run\n" << to_spaces_string(subcommand.name) << " help\nto view the available subcommands for this command\n";
+
+                    print_throw_or_do_nothing(excess_positionals_behavior, ss.str(), "Excess positional argument will be ignored\n");
                 }
             }
+
             call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::call_func(subcommand);
         }
     };
@@ -1349,6 +1395,31 @@ namespace cppli::detail {
 
 #ifdef CPPLI_IMPLEMENTATION
 
+//included from file "configuration.cpp"
+
+#include <iostream>
+
+
+namespace cppli {
+    void print_throw_or_do_nothing(minor_error_behavior behavior,
+                                   const std::string& print_if_error_or_mesasge,
+                                   const std::string& print_only_if_message) {
+        if(behavior == THROW) {
+            throw user_error(print_if_error_or_mesasge);
+        }
+        else {
+            std::cerr << print_if_error_or_mesasge << print_only_if_message;
+        }
+    }
+
+    minor_error_behavior unrecognized_flag_behavior                                         = MESSAGE,
+                         flag_included_multiple_times_behavior                              = MESSAGE,
+                         optional_included_multiple_times_with_same_argument_behavior       = MESSAGE,
+                         optional_included_multiple_times_with_different_arguments_behavior = MESSAGE,
+                         excess_positionals_behavior                                        = MESSAGE;
+}
+//end of "configuration.cpp" include
+
 //included from file "arg_parsing.cpp"
 
 #include <stdexcept>
@@ -1485,89 +1556,47 @@ namespace cppli::detail {
                     }
                 }
                 else if((arg_string[0] == '-') && !disambiguate_next_arg) { // short flag(s) and/or option (these are not so ez)
-                    if(arg_string.find('=') != std::string::npos) {
-                        for(unsigned char_i = 1; char_i < arg_string.size(); ++char_i) {
-                            std::string char_string = arg_string.substr(char_i,1);
-                            if((char_i < arg_string.size()-1) && (arg_string[char_i+1] == '=')) {
-                                if(subcommand_takes_option(subcommand_name, char_string)) {
-                                    args.options_to_values.emplace(char_string, arg_string.substr(char_i+2, arg_string.size()-(char_i+2)));
-                                }
-                                else if(subcommand_takes_flag(subcommand_name, char_string)) {
-                                    std::cerr << "For " << command_or_subcommand << " \"" << current_subcommand_name_string << "\", \"" << char_string << "\" is a flag, not an option, and therefore can't be assigned a value (like it was in flag/option group \"" << arg_string << "\"). "
-                                                 "The value will be ignored and the flag will be set to true\n";
+                    for(unsigned char_i = 1; char_i < arg_string.size(); ++char_i) {
+                        std::string char_string = arg_string.substr(char_i,1);
 
-                                    args.flags.emplace(char_string);
-                                }
-                                else {
-                                    std::cerr << "Flag/option \"" << char_string << "\" (from flag/option group \"" << arg_string << "\") was not recognized by" << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and is therefore being ignored\n";
-                                }
-                                break;
+                        if(subcommand_takes_option(subcommand_name, char_string)) { // there is an argument
+                            if(char_i < arg_string.size()-1) { // no equals sign, so everything after this character is the argument    // TODO: maybe check to see if the string contains any flags with required args, and then if not we can employ this logic
+                                args.options_to_values.emplace(char_string, arg_string.substr(char_i+1+(arg_string[char_i+1] == '='), arg_string.size()));
+                                break;                                                                 // ^ discard a leading '='!!
                             }
-                            else {
-                                if(subcommand_takes_flag(subcommand_name, char_string)) {
-                                    args.flags.emplace(char_string);
-                                }
-                                else if(subcommand_takes_option(subcommand_name, char_string)) {
+                            else if(char_i == arg_string.size()-1) { // no room for argument
+                                if(subcommand_option_argument_is_optional(subcommand_name, char_string)) { // if this option's argument is optional, assume that no argument is provided, and that the next arg is unrelated
                                     args.options_to_values.emplace(char_string, std::nullopt);
                                 }
-                                else if(char_string == "h") {
-                                    std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
-                                    return {{}, true};
-                                }
-                                else if(in_namespace) {
-                                    std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
-                                    invalid_input_to_namespace = true;
-                                    continue;
-                                }
                                 else {
-                                    std::cerr << "Flag/option \"" << char_string << "\" (from flag/option group \"" << arg_string << "\") was not recognized by" << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and is therefore being ignored\n";
-                                }
-                            }
-                        }
-                    }
-                    else {
-                        for(unsigned char_i = 1; char_i < arg_string.size(); ++char_i) {
-                            std::string char_string = arg_string.substr(char_i,1);
-
-                            if(subcommand_takes_option(subcommand_name, char_string)) {
-                                if(char_i < arg_string.size()-1) { // no equals sign, so everything after this character is the argument    // TODO: maybe check to see if the string contains any flags with required args, and then if not we can employ this logic
-                                    args.options_to_values.emplace(char_string, arg_string.substr(char_i+1, arg_string.size()-(char_i+1)));
-                                    break;
-                                }
-                                else if(char_i == arg_string.size()-1) {
-                                    if(subcommand_option_argument_is_optional(subcommand_name, char_string)) { // if this option's argument is optional, assume that no argument is provided, and that the next arg is unrelated
-                                        args.options_to_values.emplace(char_string, std::nullopt);
+                                    if(arg_i+1 < argc) {
+                                        args.options_to_values.emplace(char_string, std::string(argv[arg_i+1]));
+                                        ++arg_i; // we just ate the next arg, so don't process it again
                                     }
                                     else {
-                                        if(arg_i+1 < argc) {
-                                            args.options_to_values.emplace(char_string, std::string(argv[arg_i+1]));
-                                            ++arg_i; // we just ate the next arg, so don't process it again
-                                        }
-                                        else {
-                                            throw user_error(std::string("The last character (") + arg_string[char_i] + ") in flag/option group \"" + arg_string + "\" referred to an option with a required argument, but no argument followed\n");
-                                        }
+                                        throw user_error(std::string("The last character (") + arg_string[char_i] + ") in flag/option group \"" + arg_string + "\" referred to an option with a required argument, but no argument followed\n");
                                     }
                                 }
-                                else {
-                                    assert(false); // this should never happen
-                                }
-                            }
-                            else if(subcommand_takes_flag(subcommand_name, char_string)) {
-                                args.flags.emplace(char_string);
-                            }
-                            else if(char_string == "h") {
-                                std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
-                                return {{}, true};
-                            }
-                            else if(in_namespace) {
-                                std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
-                                invalid_input_to_namespace = true;
-                                continue;
                             }
                             else {
-                                std::cerr << "Character '" << char_string << "' in flag/option group \"" << arg_string << "\" " // TODO: can't I make this nonfatal?
-                                                         "did not form a valid flag or option for " << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and will therefore be ignored\n";
+                                assert(false); // this should never happen
                             }
+                        }
+                        else if(subcommand_takes_flag(subcommand_name, char_string)) {
+                            args.flags.emplace(char_string);
+                        }
+                        else if(char_string == "h") {
+                            std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
+                            return {{}, true};
+                        }
+                        else if(in_namespace) {
+                            std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                            invalid_input_to_namespace = true;
+                            continue;
+                        }
+                        else {
+                            std::cerr << "Character '" << char_string << "' in flag/option group \"" << arg_string << "\" "
+                                                     "did not form a valid flag or option for " << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and will therefore be ignored\n";
                         }
                     }
                 }
@@ -2015,6 +2044,29 @@ namespace cppli::detail {
         if(name.size() > 1) {
             ret += name[name.size()-1];
         }
+
+        return ret;
+    }
+
+    std::string to_spaces_string(const subcommand_name_t& name) {
+        std::string ret;
+
+        if(name.size()) {
+            if(name.front() == "MAIN") {
+                ret += program_name();
+            }
+            else {
+                ret += name.front();
+            }
+            if(name.size() > 1) {
+                ret += ' ';
+            }
+        }
+        for(unsigned i = 1; i < name.size()-1; ++i) {
+            ret += name[i];
+            ret += ' ';
+        }
+        ret += name.back();
 
         return ret;
     }
