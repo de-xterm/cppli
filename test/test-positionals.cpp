@@ -18,6 +18,7 @@ static std::optional<int> size_option;
 CPPLI_SUBCOMMAND(postest,
                  "takes some flags and some options",
                  CPPLI_POSITIONAL(int, required, "required positional"),
-                 CPPLI_OPTIONAL_POSITIONAL(int, optional, "optional positional")) {
+                 CPPLI_OPTIONAL_POSITIONAL(int, optional, "optional positional"),
+                 CPPLI_VARIADIC(int, var, "variadic positional")) {
 
 }

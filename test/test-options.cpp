@@ -31,13 +31,13 @@ CPPLI_SUBCOMMAND(opttest,
     bar_flag = bar;
     baz_flag = baz;
 
-    if(color) {
-        color_option = *color;
-    }
+    //if(color) {
+        color_option = color;
+    //}
 
-    if(size) {
-        size_option = *size;
-    }
+    //if(size) {
+        size_option = size;
+    //}
 }
 
 CPPLI_SUBCOMMAND(reqopttest,
@@ -48,11 +48,17 @@ CPPLI_SUBCOMMAND(reqopttest,
     size_option = size;
 }
 
+static bool was_included;
 CPPLI_SUBCOMMAND(optargopttest,
                  "takes one option with an optional argument",
 
-                 CPPLI_OPTIONAL_ARGUMENT_OPTION(int, size, "size", "size option", s)) {
-    size_option = size;
+                 CPPLI_OPTIONAL_ARGUMENT_OPTION(std::string, color, "color", "color option", c)) {
+
+
+    was_included = color.was_included();
+
+                // implicit cast to std::optional
+    color_option = color;
 }
 
 
@@ -283,6 +289,105 @@ TEST_CASE("required options work") {
         SECTION("with short name") {
             const char* argv[] = {"program", "reqopttest", "-s"};
             REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        }
+    }
+}
+
+TEST_CASE("optional argument options work") {
+
+    //was_included = false;
+    SECTION("not including option is valid") {
+        const char* argv[] = {"program", "optargopttest"};
+        cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+        REQUIRE(!was_included);
+        REQUIRE(!color_option);
+    }
+
+    SECTION("including option without argument is valid and results in was_included being true and an empty optional") {
+        SECTION("with long name") {
+            const char* argv[] = {"program", "optargopttest", "--color"};
+            cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+            REQUIRE(was_included);
+            REQUIRE(!color_option);
+        }
+
+        SECTION("with short name") {
+            const char* argv[] = {"program", "optargopttest", "-c"};
+            cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+            REQUIRE(was_included);
+            REQUIRE(!color_option);
+        }
+    }
+
+    SECTION("including option with argument is valid and results in was_included being true and the desired value in the optional") {
+        SECTION("with long name") {
+            SECTION("with equals syntax") {
+                const char* argv[] = {"program", "optargopttest", "--color=blue"};
+                cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+                REQUIRE(was_included);
+                REQUIRE(color_option);
+                REQUIRE(*color_option == "blue");
+            }
+
+            /*SECTION("with space syntax") {
+                const char* argv[] = {"program", "optargopttest", "--color", "blue"};
+                cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+                REQUIRE(was_included);
+                REQUIRE(color_option);
+                REQUIRE(*color_option == "blue");
+            }*/
+        }
+
+        SECTION("with short name") {
+            SECTION("with equals syntax") {
+                const char* argv[] = {"program", "optargopttest", "-c=green"};
+                cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+                REQUIRE(was_included);
+                REQUIRE(color_option);
+                REQUIRE(*color_option == "green");
+
+                SECTION("works when the argument contains '='") {
+                    const char* argv[] = {"program", "optargopttest", "-c=="};
+                    cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+                    REQUIRE(was_included);
+                    REQUIRE(color_option);
+                    REQUIRE(*color_option == "=");
+                }
+            }
+
+            /*SECTION("with space syntax") {
+                const char* argv[] = {"program", "optargopttest", "-c", "blue"};
+                cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+                REQUIRE(was_included);
+                REQUIRE(color_option);
+                REQUIRE(*color_option == "blue");
+            }*/
+
+            SECTION("with connected syntax") {
+                const char* argv[] = {"program", "optargopttest", "-cred"};
+                cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+                REQUIRE(was_included);
+                REQUIRE(color_option);
+                REQUIRE(*color_option == "red");
+
+                SECTION("works when the argument contains '='") {
+                    const char* argv[] = {"program", "optargopttest", "-co="};
+                    cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+                    REQUIRE(was_included);
+                    REQUIRE(color_option);
+                    REQUIRE(*color_option == "=");
+                }
+            }
         }
     }
 }

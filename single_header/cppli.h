@@ -2036,6 +2036,14 @@ namespace cppli::detail {
     }
 }
 //end of "subcommand.cpp" include
+
+//included from file "exceptions.cpp"
+
+
+namespace cppli {
+    user_error::user_error(const std::string& what) : std::runtime_error(what) {}
+}
+//end of "exceptions.cpp" include
 #endif
 
 

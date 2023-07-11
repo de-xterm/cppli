@@ -105,6 +105,29 @@ namespace cppli::detail {
         return ret;
     }
 
+    std::string to_spaces_string(const subcommand_name_t& name) {
+        std::string ret;
+
+        if(name.size()) {
+            if(name.front() == "MAIN") {
+                ret += program_name();
+            }
+            else {
+                ret += name.front();
+            }
+            if(name.size() > 1) {
+                ret += ' ';
+            }
+        }
+        for(unsigned i = 1; i < name.size()-1; ++i) {
+            ret += name[i];
+            ret += ' ';
+        }
+        ret += name.back();
+
+        return ret;
+    }
+
 
     std::size_t detail::subcommand_name_hash_t::operator()(const subcommand_name_t& name) const noexcept  {
         std::size_t hash = 0;

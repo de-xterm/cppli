@@ -62,7 +62,9 @@ then nothing would be printed
 * Very little typing
   * Uses macros to stringify 
 * Lots of compile time checks for sane behavior
-* Supports all common commandline features ([list of supported features](#features))
+* Supports all common commandline features ([list of supported features](#commandline-features))
+* Leverages the type system
+  * doesn't introduce a fragile runtime type system (doesn't force you to use variants or anything like that)
 * Uses raw types as much as possible
   * Minimal use of wrapper classes
   * When wrappers are necessary, stl types are used wherever possible, so the library will be compatible with many existing algorithms

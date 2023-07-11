@@ -135,7 +135,7 @@ namespace cppli::detail {
                     }
                 }
                 else if((arg_string[0] == '-') && !disambiguate_next_arg) { // short flag(s) and/or option (these are not so ez)
-                    if(arg_string.find('=') != std::string::npos) {
+                    if(arg_string.find('=') != std::string::npos) { // TODO: might cause issues when the argument to an option contains '='
                         for(unsigned char_i = 1; char_i < arg_string.size(); ++char_i) {
                             std::string char_string = arg_string.substr(char_i,1);
                             if((char_i < arg_string.size()-1) && (arg_string[char_i+1] == '=')) {

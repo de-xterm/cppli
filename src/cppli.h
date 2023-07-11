@@ -8,6 +8,7 @@
     #include "arg_parsing.cpp"
     #include "documentation.cpp"
     #include "subcommand.cpp"
+    #include "exceptions.cpp"
 #endif
 
 
