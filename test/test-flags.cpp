@@ -10,6 +10,8 @@ static bool foo_flag;
 static bool bar_flag;
 static bool baz_flag;
 
+// TODO: add test case for trying to give an option an argument throwing a user_error
+
 CPPLI_SUBCOMMAND(flagtest,
                  "takes some flags",
 

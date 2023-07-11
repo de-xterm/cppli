@@ -5,6 +5,7 @@
 #include "command_registration.h"
 
 #ifdef CPPLI_IMPLEMENTATION
+    #include "configuration.cpp"
     #include "arg_parsing.cpp"
     #include "documentation.cpp"
     #include "subcommand.cpp"
