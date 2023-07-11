@@ -718,6 +718,9 @@ namespace cppli::detail {
 
     std::string to_string(const subcommand_name_t& name);
 
+    std::string to_spaces_string(const subcommand_name_t& name);
+
+
     /// this is just boost::hash_combine, but I don't want to drag boost into this library just for one function
     template<typename T>
     std::size_t hash_combine(std::size_t& seed, const T& val) {
@@ -1031,7 +1034,7 @@ namespace cppli::detail {
                                     throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what());
                                 }
                             }
-                            else if(short_name && subcommand.inputs.options_to_values.at(*short_name)) {
+                            else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
                                 try {
                                     return {subcommand.inputs.options_to_values.at(*short_name)}; // no need for has_value check here; returning an empty optional is valid
                                 }
@@ -1124,17 +1127,12 @@ namespace cppli::detail {
     }
 
     template<typename arg_t, typename...arg_ts>
-    constexpr bool pack_contains_variadic() {
-        if constexpr(argument_info_t<arg_t>::is_variadic) {
-            return true;
+    constexpr std::size_t count_variadics() {
+        if constexpr(sizeof...(arg_ts) > 0) {
+            return argument_info_t<arg_t>::is_variadic+count_variadics<arg_ts...>();
         }
         else {
-            if constexpr(sizeof...(arg_ts) > 0) {
-                return pack_contains_variadic<arg_ts...>();
-            }
-            else {
-                return false;
-            }
+            return 0;
         }
     }
 
@@ -1157,13 +1155,32 @@ namespace cppli::detail {
     template<typename return_t, typename...arg_ts, auto func>
     struct call_func_wrapper_t<return_t(*)(arg_ts...), func> { // we need all these ugly partial specializations so that we can deduce arg_ts and indices
         static void call_func(const subcommand_t& subcommand) {
-            if constexpr(!pack_contains_variadic<std::remove_cvref_t<arg_ts>...>()) {
+            constexpr auto variadic_count = count_variadics<std::remove_cvref_t<arg_ts>...>();
+            static_assert(variadic_count < 2, "A command can only have 0 or 1 variadics (two or more were found)");
+
+            if constexpr(count_variadics<std::remove_cvref_t<arg_ts>...>() == 0) {
                 constexpr auto positionals_count = count_positionals<false, arg_ts...>();
                 if(positionals_count < subcommand.inputs.positional_args.size()) {
-                    std::cerr << "Too many positional arguments given to " << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(subcommand.name) <<
-                              "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << "). Excess positional argument will be ignored\n";
+                    std::cerr << "Unexpected positional argument" << ((subcommand.inputs.positional_args.size()-positionals_count) > 1 ? "s" : "");
+
+                    std::cerr << ' ';
+
+                    for(unsigned i = positionals_count; i < subcommand.inputs.positional_args.size()-1; ++i) {
+                        std::cerr << '\"';
+                        std::cerr << subcommand.inputs.positional_args[i];
+                        std::cerr << "\", ";
+                    }
+                    std::cerr << '\"';
+                    std::cerr << subcommand.inputs.positional_args[subcommand.inputs.positional_args.size()-1];
+
+                    std::cerr << "\" given to " << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(subcommand.name) <<
+                    "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << "). Excess positional argument will be ignored\n";
+
+                    std::cerr << "It's also possible that \"" << subcommand.inputs.positional_args[positionals_count] << "\" was supposed to be a subcommand, but was not recognized. "
+                                 "You can run\n" << to_spaces_string(subcommand.name) << " help\nto view the available subcommands for this command\n";
                 }
             }
+
             call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::call_func(subcommand);
         }
     };
@@ -1485,7 +1502,7 @@ namespace cppli::detail {
                     }
                 }
                 else if((arg_string[0] == '-') && !disambiguate_next_arg) { // short flag(s) and/or option (these are not so ez)
-                    if(arg_string.find('=') != std::string::npos) {
+                    if(arg_string.find('=') != std::string::npos) { // TODO: might cause issues when the argument to an option contains '='
                         for(unsigned char_i = 1; char_i < arg_string.size(); ++char_i) {
                             std::string char_string = arg_string.substr(char_i,1);
                             if((char_i < arg_string.size()-1) && (arg_string[char_i+1] == '=')) {
@@ -2015,6 +2032,29 @@ namespace cppli::detail {
         if(name.size() > 1) {
             ret += name[name.size()-1];
         }
+
+        return ret;
+    }
+
+    std::string to_spaces_string(const subcommand_name_t& name) {
+        std::string ret;
+
+        if(name.size()) {
+            if(name.front() == "MAIN") {
+                ret += program_name();
+            }
+            else {
+                ret += name.front();
+            }
+            if(name.size() > 1) {
+                ret += ' ';
+            }
+        }
+        for(unsigned i = 1; i < name.size()-1; ++i) {
+            ret += name[i];
+            ret += ' ';
+        }
+        ret += name.back();
 
         return ret;
     }
