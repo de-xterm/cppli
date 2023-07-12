@@ -716,9 +716,7 @@ namespace cppli::detail {
 
     using subcommand_name_t = std::vector<std::string>;
 
-    std::string to_string(const subcommand_name_t& name);
-
-    std::string to_spaces_string(const subcommand_name_t& name);
+    std::string to_string(const subcommand_name_t& name, const char* delimiter = "::");
 
 
     /// this is just boost::hash_combine, but I don't want to drag boost into this library just for one function
@@ -743,8 +741,10 @@ namespace cppli::detail {
         std::unordered_map<std::string, bool> option_argument_is_optional;
     };
 
-    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>&   subcommand_name_to_inputs_info();
-    std::unordered_map<subcommand_name_t, subcommand_func_t,        subcommand_name_hash_t>&   subcommand_name_to_func();
+    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>& subcommand_name_to_inputs_info();
+    std::unordered_map<subcommand_name_t, subcommand_func_t,        subcommand_name_hash_t>& subcommand_name_to_func();
+    std::unordered_map<subcommand_name_t, subcommand_func_t,        subcommand_name_hash_t>& subcommand_name_to_error_checking_func();
+
 
     /// if arg appended to parent_command_names forms a valid subcommand,
     /// pushes back arg to parent_command_names and returns true.
@@ -764,8 +764,6 @@ namespace cppli::detail {
     const std::string& program_description();
 
     bool main_command_is_namespace();
-
-
 }
 //end of "subcommand.h" include
 
@@ -780,8 +778,6 @@ namespace cppli::detail {
 //end of "arg_parsing.h" include
 
 //included from file "command_registration.h"
-
-#include <sstream>
 
 
 //included from file "documentation.h"
@@ -897,6 +893,7 @@ namespace cppli {
                                    const std::string& only_if_message);
 
     extern minor_error_behavior unrecognized_flag_behavior,
+                                invalid_flag_behavior,
                                 flag_included_multiple_times_behavior,
                                 flag_given_an_argument,
                                 optional_included_multiple_times_with_same_argument_behavior,
@@ -1168,11 +1165,20 @@ namespace cppli::detail {
     template<typename func_t, auto func, typename index_seq>
     struct call_func_wrapper_impl_t;
 
+    template<typename...Ts>
+    void do_nothing(Ts&&...args) {}
+
     template<typename return_t, typename...arg_ts, std::size_t...indices, auto func>
     struct call_func_wrapper_impl_t<return_t(*)(arg_ts...), func, std::integer_sequence<std::size_t, indices...>> {
         static void call_func(const subcommand_t& subcommand) {
             func(process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand)...);
         }
+
+        #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+            static void check_for_errors(const subcommand_t& subcommand) {
+                do_nothing(process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand)...);
+            }
+        #endif
     };
 
     template<typename func_t, auto func>
@@ -1184,34 +1190,14 @@ namespace cppli::detail {
             constexpr auto variadic_count = count_variadics<std::remove_cvref_t<arg_ts>...>();
             static_assert(variadic_count < 2, "A command can only have 0 or 1 variadics (two or more were found)");
 
-            if constexpr(count_variadics<std::remove_cvref_t<arg_ts>...>() == 0) {
-                constexpr auto positionals_count = count_positionals<false, arg_ts...>();
-                if(positionals_count < subcommand.inputs.positional_args.size()) {
-                    std::stringstream ss;
-                    ss << "Unexpected positional argument" << ((subcommand.inputs.positional_args.size()-positionals_count) > 1 ? "s" : "");
-
-                    ss << ' ';
-
-                    for(unsigned i = positionals_count; i < subcommand.inputs.positional_args.size()-1; ++i) {
-                        ss << '\"';
-                        ss << subcommand.inputs.positional_args[i];
-                        ss << "\", ";
-                    }
-                    ss << '\"';
-                    ss << subcommand.inputs.positional_args[subcommand.inputs.positional_args.size()-1];
-
-                    ss << "\" given to " << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(subcommand.name) <<
-                    "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << ").\n";
-
-                    ss << "It's also possible that \"" << subcommand.inputs.positional_args[positionals_count] << "\" was supposed to be a subcommand, but was not recognized. "
-                                 "You can run\n" << to_spaces_string(subcommand.name) << " help\nto view the available subcommands for this command\n";
-
-                    print_throw_or_do_nothing(excess_positionals_behavior, ss.str(), "Excess positional argument will be ignored\n");
-                }
-            }
-
             call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::call_func(subcommand);
         }
+
+        #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+            static void check_for_errors(const subcommand_t& subcommand) {
+                call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::fails(subcommand);
+            }
+        #endif
     };
 
     template<auto func>
@@ -1225,6 +1211,13 @@ namespace cppli::detail {
     void call_func(const subcommand_t& command) {
         call_func_wrapper_t<decltype(func), func>::call_func(command);
     }
+
+    #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+        template<auto func>
+        void check_for_errors(const subcommand_t& command) {
+            call_func_wrapper_t<decltype(func), func>::call_func(command);
+        }
+    #endif
 
     template<typename T, typename U, typename...Ts>
     constexpr bool pack_contains_short_name_func() {
@@ -1372,6 +1365,9 @@ namespace cppli::detail {
         generate_input_info_and_docs(info, docs, func);
 
         subcommand_name_to_func().emplace(name, call_func<func>);
+        #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+            subcommand_name_to_error_checking_func().emplace(name, check_for_errors<func>);
+        #endif
         subcommand_name_to_inputs_info().emplace(name, std::move(info));
 
         if(name == subcommand_name_t{"MAIN"}) {
@@ -1413,6 +1409,8 @@ namespace cppli {
     }
 
     minor_error_behavior unrecognized_flag_behavior                                         = MESSAGE,
+                         invalid_flag_behavior                                              = MESSAGE,
+                         flag_given_an_argument                                             = MESSAGE,
                          flag_included_multiple_times_behavior                              = MESSAGE,
                          optional_included_multiple_times_with_same_argument_behavior       = MESSAGE,
                          optional_included_multiple_times_with_different_arguments_behavior = MESSAGE,
@@ -1422,12 +1420,21 @@ namespace cppli {
 
 //included from file "arg_parsing.cpp"
 
-#include <stdexcept>
 #include <cassert>
 #include <iostream>
+#include <sstream>
 
 
 namespace cppli::detail {
+    std::string say_something_if_empty(const std::string& arg) {
+        if(!arg.size()) {
+            return "(empty string)";
+        }
+        else {
+            return '\"' + arg + '\"';
+        }
+    }
+
     parse_ret_t parse(int argc, const char* const* const argv) {
 
         if(argc == 0) {
@@ -1556,6 +1563,10 @@ namespace cppli::detail {
                     }
                 }
                 else if((arg_string[0] == '-') && !disambiguate_next_arg) { // short flag(s) and/or option (these are not so ez)
+                    bool invalid_character_in_flag_group = false;
+                    unsigned invalid_character_index; // set to max because we're going to do a minimum
+                    std::stringstream invalid_character_in_flag_group_message;
+
                     for(unsigned char_i = 1; char_i < arg_string.size(); ++char_i) {
                         std::string char_string = arg_string.substr(char_i,1);
 
@@ -1595,9 +1606,47 @@ namespace cppli::detail {
                             continue;
                         }
                         else {
-                            std::cerr << "Character '" << char_string << "' in flag/option group \"" << arg_string << "\" "
-                                                     "did not form a valid flag or option for " << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and will therefore be ignored\n";
+                            if(!isletter(char_string[0])) {
+                                if(!invalid_character_in_flag_group) {
+                                    invalid_character_index = char_i; // because we only want to set this the first time we find an invalid character
+                                }
+                                invalid_character_in_flag_group = true;
+                                invalid_character_in_flag_group_message << "Character '" << char_string << "' in flag/option group \"" << arg_string << "\" "
+                                   << "given to " << command_or_subcommand << " \"" << current_subcommand_name_string << "\" "
+                                   << "is not a letter and therefore cannot form a valid short name for a flag or option\n";
+
+                                if(arg_string[invalid_character_index] == '=') {
+                                    break; // so that we don't continue to look for flags (valid or invalid) in the "argument"
+                                }
+                            }
+                            else {
+                                std::stringstream ss;
+                                ss << "Character '" << char_string << "' in flag/option group \"" << arg_string << "\" "
+                                      "was not a recognized flag or option for " << command_or_subcommand << " \"" << current_subcommand_name_string << "\".";
+
+                                print_throw_or_do_nothing(unrecognized_flag_behavior, ss.str(), " It will be ignored\n");
+                            }
                         }
+                    }
+
+                    if(invalid_character_in_flag_group) {
+                        if(invalid_character_index > 1) { // 1 instead of 0 because of the leading '-'
+                            if(arg_string[invalid_character_index] == '=') {
+                                std::stringstream ss;
+                                ss << "Character '" << arg_string[invalid_character_index-1] << "' in flag/option group \"" << arg_string << "\" is a flag, and therefore can't accept an argument.\n";
+
+                                print_throw_or_do_nothing(flag_given_an_argument, ss.str(),
+                                                          "The argument " + say_something_if_empty(arg_string.substr(invalid_character_index+1, arg_string.size())) +
+                                                          " will be ignored and the flag '" + arg_string[invalid_character_index-1] + "' will be set to true\n");
+                                continue;
+                            }
+                            else {
+                                invalid_character_in_flag_group_message << "It's possible that the substring \"" << arg_string.substr(invalid_character_index, arg_string.size())
+                                                                        << "\" was meant to be an argument for '" << arg_string[invalid_character_index-1] << "', but '"
+                                                                        << arg_string[invalid_character_index-1] << "' is flag and therefore can't have an argument.\n";
+                            }
+                        }
+                        print_throw_or_do_nothing(invalid_flag_behavior, invalid_character_in_flag_group_message.str(), "Invalid flag(s) will be ignored\n");
                     }
                 }
                 else { // positional arg
@@ -1614,9 +1663,40 @@ namespace cppli::detail {
                         disambiguate_next_arg = false;
                         args.positional_args.emplace_back(std::move(arg_string));
                     }
+
+                    const auto& docs = subcommand_name_to_docs()[commands.back().name];
+                    const auto& command = commands.back();
+
+                    unsigned expected_positionals_count = docs.positionals.size(),
+                             actual_positionals_count   = args.positional_args.size();
+
+                    if(!docs.variadic && (actual_positionals_count > expected_positionals_count)) {
+
+                        std::stringstream ss;
+                        ss << "Unexpected positional argument" << ((actual_positionals_count-expected_positionals_count) > 1 ? "s" : "");
+
+                        ss << ' ';
+
+                        for(unsigned i = expected_positionals_count; i < actual_positionals_count-1; ++i) {
+                            ss << '\"';
+                            ss << args.positional_args[i];
+                            ss << "\", ";
+                        }
+                        ss << '\"';
+                        ss << args.positional_args.back();
+
+                        ss << "\" given to " << (command.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(command.name) <<
+                           "\" (expected " << expected_positionals_count << ", got " << actual_positionals_count << ").\n";
+
+                        ss << "It's also possible that \"" << args.positional_args[expected_positionals_count] << "\" was supposed to be a subcommand, but was not recognized. "
+                                                                                                                            "You can run\n" << to_string(command.name, " ") << " help\nto view the available subcommands for this command\n";
+
+                        print_throw_or_do_nothing(excess_positionals_behavior, ss.str(), "Excess positional argument will be ignored\n\n");
+                    }
                 }
             }
         }
+
         if(is_namespace(commands.back().name)) {
             /*if(invalid_input_to_namespace) {
                 std::cout << "Here is its help page:\n";
@@ -1624,7 +1704,7 @@ namespace cppli::detail {
             else {*/
             if(!invalid_input_to_namespace) { // TODO: make it configurable whether invalid input to namespace just gives a warning, or causes the program to stop and print help
                 std::cout << '\"' << commands.back().name.back()
-                          << "\" is a namespace, so using it on its own doesn't do anything. Here is its help page:\n";
+                          << "\" is a namespace, so using it without further subcommands doesn't do anything. Here is its help page: \n";
                 //}
                 std::cout << get_documentation_string(commands.back().name, default_help_verbosity,
                                                       default_help_recursion_level);
@@ -1635,6 +1715,10 @@ namespace cppli::detail {
         //if(commands.size() > 0) {
             commands.back().inputs = std::move(args);
         //}
+
+        for(const auto& command : commands) {
+
+        }
 
         return {std::move(commands), false};
     }
@@ -1964,6 +2048,11 @@ namespace cppli::detail {
         return subcommand_name_to_func_;
     }
 
+    std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>& subcommand_name_to_error_checking_func() {
+        static std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t> subcommand_name_to_error_checking_func_;
+
+        return subcommand_name_to_error_checking_func_;
+    }
 
 
     bool is_valid_subcommand(subcommand_name_t& parent_command_names, const std::string& arg) {
@@ -2023,7 +2112,7 @@ namespace cppli::detail {
         program_description_ = std::move(description);
     }
 
-    std::string to_string(const subcommand_name_t& name) {
+    std::string to_string(const subcommand_name_t& name, const char* delimiter) {
         std::string ret;
 
         if(name.size()) {
@@ -2034,12 +2123,12 @@ namespace cppli::detail {
                 ret += name.front();
             }
             if(name.size() > 1) {
-                ret += "::";
+                ret += delimiter;
             }
         }
         for(unsigned i = 1; i < name.size()-1; ++i) {
             ret += name[i];
-            ret += "::";
+            ret += delimiter;
         }
         if(name.size() > 1) {
             ret += name[name.size()-1];
@@ -2047,30 +2136,6 @@ namespace cppli::detail {
 
         return ret;
     }
-
-    std::string to_spaces_string(const subcommand_name_t& name) {
-        std::string ret;
-
-        if(name.size()) {
-            if(name.front() == "MAIN") {
-                ret += program_name();
-            }
-            else {
-                ret += name.front();
-            }
-            if(name.size() > 1) {
-                ret += ' ';
-            }
-        }
-        for(unsigned i = 1; i < name.size()-1; ++i) {
-            ret += name[i];
-            ret += ' ';
-        }
-        ret += name.back();
-
-        return ret;
-    }
-
 
     std::size_t detail::subcommand_name_hash_t::operator()(const subcommand_name_t& name) const noexcept  {
         std::size_t hash = 0;
@@ -2123,6 +2188,12 @@ namespace cppli {
 
         if(!parse_ret.printed_help) {
             const auto& commands_vec = parse_ret.subcommands;
+
+            #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+                for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
+                    (detail::subcommand_name_to_error_checking_func()[command.name])(command);
+                }
+            #endif
 
             bool runnable_command_found = false;
             if(!detail::subcommand_name_to_docs()[{"MAIN"}].is_namespace) {
