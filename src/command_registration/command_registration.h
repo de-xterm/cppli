@@ -1,7 +1,5 @@
 #pragma once
 
-#include <sstream>
-
 #include "subcommand.h"
 #include "documentation.h"
 #include "exceptions.h"
@@ -270,11 +268,20 @@ namespace cppli::detail {
     template<typename func_t, auto func, typename index_seq>
     struct call_func_wrapper_impl_t;
 
+    template<typename...Ts>
+    void do_nothing(Ts&&...args) {}
+
     template<typename return_t, typename...arg_ts, std::size_t...indices, auto func>
     struct call_func_wrapper_impl_t<return_t(*)(arg_ts...), func, std::integer_sequence<std::size_t, indices...>> {
         static void call_func(const subcommand_t& subcommand) {
             func(process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand)...);
         }
+
+        #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+            static void check_for_errors(const subcommand_t& subcommand) {
+                do_nothing(process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand)...);
+            }
+        #endif
     };
 
     template<typename func_t, auto func>
@@ -286,34 +293,14 @@ namespace cppli::detail {
             constexpr auto variadic_count = count_variadics<std::remove_cvref_t<arg_ts>...>();
             static_assert(variadic_count < 2, "A command can only have 0 or 1 variadics (two or more were found)");
 
-            if constexpr(count_variadics<std::remove_cvref_t<arg_ts>...>() == 0) {
-                constexpr auto positionals_count = count_positionals<false, arg_ts...>();
-                if(positionals_count < subcommand.inputs.positional_args.size()) {
-                    std::stringstream ss;
-                    ss << "Unexpected positional argument" << ((subcommand.inputs.positional_args.size()-positionals_count) > 1 ? "s" : "");
-
-                    ss << ' ';
-
-                    for(unsigned i = positionals_count; i < subcommand.inputs.positional_args.size()-1; ++i) {
-                        ss << '\"';
-                        ss << subcommand.inputs.positional_args[i];
-                        ss << "\", ";
-                    }
-                    ss << '\"';
-                    ss << subcommand.inputs.positional_args[subcommand.inputs.positional_args.size()-1];
-
-                    ss << "\" given to " << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(subcommand.name) <<
-                    "\" (expected " << std::to_string(positionals_count) << ", got " << std::to_string(subcommand.inputs.positional_args.size()) << ").\n";
-
-                    ss << "It's also possible that \"" << subcommand.inputs.positional_args[positionals_count] << "\" was supposed to be a subcommand, but was not recognized. "
-                                 "You can run\n" << to_spaces_string(subcommand.name) << " help\nto view the available subcommands for this command\n";
-
-                    print_throw_or_do_nothing(excess_positionals_behavior, ss.str(), "Excess positional argument will be ignored\n");
-                }
-            }
-
             call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::call_func(subcommand);
         }
+
+        #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+            static void check_for_errors(const subcommand_t& subcommand) {
+                call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::fails(subcommand);
+            }
+        #endif
     };
 
     template<auto func>
@@ -327,6 +314,13 @@ namespace cppli::detail {
     void call_func(const subcommand_t& command) {
         call_func_wrapper_t<decltype(func), func>::call_func(command);
     }
+
+    #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+        template<auto func>
+        void check_for_errors(const subcommand_t& command) {
+            call_func_wrapper_t<decltype(func), func>::call_func(command);
+        }
+    #endif
 
     template<typename T, typename U, typename...Ts>
     constexpr bool pack_contains_short_name_func() {
@@ -474,6 +468,9 @@ namespace cppli::detail {
         generate_input_info_and_docs(info, docs, func);
 
         subcommand_name_to_func().emplace(name, call_func<func>);
+        #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+            subcommand_name_to_error_checking_func().emplace(name, check_for_errors<func>);
+        #endif
         subcommand_name_to_inputs_info().emplace(name, std::move(info));
 
         if(name == subcommand_name_t{"MAIN"}) {

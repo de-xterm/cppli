@@ -38,6 +38,12 @@ namespace cppli {
         if(!parse_ret.printed_help) {
             const auto& commands_vec = parse_ret.subcommands;
 
+            #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+                for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
+                    (detail::subcommand_name_to_error_checking_func()[command.name])(command);
+                }
+            #endif
+
             bool runnable_command_found = false;
             if(!detail::subcommand_name_to_docs()[{"MAIN"}].is_namespace) {
                 (detail::subcommand_name_to_func()[{"MAIN"}])(commands_vec[0]);

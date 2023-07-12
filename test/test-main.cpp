@@ -9,5 +9,9 @@
 
 int main(int argc, char** argv) {
     cppli::excess_positionals_behavior = cppli::THROW;
+    cppli::invalid_flag_behavior       = cppli::THROW;
+    cppli::flag_given_an_argument      = cppli::THROW;
+    cppli::unrecognized_flag_behavior  = cppli::THROW;
+
     int result = Catch::Session().run(argc, argv);
 }

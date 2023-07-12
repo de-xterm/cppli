@@ -22,9 +22,7 @@ namespace cppli::detail {
 
     using subcommand_name_t = std::vector<std::string>;
 
-    std::string to_string(const subcommand_name_t& name);
-
-    std::string to_spaces_string(const subcommand_name_t& name);
+    std::string to_string(const subcommand_name_t& name, const char* delimiter = "::");
 
 
     /// this is just boost::hash_combine, but I don't want to drag boost into this library just for one function
@@ -49,8 +47,10 @@ namespace cppli::detail {
         std::unordered_map<std::string, bool> option_argument_is_optional;
     };
 
-    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>&   subcommand_name_to_inputs_info();
-    std::unordered_map<subcommand_name_t, subcommand_func_t,        subcommand_name_hash_t>&   subcommand_name_to_func();
+    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>& subcommand_name_to_inputs_info();
+    std::unordered_map<subcommand_name_t, subcommand_func_t,        subcommand_name_hash_t>& subcommand_name_to_func();
+    std::unordered_map<subcommand_name_t, subcommand_func_t,        subcommand_name_hash_t>& subcommand_name_to_error_checking_func();
+
 
     /// if arg appended to parent_command_names forms a valid subcommand,
     /// pushes back arg to parent_command_names and returns true.
@@ -70,6 +70,4 @@ namespace cppli::detail {
     const std::string& program_description();
 
     bool main_command_is_namespace();
-
-
 }

@@ -17,6 +17,8 @@ namespace cppli {
     }
 
     minor_error_behavior unrecognized_flag_behavior                                         = MESSAGE,
+                         invalid_flag_behavior                                              = MESSAGE,
+                         flag_given_an_argument                                             = MESSAGE,
                          flag_included_multiple_times_behavior                              = MESSAGE,
                          optional_included_multiple_times_with_same_argument_behavior       = MESSAGE,
                          optional_included_multiple_times_with_different_arguments_behavior = MESSAGE,

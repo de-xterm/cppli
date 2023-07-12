@@ -18,6 +18,7 @@ CPPLI_SUBCOMMAND(flagtest,
                  CPPLI_FLAG(foo, "foo flag", f),
                  CPPLI_FLAG(bar, "bar flag", b),
                  CPPLI_FLAG(baz, "baz flag", z)) {
+
     foo_flag = foo;
     bar_flag = bar;
     baz_flag = baz;
@@ -112,5 +113,26 @@ TEST_CASE("passing multiple flags in the same groups works") {
         REQUIRE(foo_flag);
         REQUIRE(bar_flag);
         REQUIRE(baz_flag);
+    }
+}
+
+TEST_CASE("passing invalid characters in flag groups throws") {
+    SECTION("with random numbers") {
+        const char* argv[] = {"program", "flagtest", "-fbz34239"};
+
+        REQUIRE_THROWS_AS((cppli::run<"program", "does stuff">(lengthof(argv), argv)), cppli::user_error);
+    }
+
+    SECTION("with equals and non-empty argument") {
+        const char* argv[] = {"program", "flagtest", "-fbz=foo"};
+
+        REQUIRE_THROWS_AS((cppli::run<"program", "does stuff">(lengthof(argv), argv)), cppli::user_error);
+
+    }
+
+    SECTION("with equals and empty argument") {
+        const char* argv[] = {"program", "flagtest", "-fbz="};
+
+        REQUIRE_THROWS_AS((cppli::run<"program", "does stuff">(lengthof(argv), argv)), cppli::user_error);
     }
 }

@@ -14,6 +14,7 @@ namespace cppli {
                                    const std::string& only_if_message);
 
     extern minor_error_behavior unrecognized_flag_behavior,
+                                invalid_flag_behavior,
                                 flag_included_multiple_times_behavior,
                                 flag_given_an_argument,
                                 optional_included_multiple_times_with_same_argument_behavior,
