@@ -20,7 +20,9 @@ CPPLI_SUBCOMMAND(foo,
 
 static bool bar_subcommand_called = false;
 CPPLI_SUBCOMMAND(CPPLI_NAME(foo, bar),
-                 "the bar subcommand") {
+                 "the bar subcommand",
+
+                 CPPLI_OPTIONAL_POSITIONAL(int, size, "size positional")) {
     bar_subcommand_called = true;
 }
 
@@ -52,9 +54,32 @@ TEST_CASE("nested subcommand callback gets called") {
     REQUIRE(bar_subcommand_called);
 }
 
+TEST_CASE("misspelling subcommand name throws") {
+    SECTION("at a branch subcommand") {
+        const char* argv[] = {"program", "fo", "bar"};
+        REQUIRE_THREW(cppli::user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    }
+
+    SECTION("at a leaf subcommand") {
+        const char* argv[] = {"program", "foo", "ba"};
+        REQUIRE_THREW(cppli::user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    }
+}
+
 TEST_CASE("attempting to use a namespace without further subcommands does nothing") {
     const char* argv[] = {"program", "namespace"};
     cppli::run<"program", "does stuff">(lengthof(argv), argv);
 
     REQUIRE(!foo_in_namespace_called);
+}
+
+TEST_CASE("Branch subcommands are not run if a conversion error occurs at a leaf subcommand") {
+    const char* argv[] = {"program", "foo", "bar", "not-an-int"};
+
+    foo_subcommand_called = false;
+    bar_subcommand_called = false;
+
+    REQUIRE_THREW(cppli::user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    REQUIRE(!foo_subcommand_called);
+    REQUIRE(!bar_subcommand_called);
 }

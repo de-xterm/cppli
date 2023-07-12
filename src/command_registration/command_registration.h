@@ -268,9 +268,6 @@ namespace cppli::detail {
     template<typename func_t, auto func, typename index_seq>
     struct call_func_wrapper_impl_t;
 
-    template<typename...Ts>
-    void do_nothing(Ts&&...args) {}
-
     template<typename return_t, typename...arg_ts, std::size_t...indices, auto func>
     struct call_func_wrapper_impl_t<return_t(*)(arg_ts...), func, std::integer_sequence<std::size_t, indices...>> {
         static void call_func(const subcommand_t& subcommand) {
@@ -279,7 +276,8 @@ namespace cppli::detail {
 
         #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
             static void check_for_errors(const subcommand_t& subcommand) {
-                do_nothing(process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand)...);
+                // fold over comma operator
+                (process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand), ...);
             }
         #endif
     };
@@ -298,7 +296,7 @@ namespace cppli::detail {
 
         #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
             static void check_for_errors(const subcommand_t& subcommand) {
-                call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::fails(subcommand);
+                call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::check_for_errors(subcommand);
             }
         #endif
     };
@@ -307,6 +305,10 @@ namespace cppli::detail {
     struct call_func_wrapper_t<void(*)(), func> { // we need all this ugly partial specializations so that we can deduce arg_ts and indices
         static void call_func(const subcommand_t& subcommand) {
             func();
+        }
+
+        static void check_for_errors(const subcommand_t& subcommand) {
+            // do nothing
         }
     };
 
@@ -318,7 +320,7 @@ namespace cppli::detail {
     #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
         template<auto func>
         void check_for_errors(const subcommand_t& command) {
-            call_func_wrapper_t<decltype(func), func>::call_func(command);
+            call_func_wrapper_t<decltype(func), func>::check_for_errors(command);
         }
     #endif
 

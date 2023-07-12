@@ -17,6 +17,7 @@ namespace cppli::detail {
         }
     }
 
+    // TODO: break each major if in the loop into a function, and put each function in its own file
     parse_ret_t parse(int argc, const char* const* const argv) {
 
         if(argc == 0) {
