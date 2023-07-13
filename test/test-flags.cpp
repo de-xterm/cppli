@@ -5,6 +5,7 @@
 #include "test_utils.h"
 
 using namespace cppli::detail;
+using namespace cppli;
 
 static bool foo_flag;
 static bool bar_flag;
@@ -120,19 +121,19 @@ TEST_CASE("passing invalid characters in flag groups throws") {
     SECTION("with random numbers") {
         const char* argv[] = {"program", "flagtest", "-fbz34239"};
 
-        REQUIRE_THROWS_AS((cppli::run<"program", "does stuff">(lengthof(argv), argv)), cppli::user_error);
+        REQUIRE_THREW(cppli::user_error, INVALID_FLAG, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 
     SECTION("with equals and non-empty argument") {
         const char* argv[] = {"program", "flagtest", "-fbz=foo"};
 
-        REQUIRE_THROWS_AS((cppli::run<"program", "does stuff">(lengthof(argv), argv)), cppli::user_error);
+        REQUIRE_THREW(cppli::user_error, FLAG_GIVEN_AN_ARGUMENT, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
 
     }
 
     SECTION("with equals and empty argument") {
         const char* argv[] = {"program", "flagtest", "-fbz="};
 
-        REQUIRE_THROWS_AS((cppli::run<"program", "does stuff">(lengthof(argv), argv)), cppli::user_error);
+        REQUIRE_THREW(cppli::user_error, FLAG_GIVEN_AN_ARGUMENT, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 }

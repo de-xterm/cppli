@@ -5,22 +5,27 @@
 #include "exceptions.h"
 
 namespace cppli {
-    void print_throw_or_do_nothing(minor_error_behavior behavior,
+    void print_throw_or_do_nothing(minor_error_type error_type,
                                    const std::string& print_if_error_or_mesasge,
                                    const std::string& print_only_if_message) {
-        if(behavior == THROW) {
-            throw user_error(print_if_error_or_mesasge);
+        if(minor_error_behavior(error_type) == THROW) {
+            throw user_error(print_if_error_or_mesasge, error_type);
         }
         else {
             std::cerr << print_if_error_or_mesasge << print_only_if_message;
         }
     }
 
-    minor_error_behavior unrecognized_flag_behavior                                         = MESSAGE,
-                         invalid_flag_behavior                                              = MESSAGE,
-                         flag_given_an_argument                                             = MESSAGE,
-                         flag_included_multiple_times_behavior                              = MESSAGE,
-                         optional_included_multiple_times_with_same_argument_behavior       = MESSAGE,
-                         optional_included_multiple_times_with_different_arguments_behavior = MESSAGE,
-                         excess_positionals_behavior                                        = MESSAGE;
+
+    error_behavior& minor_error_behavior(minor_error_type error_type) {
+        static std::unordered_map<minor_error_type, error_behavior> minor_error_code_to_behavior;
+
+        if(!minor_error_code_to_behavior.size()) {
+            for(unsigned i = 0; i < NUMBER_OF_MINOR_ERROR_TYPES; ++i) {
+                minor_error_code_to_behavior.emplace(static_cast<minor_error_type>(i), MESSAGE);
+            }
+        }
+
+        return minor_error_code_to_behavior.at(error_type);
+    }
 }

@@ -240,20 +240,34 @@ TEST_CASE("passing an option at the end of a flag group works") {
 }
 
 TEST_CASE("omitting the argument of an option with a required argument throws a user_error") {
-    SECTION("with equals syntax") {
-        const char* argv[] = {"program", "opttest", "-fbzs="};
-        REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    SECTION("with long name") {
+        SECTION("with equals syntax") {
+            const char* argv[] = {"program", "opttest", "--size="};
+            REQUIRE_THREW(user_error, STRING_CONVERSION_ERROR, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        }
+
+        SECTION("with non-equals syntax") {
+            const char* argv[] = {"program", "opttest", "--size"};
+            REQUIRE_THREW(user_error, OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        }
     }
 
-    SECTION("with non-equals syntax") {
-        const char* argv[] = {"program", "opttest", "-fbzs"};
-        REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    SECTION("with short name") {
+        SECTION("with equals syntax") {
+            const char* argv[] = {"program", "opttest", "-fbzs="};
+            REQUIRE_THREW(user_error, STRING_CONVERSION_ERROR, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        }
+
+        SECTION("with non-equals syntax") {
+            const char* argv[] = {"program", "opttest", "-fbzs"};
+            REQUIRE_THREW(user_error, OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        }
     }
 }
 
 TEST_CASE("passing the incorrect type as the argument for an option throw a user_error") {
     const char* argv[] = {"program", "opttest", "--size=foobar"};
-    REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    REQUIRE_THREW(user_error, STRING_CONVERSION_ERROR, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
 }
 
 TEST_CASE("required options work") {
@@ -277,18 +291,18 @@ TEST_CASE("required options work") {
 
     SECTION("not providing a required option throws a user_error") {
         const char* argv[] = {"program", "reqopttest"};
-        REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(user_error, REQUIRED_OPTION_NOT_PROVIDED, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 
     SECTION("not providing a required option's argument throws a user_error") {
         SECTION("with long name") {
             const char* argv[] = {"program", "reqopttest", "--size"};
-            REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+            REQUIRE_THREW(user_error, OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
         }
 
         SECTION("with short name") {
             const char* argv[] = {"program", "reqopttest", "-s"};
-            REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+            REQUIRE_THREW(user_error, OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
         }
     }
 }
@@ -335,7 +349,7 @@ TEST_CASE("optional argument options work") {
 
             SECTION("space syntax throws a user_error because of unrecognized positional") {
                 const char* argv[] = {"program", "optargopttest", "--color", "blue"};
-                REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+                REQUIRE_THREW(user_error, EXCESS_POSITIONAL_WITH_SUSPICIOUS_OPTION, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
             }
         }
 
@@ -358,9 +372,9 @@ TEST_CASE("optional argument options work") {
                 }
             }
 
-            SECTION("with space syntax") {
+            SECTION("space syntax throws") {
                 const char* argv[] = {"program", "optargopttest", "-c", "blue"};
-                REQUIRE_THREW(user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+                REQUIRE_THREW(user_error, EXCESS_POSITIONAL_WITH_SUSPICIOUS_OPTION, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
             }
 
             SECTION("with connected syntax") {

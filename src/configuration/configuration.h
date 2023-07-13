@@ -1,23 +1,20 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
+
+#include "exceptions.h"
 
 namespace cppli {
-    enum minor_error_behavior {
+    enum error_behavior {
         SILENT,
         MESSAGE,
         THROW
     };
 
-    void print_throw_or_do_nothing(minor_error_behavior behavior,
+    void print_throw_or_do_nothing(minor_error_type error_type,
                                    const std::string& if_error_or_mesasge,
                                    const std::string& only_if_message);
 
-    extern minor_error_behavior unrecognized_flag_behavior,
-                                invalid_flag_behavior,
-                                flag_included_multiple_times_behavior,
-                                flag_given_an_argument,
-                                optional_included_multiple_times_with_same_argument_behavior,
-                                optional_included_multiple_times_with_different_arguments_behavior,
-                                excess_positionals_behavior;
+    error_behavior& minor_error_behavior(minor_error_type error_type);
 }

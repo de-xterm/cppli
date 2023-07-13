@@ -5,6 +5,7 @@
 #include "test_utils.h"
 
 using namespace cppli::detail;
+using namespace cppli;
 
 static bool main_command_called = false;
 
@@ -57,12 +58,14 @@ TEST_CASE("nested subcommand callback gets called") {
 TEST_CASE("misspelling subcommand name throws") {
     SECTION("at a branch subcommand") {
         const char* argv[] = {"program", "fo", "bar"};
-        REQUIRE_THREW(cppli::user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(cppli::user_error, EXCESS_POSITIONAL, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+
+        user_error::error_variant_t  v;
     }
 
     SECTION("at a leaf subcommand") {
         const char* argv[] = {"program", "foo", "ba"};
-        REQUIRE_THREW(cppli::user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(cppli::user_error, EXCESS_POSITIONAL, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 }
 
@@ -79,7 +82,7 @@ TEST_CASE("Branch subcommands are not run if a conversion error occurs at a leaf
     foo_subcommand_called = false;
     bar_subcommand_called = false;
 
-    REQUIRE_THREW(cppli::user_error, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    REQUIRE_THREW(cppli::user_error, STRING_CONVERSION_ERROR, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     REQUIRE(!foo_subcommand_called);
     REQUIRE(!bar_subcommand_called);
 }

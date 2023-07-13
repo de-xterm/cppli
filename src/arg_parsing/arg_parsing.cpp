@@ -44,6 +44,8 @@ namespace cppli::detail {
 
         bool invalid_input_to_namespace = false;
 
+        std::unordered_map<unsigned, std::string> optional_argument_option_with_no_value_provided_arg_index_to_option_string; // indices in argv of optional argument optionals that weren't provided an argument
+                                                                                                                                  // used to make better error messages
         std::string first_command_name = argv[0];
 
         bool in_namespace = is_namespace({"MAIN"});
@@ -82,14 +84,16 @@ namespace cppli::detail {
                         std::string::size_type equals_pos;
                         if((equals_pos = arg_string.find('=')) != std::string::npos) { // TODO: make sure the -2 doesn't cause issues
                             std::string option_name  = arg_string.substr(2, equals_pos-2),
-                                    option_value = arg_string.substr(equals_pos+1, arg_string.size()-(equals_pos+1));
+                                        option_value = arg_string.substr(equals_pos+1, arg_string.size()-(equals_pos+1));
 
                             if(subcommand_takes_option(subcommand_name, option_name)) {
                                 args.options_to_values.emplace(option_name, option_value);
                             }
                             else if(subcommand_takes_flag(subcommand_name, option_name)) {
-                                std::cerr << "For " << command_or_subcommand << " \"" << current_subcommand_name_string << "\", \"" << option_name << "\" is a flag, not an option, and therefore can't be assigned a value (like it was in \"" << arg_string << "\"). "
-                                             "The value will be ignored and the flag will be set to true\n";
+                                std::stringstream ss;
+                                ss << "For " << command_or_subcommand << " \"" << current_subcommand_name_string << "\", \"" << option_name << "\" is a flag, not an option, and therefore can't be assigned a value (like it was in \"" << arg_string << "\"). ";
+
+                                print_throw_or_do_nothing(FLAG_GIVEN_AN_ARGUMENT, ss.str(), "The value will be ignored and the flag will be set to true\n");
 
                                 args.flags.emplace(option_name);
                             }
@@ -99,12 +103,18 @@ namespace cppli::detail {
                                     return {{}, true};
                                 }
                                 else if(in_namespace) {
-                                    std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                                    std::stringstream ss;
+                                    ss << '\"' << current_subcommand_name_string << "\" is a namespace, so it cannot accept the input \"" << arg_string << "\" (the only inputs it can accept are --help, -h, and help)";
+
+                                    print_throw_or_do_nothing(ARGUMENT_GIVEN_TO_NAMESPACE, ss.str(), "The given input be ignored\n");
                                     invalid_input_to_namespace = true;
                                     continue;
                                 }
                                 else {
-                                    std::cerr << "Flag/option \"" << option_name << "\" (from \"" << arg_string << "\") was not recognized by " << command_or_subcommand << " \"" << current_subcommand_name_string << "\" and is therefore being ignored\n";
+                                    std::stringstream ss;
+                                    ss << "Flag/option \"" << option_name << "\" (from \"" << arg_string << "\") was not recognized by " << command_or_subcommand << " \"" << current_subcommand_name_string << "\"\n";
+
+                                    print_throw_or_do_nothing(UNRECOGNIZED_FLAG, ss.str(), "It will be ignored\n");
                                 }
                             }
                         }
@@ -114,6 +124,7 @@ namespace cppli::detail {
                             if(subcommand_takes_option(subcommand_name, option_or_flag_name)) {
                                 if(subcommand_option_argument_is_optional(subcommand_name, option_or_flag_name)) {
                                     args.options_to_values.emplace(option_or_flag_name, std::nullopt);
+                                    optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, '\"' + arg_string.substr(2, arg_string.size()) + '\'');
                                 }
                                 else {
                                     if(arg_i+1 < argc) {
@@ -121,7 +132,12 @@ namespace cppli::detail {
                                         ++arg_i; // we just ate the next arg, so don't process it again
                                     }
                                     else {
-                                        throw user_error('\"' + arg_string + "\" referred to an option with a required argument, but no argument followed\n");
+                                        std::stringstream ss;
+                                        ss << "Argument \"" << arg_string
+                                           << "\" given to " << command_or_subcommand << ' ' << current_subcommand_name_string
+                                           << " referred to an option with a required argument, but no argument followed\n";
+
+                                        throw user_error(ss.str(), OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
                                     }
                                 }
                             }
@@ -147,7 +163,7 @@ namespace cppli::detail {
                 }
                 else if((arg_string[0] == '-') && !disambiguate_next_arg) { // short flag(s) and/or option (these are not so ez)
                     bool invalid_character_in_flag_group = false;
-                    unsigned invalid_character_index; // set to max because we're going to do a minimum
+                    unsigned invalid_character_index;
                     std::stringstream invalid_character_in_flag_group_message;
 
                     for(unsigned char_i = 1; char_i < arg_string.size(); ++char_i) {
@@ -161,6 +177,7 @@ namespace cppli::detail {
                             else if(char_i == arg_string.size()-1) { // no room for argument
                                 if(subcommand_option_argument_is_optional(subcommand_name, char_string)) { // if this option's argument is optional, assume that no argument is provided, and that the next arg is unrelated
                                     args.options_to_values.emplace(char_string, std::nullopt);
+                                    optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, '\'' + char_string + '\'');
                                 }
                                 else {
                                     if(arg_i+1 < argc) {
@@ -168,12 +185,18 @@ namespace cppli::detail {
                                         ++arg_i; // we just ate the next arg, so don't process it again
                                     }
                                     else {
-                                        throw user_error(std::string("The last character (") + arg_string[char_i] + ") in flag/option group \"" + arg_string + "\" referred to an option with a required argument, but no argument followed\n");
+                                        std::stringstream ss;
+                                        ss << "The last character '" << arg_string[char_i]
+                                           << "' in flag/option group \"" << arg_string << "\" "
+                                              "given to " << command_or_subcommand << ' ' << current_subcommand_name_string
+                                           << " referred to an option with a required argument, but no argument followed\n";
+
+                                        throw user_error(ss.str(), OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
                                     }
                                 }
                             }
                             else {
-                                assert(false); // this should never happen
+                                assert(false); // this should never happen (would mean char_i is out of range of arg_string)
                             }
                         }
                         else if(subcommand_takes_flag(subcommand_name, char_string)) {
@@ -207,7 +230,7 @@ namespace cppli::detail {
                                 ss << "Character '" << char_string << "' in flag/option group \"" << arg_string << "\" "
                                       "was not a recognized flag or option for " << command_or_subcommand << " \"" << current_subcommand_name_string << "\".";
 
-                                print_throw_or_do_nothing(unrecognized_flag_behavior, ss.str(), " It will be ignored\n");
+                                print_throw_or_do_nothing(UNRECOGNIZED_FLAG, ss.str(), " It will be ignored\n");
                             }
                         }
                     }
@@ -218,7 +241,7 @@ namespace cppli::detail {
                                 std::stringstream ss;
                                 ss << "Character '" << arg_string[invalid_character_index-1] << "' in flag/option group \"" << arg_string << "\" is a flag, and therefore can't accept an argument.\n";
 
-                                print_throw_or_do_nothing(flag_given_an_argument, ss.str(),
+                                print_throw_or_do_nothing(FLAG_GIVEN_AN_ARGUMENT, ss.str(),
                                                           "The argument " + say_something_if_empty(arg_string.substr(invalid_character_index+1, arg_string.size())) +
                                                           " will be ignored and the flag '" + arg_string[invalid_character_index-1] + "' will be set to true\n");
                                 continue;
@@ -229,7 +252,7 @@ namespace cppli::detail {
                                                                         << arg_string[invalid_character_index-1] << "' is flag and therefore can't have an argument.\n";
                             }
                         }
-                        print_throw_or_do_nothing(invalid_flag_behavior, invalid_character_in_flag_group_message.str(), "Invalid flag(s) will be ignored\n");
+                        print_throw_or_do_nothing(INVALID_FLAG, invalid_character_in_flag_group_message.str(), "Invalid flag(s) will be ignored\n");
                     }
                 }
                 else { // positional arg
@@ -244,7 +267,7 @@ namespace cppli::detail {
                     }
                     else {
                         disambiguate_next_arg = false;
-                        args.positional_args.emplace_back(std::move(arg_string));
+                        args.positional_args.emplace_back(arg_string);
                     }
 
                     const auto& docs = subcommand_name_to_docs()[commands.back().name];
@@ -256,25 +279,37 @@ namespace cppli::detail {
                     if(!docs.variadic && (actual_positionals_count > expected_positionals_count)) {
 
                         std::stringstream ss;
-                        ss << "Unexpected positional argument" << ((actual_positionals_count-expected_positionals_count) > 1 ? "s" : "");
+                        ss << "Unexpected positional argument \"" << arg_string
+                           << "\" given to " << (command.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(command.name);/* <<
+                           "\" (expected " << expected_positionals_count << ", got " << actual_positionals_count << ").\n";*/
 
-                        ss << ' ';
+                        ss << "It's also possible that \"" << arg_string
+                           << "\" was supposed to be a subcommand, but was not recognized. "
+                              "You can run\n" << to_string(command.name, " ") << " help\nto view the available subcommands for this command\n";
 
-                        for(unsigned i = expected_positionals_count; i < actual_positionals_count-1; ++i) {
-                            ss << '\"';
-                            ss << args.positional_args[i];
-                            ss << "\", ";
+                        minor_error_type e;
+                        if(optional_argument_option_with_no_value_provided_arg_index_to_option_string.contains(arg_i-1)) {
+                            ss << "Another possibility is that \"" << arg_string << "\" was supposed to be an argument for the previous commandline argument "
+                               << optional_argument_option_with_no_value_provided_arg_index_to_option_string.at(arg_i - 1)
+                               << ", which is an option that accepts an optional argument.\n"
+                                  "However, an optional argument option can't be given an argument using the space separated syntax.\n"
+                                  "The argument must use the '=' syntax (" << argv[arg_i-1] << '=' << arg_string << ')';
+
+                            if(std::string(argv[arg_i-1]).substr(0,2) == "--") {
+                                ss << "or, for (potentially grouped) short options, the connected syntax ("
+                                   << argv[arg_i-1] << arg_string << ")";
+                            }
+
+                            ss << '\n';
+
+                            e = EXCESS_POSITIONAL_WITH_SUSPICIOUS_OPTION;
                         }
-                        ss << '\"';
-                        ss << args.positional_args.back();
+                        else {
+                            e = EXCESS_POSITIONAL;
+                        }
 
-                        ss << "\" given to " << (command.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(command.name) <<
-                           "\" (expected " << expected_positionals_count << ", got " << actual_positionals_count << ").\n";
 
-                        ss << "It's also possible that \"" << args.positional_args[expected_positionals_count] << "\" was supposed to be a subcommand, but was not recognized. "
-                                                                                                                            "You can run\n" << to_string(command.name, " ") << " help\nto view the available subcommands for this command\n";
-
-                        print_throw_or_do_nothing(excess_positionals_behavior, ss.str(), "Excess positional argument will be ignored\n\n");
+                        print_throw_or_do_nothing(e, ss.str(), "This argument will be ignored\n");
                     }
                 }
             }

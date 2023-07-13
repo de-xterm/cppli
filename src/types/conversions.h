@@ -55,10 +55,10 @@ namespace cppli {
                     return std::stoi(str);
                 }
                 catch(std::invalid_argument& e) {
-                    throw user_error("Could not form a valid integer from string \"" + str + "\"");
+                    throw user_error("Could not form a valid integer from string \"" + str + "\"", STRING_CONVERSION_ERROR);
                 }
                 catch(std::out_of_range& e) {
-                    throw user_error("Could not form a valid integer from string \"" + str + "\" because the resulting integer would be out of range");
+                    throw user_error("Could not form a valid integer from string \"" + str + "\" because the resulting integer would be out of range", STRING_CONVERSION_ERROR);
                 }
             }
 
@@ -69,7 +69,7 @@ namespace cppli {
         struct conversion_t<char> {
             int operator()(const std::string& str) const {
                 if(!str.size()) {
-                    throw user_error("Could not form a character from the given string because it was empty");
+                    throw user_error("Could not form a character from the given string because it was empty", STRING_CONVERSION_ERROR);
                 }
 
                 return str[0];
@@ -85,10 +85,10 @@ namespace cppli {
                     return std::stof(str);
                 }
                 catch(std::invalid_argument& e) {
-                    throw user_error("Could not form a valid decimal from string \"" + str + "\"");
+                    throw user_error("Could not form a valid decimal from string \"" + str + "\"", STRING_CONVERSION_ERROR);
                 }
                 catch(std::out_of_range& e) {
-                    throw user_error("Could not form a valid decimal from string \"" + str + "\" because the resulting integer would be out of range");
+                    throw user_error("Could not form a valid decimal from string \"" + str + "\" because the resulting integer would be out of range", STRING_CONVERSION_ERROR);
                 }
             }
 
