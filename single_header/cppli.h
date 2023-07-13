@@ -1532,9 +1532,9 @@ namespace cppli::detail {
         bool disambiguate_next_arg = false;
 
         bool invalid_input_to_namespace = false;
-
+                                                    // possibly the longest variable name I've ever written
         std::unordered_map<unsigned, std::string> optional_argument_option_with_no_value_provided_arg_index_to_option_string; // indices in argv of optional argument optionals that weren't provided an argument
-                                                                                                                                  // used to make better error messages
+                                                                                                                              // used to make better error messages
         std::string first_command_name = argv[0];
 
         bool in_namespace = is_namespace({"MAIN"});
@@ -1613,7 +1613,7 @@ namespace cppli::detail {
                             if(subcommand_takes_option(subcommand_name, option_or_flag_name)) {
                                 if(subcommand_option_argument_is_optional(subcommand_name, option_or_flag_name)) {
                                     args.options_to_values.emplace(option_or_flag_name, std::nullopt);
-                                    optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, '\"' + arg_string.substr(2, arg_string.size()) + '\'');
+                                    optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, '\"' + arg_string.substr(2, arg_string.size()) + '"');
                                 }
                                 else {
                                     if(arg_i+1 < argc) {
@@ -1769,7 +1769,7 @@ namespace cppli::detail {
 
                         std::stringstream ss;
                         ss << "Unexpected positional argument \"" << arg_string
-                           << "\" given to " << (command.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << " \"" << to_string(command.name);/* <<
+                           << "\" given to " << (command.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(command.name) << '\n';/* <<
                            "\" (expected " << expected_positionals_count << ", got " << actual_positionals_count << ").\n";*/
 
                         ss << "It's also possible that \"" << arg_string
@@ -1778,14 +1778,14 @@ namespace cppli::detail {
 
                         minor_error_type e;
                         if(optional_argument_option_with_no_value_provided_arg_index_to_option_string.contains(arg_i-1)) {
-                            ss << "Another possibility is that \"" << arg_string << "\" was supposed to be an argument for the previous commandline argument "
+                            ss << "\nAnother possibility is that \"" << arg_string << "\" was supposed to be an argument for the previous commandline argument "
                                << optional_argument_option_with_no_value_provided_arg_index_to_option_string.at(arg_i - 1)
                                << ", which is an option that accepts an optional argument.\n"
                                   "However, an optional argument option can't be given an argument using the space separated syntax.\n"
                                   "The argument must use the '=' syntax (" << argv[arg_i-1] << '=' << arg_string << ')';
 
-                            if(std::string(argv[arg_i-1]).substr(0,2) == "--") {
-                                ss << "or, for (potentially grouped) short options, the connected syntax ("
+                            if(std::string(argv[arg_i-1]).substr(0,2) != "--") {
+                                ss << " or, for (potentially grouped) short options, the connected syntax ("
                                    << argv[arg_i-1] << arg_string << ")";
                             }
 
@@ -1810,7 +1810,7 @@ namespace cppli::detail {
             }
             else {*/
             if(!invalid_input_to_namespace) { // TODO: make it configurable whether invalid input to namespace just gives a warning, or causes the program to stop and print help
-                std::cout << '\"' << commands.back().name.back()
+                std::cout << '\"' << to_string(commands.back().name)
                           << "\" is a namespace, so using it without further subcommands doesn't do anything. Here is its help page: \n";
                 //}
                 std::cout << get_documentation_string(commands.back().name, default_help_verbosity,
