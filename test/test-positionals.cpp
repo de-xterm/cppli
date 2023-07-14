@@ -33,6 +33,8 @@ TEST_CASE("required positionals are assigned correctly") {
     const char* argv[] = {"program", "postest", "32"};
     cppli::run<"program", "does stuff">(lengthof(argv), argv);
     REQUIRE(required_positional == 32);
+    REQUIRE(!optional_positional);
+    REQUIRE(variadic_positional.size() == 0);
 
     SECTION("not including a required positional throws") {
         const char* argv[] = {"program", "postest"};
