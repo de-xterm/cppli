@@ -50,6 +50,7 @@ TEST_CASE("optional positionals work and don't mess with required positionals") 
     REQUIRE(required_positional == 32);
     REQUIRE(optional_positional);
     REQUIRE(*optional_positional == 64);
+    REQUIRE(variadic_positional.size() == 0);
 }
 
 TEST_CASE("variadic positionals work and don't mess with required positionals or optional positionals") {
