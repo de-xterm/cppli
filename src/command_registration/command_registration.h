@@ -39,11 +39,11 @@ namespace cppli::detail {
                     if constexpr(last::optional) { // implicitly required argument
                         if(subcommand.inputs.options_to_values.contains(canonical_name)) {
                             if(!subcommand.inputs.options_to_values.at(canonical_name).has_value()) { // TODO: aren't we doing this check in arg_parsing.cpp too?
-                                throw user_error(main_command_or_subcommand + to_string(subcommand.name)+ "\" option \"" + canonical_name + "\" "
-                                                                                                                                            "requires an argument, but one was not provided (expected an argument of type "
+                                throw user_error(main_command_or_subcommand + to_string(subcommand.name) + "\" option \"" + canonical_name + "\" "
+                                                 "requires an argument, but one was not provided (expected an argument of type "
                                                  + static_cast<std::string>(conversion_t::type_string.make_lowercase_and_convert_underscores()) + "."
-                                                                                                                                                  "Note that this option is optional, so it is valid to omit it entirely, "
-                                                                                                                                                  "but the option's argument is required, so if the option is provided, it must come with an argument",
+                                                 "Note that this option is optional, so it is valid to omit it entirely, "
+                                                 "but the option's argument is required, so if the option is provided, it must come with an argument",
                                                  OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
                             }
                             else {
@@ -66,7 +66,7 @@ namespace cppli::detail {
                             }
                             else {
                                 try {
-                                    return conversion_t()(subcommand.inputs.options_to_values.at(*short_name)); // no need for has_value check here; returning an empty optional is valid
+                                    return conversion_t()(*subcommand.inputs.options_to_values.at(*short_name)); // no need for has_value check here; returning an empty optional is valid
                                 }
                                 catch(user_error& e) {
                                     throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\"). Details: " + e.what(), e.error_type());
