@@ -1613,7 +1613,7 @@ namespace cppli::detail {
                             if(subcommand_takes_option(subcommand_name, option_or_flag_name)) {
                                 if(subcommand_option_argument_is_optional(subcommand_name, option_or_flag_name)) {
                                     args.options_to_values.emplace(option_or_flag_name, std::nullopt);
-                                    optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, '\"' + arg_string.substr(2, arg_string.size()) + '"');
+                                    optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, arg_string);
                                 }
                                 else {
                                     if(arg_i+1 < argc) {
@@ -1666,7 +1666,7 @@ namespace cppli::detail {
                             else if(char_i == arg_string.size()-1) { // no room for argument
                                 if(subcommand_option_argument_is_optional(subcommand_name, char_string)) { // if this option's argument is optional, assume that no argument is provided, and that the next arg is unrelated
                                     args.options_to_values.emplace(char_string, std::nullopt);
-                                    optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, '\'' + char_string + '\'');
+                                    optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, "-" + char_string);
                                 }
                                 else {
                                     if(arg_i+1 < argc) {
@@ -1778,15 +1778,16 @@ namespace cppli::detail {
 
                         minor_error_type e;
                         if(optional_argument_option_with_no_value_provided_arg_index_to_option_string.contains(arg_i-1)) {
+                            const std::string& erroneous_option_string = optional_argument_option_with_no_value_provided_arg_index_to_option_string.at(arg_i-1);
                             ss << "\nAnother possibility is that \"" << arg_string << "\" was supposed to be an argument for the previous commandline argument "
-                               << optional_argument_option_with_no_value_provided_arg_index_to_option_string.at(arg_i - 1)
+                               << '\"' << optional_argument_option_with_no_value_provided_arg_index_to_option_string.at(arg_i - 1) << '\"'
                                << ", which is an option that accepts an optional argument.\n"
                                   "However, an optional argument option can't be given an argument using the space separated syntax.\n"
-                                  "The argument must use the '=' syntax (" << argv[arg_i-1] << '=' << arg_string << ')';
+                                  "The argument must use the '=' syntax (" << erroneous_option_string << '=' << arg_string << ')';
 
                             if(std::string(argv[arg_i-1]).substr(0,2) != "--") {
                                 ss << " or, for (potentially grouped) short options, the connected syntax ("
-                                   << argv[arg_i-1] << arg_string << ")";
+                                   << erroneous_option_string << arg_string << ")";
                             }
 
                             ss << '\n';

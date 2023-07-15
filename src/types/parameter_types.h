@@ -28,7 +28,7 @@ namespace cppli {
             flag() = default;
         };
 
-        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
+        template<typename type_, typename conversion_t_, bool default_construct_when_empty_, string_literal name_, string_literal documentation_, string_literal argument_text_,
                 bool optional_, bool argument_optional_,
                 char short_name_ = '\0'>
         class option {
@@ -39,6 +39,9 @@ namespace cppli {
 
         public:
             using type = type_;
+            using conversion_t = conversion_t_;
+
+            static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
             static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
             static constexpr auto cppli_type_string = type_string;
@@ -52,9 +55,9 @@ namespace cppli {
             static constexpr auto has_long_name  = true;
         };
 
-        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
+        template<typename type_, typename conversion_t_, bool default_construct_when_empty_, string_literal name_, string_literal documentation_, string_literal argument_text_,
                 char short_name_>
-        class option<type_, name_, documentation_, argument_text_,
+        class option<type_, conversion_t_, default_construct_when_empty_, name_, documentation_, argument_text_,
                 true, true,
                 short_name_> {
             /// type_ if default_value == no_default_value, otherwise std::optional<type_>
@@ -66,7 +69,9 @@ namespace cppli {
 
         public:
             using type = type_;
+            using conversion_t = conversion_t_;
 
+            static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
             static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
             static constexpr auto cppli_type_string = type_string;
@@ -149,15 +154,15 @@ namespace cppli {
             }
         };
 
-        template<typename type_, bool optional_, string_literal name_, string_literal documentation_>
-        class positional;
-
-        template<typename type_, string_literal name_, string_literal documentation_>
-        class positional<type_, true, name_, documentation_> {
+        template<typename type_, typename conversion_t_, bool default_construct_when_empty_, bool optional_, string_literal name_, string_literal documentation_>
+        class positional {
             static_assert(std::is_constructible_v<type_, std::string> || std::is_move_constructible_v<type_>,
                           "The type parameter of an optional positional argument must be constructible from an std::string or have a move constructor available");
 
         public:
+            using conversion_t = conversion_t_;
+
+            static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_;
             static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
             static constexpr auto optional = true;
@@ -167,12 +172,13 @@ namespace cppli {
             static constexpr auto has_long_name  = false;
         };
 
-        // this partial specialization is just a wrapper for documentation
-        template<typename type_, string_literal name_, string_literal documentation_>
-        class positional<type_, false, name_, documentation_> {
+        template<typename type_, typename conversion_t_, bool default_construct_when_empty_, string_literal name_, string_literal documentation_>
+        class positional<type_,  conversion_t_, default_construct_when_empty_, false, name_, documentation_> {
         public:
             using type = type_;
+            using conversion_t = conversion_t_;
 
+            static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_;
             static constexpr auto type_string = conversions::conversion_t<type_>::type_string; // TODO: delete one of these
             static constexpr auto cppli_type_string = type_string;
@@ -185,11 +191,13 @@ namespace cppli {
             positional() = default;
         };
 
-        template<typename type_, string_literal name_, string_literal documentation_>
+        template<typename type_, typename conversion_t_, bool default_construct_when_empty_, string_literal name_, string_literal documentation_>
         class variadic {
         public:
             using type = type_;
+            using conversion_t = conversion_t_;
 
+            static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_;
             static constexpr auto type_string = conversions::conversion_t<type_>::type_string; // TODO: delete one of these
             static constexpr auto cppli_type_string = type_string;
@@ -224,10 +232,10 @@ namespace cppli {
             static constexpr bool has_short_name = (short_name_ != '\0');
         };
 
-        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
+        template<typename type_, typename conversion_t_, bool default_construct_when_empty_, string_literal name_, string_literal documentation_, string_literal argument_text_,
                 bool optional_, bool argument_optional_,
                 char short_name_>
-        struct argument_info_t<option<type_, name_, documentation_, argument_text_, optional_, argument_optional_, short_name_>> {
+        struct argument_info_t<option<type_, conversion_t_, default_construct_when_empty_, name_, documentation_, argument_text_, optional_, argument_optional_, short_name_>> {
             static constexpr bool is_raw_type = false;
             static constexpr bool is_flag = false;
             static constexpr bool is_option = true;
@@ -238,8 +246,8 @@ namespace cppli {
             static constexpr bool has_short_name = (short_name_ != '\0');
         };
 
-        template<typename type_, bool optional_, string_literal name_, string_literal documentation_>
-        struct argument_info_t<positional<type_, optional_, name_, documentation_>> {
+        template<typename type_, typename conversion_t_, bool default_construct_when_empty_, bool optional_, string_literal name_, string_literal documentation_>
+        struct argument_info_t<positional<type_, conversion_t_, default_construct_when_empty_, optional_, name_, documentation_>> {
             static constexpr bool is_raw_type = false;
             static constexpr bool is_flag = false;
             static constexpr bool is_option = false;
@@ -250,8 +258,8 @@ namespace cppli {
             static constexpr bool has_short_name = false;
         };
 
-        template<typename type_, string_literal name_, string_literal documentation_>
-        struct argument_info_t<variadic<type_, name_, documentation_>> {
+        template<typename type_, typename conversion_t_, bool default_construct_when_empty_, string_literal name_, string_literal documentation_>
+        struct argument_info_t<variadic<type_, conversion_t_, default_construct_when_empty_, name_, documentation_>> {
                 static constexpr bool is_raw_type = false;
                 static constexpr bool is_flag = false;
                 static constexpr bool is_option = false;
@@ -261,25 +269,5 @@ namespace cppli {
                 static constexpr bool has_long_name = false;
                 static constexpr bool has_short_name = false;
         };
-
-        template<string_literal name_, string_literal documentation_, char short_name_>
-        std::ostream& operator<<(std::ostream& os, const detail::flag<name_, documentation_, short_name_>& s) {
-            os << *s;
-            return os;
-        }
-
-        template<typename T, bool optional, string_literal name, string_literal docs>
-        std::ostream& operator<<(std::ostream& os, const detail::positional<T, optional, name, docs>& s) {
-            os << *s;
-            return os;
-        }
-
-        template<typename type_, string_literal name_, string_literal documentation_, string_literal argument_text_,
-                bool optional_, bool argument_optional_,
-                char short_name_>
-        std::ostream& operator<<(std::ostream& os, const detail::option<type_, name_, documentation_, argument_text_, optional_, argument_optional_, short_name_>& s) {
-            os << *s;
-            return os;
-        }
     }
 }
