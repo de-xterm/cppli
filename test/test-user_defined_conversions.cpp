@@ -80,11 +80,15 @@ struct semicolon_int_vec_conversion_t {
     static constexpr cppli::detail::string_literal type_string = "semicolon separated list of ints";
 };
 
+static std::vector<int> vec_option;
+
 CPPLI_SUBCOMMAND(conversions2,
                  "subcommand for testing manually specified user defined_conversions",
-                 CPPLI_POSITIONAL_CONVERSION(std::vector<int>, semicolon_int_vec_conversion_t, vec, "int vec positional")) {
+                 CPPLI_POSITIONAL_CONVERSION(std::vector<int>, semicolon_int_vec_conversion_t, vec, "int vec positional"),
+                 CPPLI_OPTION_CONVERSION_DEFAULT_CTOR(std::vector<int>, semicolon_int_vec_conversion_t, vecopt, "vector", "int vec option")) {
 
     vec_positional = vec;
+    vec_option = vecopt;
 }
 
 TEST_CASE("user defined conversion with manually specified conversion_t works") {
@@ -94,4 +98,23 @@ TEST_CASE("user defined conversion with manually specified conversion_t works") 
     cppli::run<"program", "does stuff">(lengthof(argv), argv);
 
     REQUIRE(vec_positional == std::vector{16,32,64});
+
+    SECTION("works with DEFAULT_CTOR modifier") {
+        const char* argv[] = {"program", "conversions2", "16;32;64", "--vecopt=16;32;64"};
+        vec_option = {};
+
+        cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+        REQUIRE(vec_option == std::vector{16,32,64});
+
+        SECTION("not providing option gives a default constructed object (in this case, an empty vector)") {
+            const char* argv[] = {"program", "conversions2", "16;32;64"};
+            vec_option = {};
+
+            cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+            REQUIRE(vec_option == std::vector<int>{});
+        }
+    }
 }
+

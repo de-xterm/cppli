@@ -8,6 +8,15 @@
 #include "configuration.h"
 
 namespace cppli::detail {
+    bool contains_letters(const std::string& str) {
+        bool contains = false;
+        for(char c : str) {
+            contains |= isletter(c);
+        }
+
+        return contains;
+    }
+
     std::string say_something_if_empty(const std::string& arg) {
         if(!arg.size()) {
             return "(empty string)";
@@ -74,8 +83,8 @@ namespace cppli::detail {
                 /*if(in_namespace) { // I forgot why this doesn't work
                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                     continue;
-                }*/
-                if((arg_string.substr(0,2) == "--") && !disambiguate_next_arg) { // long flag (these are ez)
+                }*/                                                              // so that string like "-" and " - " can be used as positionals without issue
+                if((arg_string.substr(0,2) == "--") && !disambiguate_next_arg && contains_letters(arg_string)) { // long flag (these are ez)
                                                     // we need this check so that we can handle the case where "--" is the thing we're trying to disambiguate. Ex: "program -- --"
                     if((arg_string.size() == 2) /*&& (!disambiguate_next_arg)*/) { // if the whole string is just "--", then this arg is used to disambiguate the next
                         disambiguate_next_arg = true; // ( "--" just means "the next arg is positional, even if it looks like an option/flag (starts with '-' or "--"), or a subcommand (matches a subcommand name))

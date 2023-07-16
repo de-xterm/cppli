@@ -37,44 +37,80 @@ namespace cppli::detail {
 
                 if constexpr(argument_info_t<last>::is_option) {
                     if constexpr(last::optional) { // implicitly required argument
-                        if(subcommand.inputs.options_to_values.contains(canonical_name)) {
-                            if(!subcommand.inputs.options_to_values.at(canonical_name).has_value()) { // TODO: aren't we doing this check in arg_parsing.cpp too?
-                                throw user_error(main_command_or_subcommand + to_string(subcommand.name) + "\" option \"" + canonical_name + "\" "
-                                                 "requires an argument, but one was not provided (expected an argument of type "
-                                                 + static_cast<std::string>(conversion_t::type_string.make_lowercase_and_convert_underscores()) + "."
-                                                 "Note that this option is optional, so it is valid to omit it entirely, "
-                                                 "but the option's argument is required, so if the option is provided, it must come with an argument",
-                                                 OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
+                        if constexpr(last::argument_optional) { // I believe default_construct_when_empty is implicity true, so no need for && here
+                            if(subcommand.inputs.options_to_values.contains(canonical_name)) {
+                                if(subcommand.inputs.options_to_values.at(canonical_name).has_value()) {
+                                    try {
+                                        return conversions::conversion_t<std::optional<typename last::type>>()(*subcommand.inputs.options_to_values.at(canonical_name)); // no need for has_value check here; returning an empty optional is valid
+                                    }
+                                    catch(user_error& e) {
+                                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
+                                    }
+                                }
+                                else {
+                                    return typename last::type();
+                                }
+                            }
+                            else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
+                                if(subcommand.inputs.options_to_values.at(*short_name).has_value()) {
+                                    try {
+                                        return conversions::conversion_t<std::optional<typename last::type>>()(*subcommand.inputs.options_to_values.at(*short_name));
+                                    }
+                                    catch (user_error& e) {
+                                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
+                                                         to_string(subcommand.name) + "\" option \"" + *short_name +
+                                                         "\" (full name \"" + canonical_name + "\"). Details: " +
+                                                         e.what(), e.error_type());
+                                    }
+                                }
+                                else {
+                                    return typename last::type();
+                                }
                             }
                             else {
-                                try {
-                                    return conversion_t()(*subcommand.inputs.options_to_values.at(canonical_name)); // no need for has_value check here; returning an empty optional is valid
-                                }
-                                catch(user_error& e) {
-                                    throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
-                                }
-                            }
-                        }
-                        else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) { // TODO: evaluating short_name could use if constexpr
-                            if(!subcommand.inputs.options_to_values.at(*short_name).has_value()) {
-                                throw user_error(main_command_or_subcommand + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\") "
-                                                                                                                                                                                "requires an argument, but one was not provided (expected an argument of type "
-                                                 + conversion_t::type_string.string() + "."
-                                                                                        "Note that this option is optional, so it is valid to omit it entirely, "
-                                                                                        "but the option's argument is required, so if the option is provided, it must come with an argument",
-                                                 OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
-                            }
-                            else {
-                                try {
-                                    return conversion_t()(*subcommand.inputs.options_to_values.at(*short_name)); // no need for has_value check here; returning an empty optional is valid
-                                }
-                                catch(user_error& e) {
-                                    throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\"). Details: " + e.what(), e.error_type());
-                                }
+                                return {}; // return empty optional
                             }
                         }
                         else {
-                            return {};
+                            if(subcommand.inputs.options_to_values.contains(canonical_name)) {
+                                if(!subcommand.inputs.options_to_values.at(canonical_name).has_value()) { // TODO: aren't we doing this check in arg_parsing.cpp too?
+                                    throw user_error(main_command_or_subcommand + to_string(subcommand.name) + "\" option \"" + canonical_name + "\" "
+                                                     "requires an argument, but one was not provided (expected an argument of type "
+                                                     + static_cast<std::string>(conversion_t::type_string.make_lowercase_and_convert_underscores()) + "."
+                                                     "Note that this option is optional, so it is valid to omit it entirely, "
+                                                     "but the option's argument is required, so if the option is provided, it must come with an argument",
+                                                     OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
+                                }
+                                else {
+                                    try {
+                                        return conversion_t()(*subcommand.inputs.options_to_values.at(canonical_name)); // no need for has_value check here; returning an empty optional is valid
+                                    }
+                                    catch(user_error& e) {
+                                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
+                                    }
+                                }
+                            }
+                            else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) { // TODO: evaluating short_name could use if constexpr
+                                if(!subcommand.inputs.options_to_values.at(*short_name).has_value()) {
+                                    throw user_error(main_command_or_subcommand + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\") "
+                                                     "requires an argument, but one was not provided (expected an argument of type "
+                                                     + conversion_t::type_string.string() + "."
+                                                     "Note that this option is optional, so it is valid to omit it entirely, "
+                                                     "but the option's argument is required, so if the option is provided, it must come with an argument",
+                                                     OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
+                                }
+                                else {
+                                    try {
+                                        return conversion_t()(*subcommand.inputs.options_to_values.at(*short_name)); // no need for has_value check here; returning an empty optional is valid
+                                    }
+                                    catch(user_error& e) {
+                                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\"). Details: " + e.what(), e.error_type());
+                                    }
+                                }
+                            }
+                            else {
+                                return {};
+                            }
                         }
                     }
                     else {
@@ -169,52 +205,35 @@ namespace cppli::detail {
             }
 
             if constexpr(arg_info_t::is_option) {
-                if constexpr(T::optional) {
-                    if constexpr(T::argument_optional) {
-                        if constexpr(T::argument_optional) {
-                            if(subcommand.inputs.options_to_values.contains(canonical_name)) {
-                                try {
-                                    return {subcommand.inputs.options_to_values.at(canonical_name)}; // no need for has_value check here; returning an empty optional is valid
-                                }
-                                catch(user_error& e) {
-                                    throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
-                                }
-                            }
-                            else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
-                                try {
-                                    return {subcommand.inputs.options_to_values.at(*short_name)}; // no need for has_value check here; returning an empty optional is valid
-                                }
-                                catch(user_error& e) {
-                                    throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\"). Details: " + e.what(), e.error_type());
-                                }
-                            }
-                            else {
-                                return {}; // default constructor for optional option with optional argument inits to empty optional and was_included to false
-                            }
+                if constexpr(T::optional && T::argument_optional) {
+                    if(subcommand.inputs.options_to_values.contains(canonical_name)) {
+                        try {
+                            return {subcommand.inputs.options_to_values.at(canonical_name)}; // no need for has_value check here; returning an empty optional is valid
+                        }
+                        catch(user_error& e) {
+                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
+                        }
+                    }
+                    else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
+                        try {
+                            return {subcommand.inputs.options_to_values.at(*short_name)}; // no need for has_value check here; returning an empty optional is valid
+                        }
+                        catch(user_error& e) {
+                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\"). Details: " + e.what(), e.error_type());
                         }
                     }
                     else {
-                        return {}; // dummy
+                        return {}; // default constructor for optional option with optional argument inits to empty optional and was_included to false
                     }
                 }
                 else {
                     return {}; // this variable is a dummy
                 }
             }
-            else if constexpr(arg_info_t::is_flag) {
+            else {
                 return {}; // dummy
             }
-            else if constexpr(arg_info_t::is_positional) {
-                if constexpr(T::optional) {
-                    return {}; // dummy
-                }
-                else {
-                    return {}; // dummy
-                }
-            }
-            else { // is variadic
-                return {}; // dummy
-            }
+
         }
     }
 
