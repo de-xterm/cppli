@@ -1,10 +1,10 @@
 
-#include "subcommand.h"
-
 #include <tuple>
+#include <sstream>
 
+#include "subcommand.h"
 #include "documentation.h"
-
+#include "configuration.h"
 namespace cppli::detail {
 
     // construct on first use idiom
@@ -45,13 +45,11 @@ namespace cppli::detail {
     }
 
     bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name) {
-        return subcommand_name_to_inputs_info().contains(subcommand) &&
-               subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
+        return subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
     }
 
     bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name) {
-        return subcommand_name_to_inputs_info().contains(subcommand) &&
-               subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
+        return subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
     }
 
     bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name) {
@@ -60,6 +58,63 @@ namespace cppli::detail {
         }
         return false;
     }
+
+    void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option) {
+        const auto& inputs_info = subcommand_name_to_inputs_info().at(subcommand.name);
+        const std::string& short_name = inputs_info.flag_or_option_long_name_to_short_name.at(flag_or_option);
+
+        std::stringstream ss;
+
+        if(inputs_info.flags.contains(flag_or_option)) {
+            if(subcommand.inputs.flags.contains(flag_or_option) ||
+               subcommand.inputs.flags.contains(short_name)) {
+
+                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                   << " flag --" << flag_or_option << " included multiple times";
+
+                if(subcommand.inputs.flags.contains(short_name)) {
+                    ss << "(previously included with short name '" << short_name << "'\n";
+                }
+                else {
+                    ss << '\n';
+                }
+            }
+
+            print_throw_or_do_nothing(FLAG_INCLUDED_MULTIPLE_TIMES, ss.str());
+        }
+        else {
+            if(subcommand.inputs.options_to_values.contains(flag_or_option) ||
+               subcommand.inputs.options_to_values.contains(short_name)) {
+
+                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                   << " option --" << flag_or_option << " included multiple times";
+
+                if(subcommand.inputs.options_to_values.contains(short_name)) {
+                    ss << "(previously included with short name '" << short_name;
+                }
+                else {
+                }
+            }
+
+            print_throw_or_do_nothing(OPTION_INCLUDED_MULTIPLE_TIMES, ss.str(), "\nThe value of the first instance of this option will be used, and all other instances will be ignored");
+        }
+    }
+
+    void error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& short_flag_or_option) {
+        const auto& inputs_info = subcommand_name_to_inputs_info().at(subcommand.name);
+        const std::string& short_name = inputs_info.flag_or_option_short_name_to_long_name.at(short_flag_or_option[0]);
+
+        bool already_included;
+        if(inputs_info.flags.contains(short_flag_or_option)) {
+            already_included =  subcommand.inputs.flags.contains(short_flag_or_option) ||
+                                subcommand.inputs.flags.contains(short_name);
+        }
+        else {
+            already_included =  subcommand.inputs.options_to_values.contains(short_flag_or_option) ||
+                                subcommand.inputs.options_to_values.contains(short_name);
+        }
+    }
+
 
     bool is_namespace(const subcommand_name_t& subcommand) {
         return subcommand_name_to_docs().at(subcommand).is_namespace;

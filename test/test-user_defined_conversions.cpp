@@ -117,4 +117,3 @@ TEST_CASE("user defined conversion with manually specified conversion_t works") 
         }
     }
 }
-

@@ -83,8 +83,8 @@ namespace cppli::detail {
                 /*if(in_namespace) { // I forgot why this doesn't work
                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                     continue;
-                }*/                                                              // so that string like "-" and " - " can be used as positionals without issue
-                if((arg_string.substr(0,2) == "--") && !disambiguate_next_arg && contains_letters(arg_string)) { // long flag (these are ez)
+                }*/
+                if((arg_string.substr(0,2) == "--") && !disambiguate_next_arg) { // long flag (these are ez)
                                                     // we need this check so that we can handle the case where "--" is the thing we're trying to disambiguate. Ex: "program -- --"
                     if((arg_string.size() == 2) /*&& (!disambiguate_next_arg)*/) { // if the whole string is just "--", then this arg is used to disambiguate the next
                         disambiguate_next_arg = true; // ( "--" just means "the next arg is positional, even if it looks like an option/flag (starts with '-' or "--"), or a subcommand (matches a subcommand name))
@@ -169,8 +169,8 @@ namespace cppli::detail {
                             }
                         }
                     }
-                }
-                else if((arg_string[0] == '-') && !disambiguate_next_arg) { // short flag(s) and/or option (these are not so ez)
+                }                                                           // so that string like "-" and " - " can be used as positionals without issue
+                else if((arg_string[0] == '-') && !disambiguate_next_arg && contains_letters(arg_string)) { // short flag(s) and/or option (these are not so ez)
                     bool invalid_character_in_flag_group = false;
                     unsigned invalid_character_index;
                     std::stringstream invalid_character_in_flag_group_message;

@@ -45,6 +45,9 @@ namespace cppli::detail {
     struct subcommand_inputs_info_t {
         std::unordered_set<std::string> flags;
         std::unordered_map<std::string, bool> option_argument_is_optional;
+
+        std::unordered_map<std::string, std::string> flag_or_option_long_name_to_short_name;
+        std::unordered_map<char, std::string> flag_or_option_short_name_to_long_name;
     };
 
     std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>& subcommand_name_to_inputs_info();
@@ -61,6 +64,10 @@ namespace cppli::detail {
     bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name);
 
     bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name);
+
+                                                                                                        /// string shouldn't included the leading '-' or "--"
+    void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
+    void error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
 
     bool is_namespace(const subcommand_name_t& subcommand);
 
