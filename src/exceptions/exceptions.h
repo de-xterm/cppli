@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <variant>
 
+#include "template_utils.h"
+
 namespace cppli {
     namespace detail {
         using error_enum_underlying_t = uint_fast8_t;
@@ -32,11 +34,10 @@ namespace cppli {
     class user_error : public std::runtime_error {
     public:
         using error_variant_t = std::variant<minor_error_type,
-                                major_error_type>;
+                                             major_error_type>;
 
     private:
-        std::variant<minor_error_type,
-                major_error_type> error_variant_;
+        error_variant_t error_variant_;
 
     public:
         user_error(const std::string& what, minor_error_type e);
@@ -46,15 +47,24 @@ namespace cppli {
         const error_variant_t& error_type() const;
     };
 
+
+    template<typename T, typename...variant_ts>
+    bool is_a(const std::variant<variant_ts...>& v) {
+        return v.index() == detail::get_type_index_in_pack_v<std::remove_cvref_t<T>, std::remove_cvref_t<variant_ts>...>;
+    }
+
     //source: https://stackoverflow.com/a/62708827
     // A trait to check that T is one of 'Types...'
     template <typename T, typename...Types>
     struct is_one_of final : std::disjunction<std::is_same<T, Types>...> {};
 
-    template<typename... Types, typename T>
+    template<typename...Types, typename T>
     auto operator==(const std::variant<Types...>& v, T const& t) noexcept
     -> std::enable_if_t<is_one_of<T, Types...>::value, bool>
     {
-        return std::get<T>(v) == t;
+
+        return
+            is_a<T>(v) &&
+            (std::get<T>(v) == t);
     }
 }

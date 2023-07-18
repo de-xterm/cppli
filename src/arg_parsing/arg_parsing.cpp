@@ -45,9 +45,8 @@ namespace cppli::detail {
         // skip the program name
         subcommand_name_t subcommand_name = {"MAIN"};
 
-        subcommand_inputs_t args;
-
-        std::vector<subcommand_t> commands{{subcommand_name, args}};
+        //subcommand_inputs_t args;
+        std::vector<subcommand_t> commands{{subcommand_name}};
 
         bool disambiguate_next_arg = false;
 
@@ -74,12 +73,13 @@ namespace cppli::detail {
                 command_or_subcommand = "subcommand";
                 current_subcommand_name_string = to_string(subcommand_name);
 
-                commands.back().inputs = std::move(args);
-                args = {};
+                //commands.back().inputs = std::move(args);
+                //args = {};
 
                 commands.push_back({subcommand_name});
             }
             else {
+                subcommand_inputs_t& args = commands.back().inputs;
                 /*if(in_namespace) { // I forgot why this doesn't work
                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                     continue;
@@ -96,6 +96,7 @@ namespace cppli::detail {
                                         option_value = arg_string.substr(equals_pos+1, arg_string.size()-(equals_pos+1));
 
                             if(subcommand_takes_option(subcommand_name, option_name)) {
+                                error_if_flag_or_option_already_included(commands.back(), option_name);
                                 args.options_to_values.emplace(option_name, option_value);
                             }
                             else if(subcommand_takes_flag(subcommand_name, option_name)) {
@@ -130,7 +131,11 @@ namespace cppli::detail {
                         else {
                             std::string option_or_flag_name = arg_string.substr(2, arg_string.size()-1);
 
+                            //error_if_flag_or_option_already_included(commands.back(), option_or_flag_name);
+
                             if(subcommand_takes_option(subcommand_name, option_or_flag_name)) {
+                                error_if_flag_or_option_already_included(commands.back(), option_or_flag_name);
+
                                 if(subcommand_option_argument_is_optional(subcommand_name, option_or_flag_name)) {
                                     args.options_to_values.emplace(option_or_flag_name, std::nullopt);
                                     optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, arg_string);
@@ -151,6 +156,7 @@ namespace cppli::detail {
                                 }
                             }
                             else if(subcommand_takes_flag(subcommand_name, option_or_flag_name)) {
+                                error_if_flag_or_option_already_included(commands.back(), option_or_flag_name);
                                 args.flags.emplace(option_or_flag_name);
                             }
                             else {
@@ -179,6 +185,7 @@ namespace cppli::detail {
                         std::string char_string = arg_string.substr(char_i,1);
 
                         if(subcommand_takes_option(subcommand_name, char_string)) { // there is an argument
+                            error_if_short_flag_or_option_already_included(commands.back(), char_string);
                             if(char_i < arg_string.size()-1) { // no equals sign, so everything after this character is the argument    // TODO: maybe check to see if the string contains any flags with required args, and then if not we can employ this logic
                                 args.options_to_values.emplace(char_string, arg_string.substr(char_i+1+(arg_string[char_i+1] == '='), arg_string.size()));
                                 break;                                                                 // ^ discard a leading '='!!
@@ -209,6 +216,7 @@ namespace cppli::detail {
                             }
                         }
                         else if(subcommand_takes_flag(subcommand_name, char_string)) {
+                            error_if_short_flag_or_option_already_included(commands.back(), char_string);
                             args.flags.emplace(char_string);
                         }
                         else if(char_string == "h") {
@@ -341,7 +349,7 @@ namespace cppli::detail {
         }
 
         //if(commands.size() > 0) {
-            commands.back().inputs = std::move(args);
+            //commands.back().inputs = std::move(args);
         //}
 
         for(const auto& command : commands) {

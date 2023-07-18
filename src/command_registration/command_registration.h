@@ -4,6 +4,7 @@
 #include "documentation.h"
 #include "exceptions.h"
 #include "configuration.h"
+#include "template_utils.h"
 
 namespace cppli::detail {
     template<typename T, typename last>
@@ -237,26 +238,6 @@ namespace cppli::detail {
         }
     }
 
-    template<typename T_>
-    struct type_wrapper { using T = T_; };
-
-    template<std::size_t current_index, std::size_t desired_index, typename T, typename...Ts>
-    static constexpr auto get_type_from_index_in_pack_func() {
-        if constexpr((current_index == 0) && (desired_index > sizeof...(Ts))) {
-            return type_wrapper<void>{};
-        }
-        else if constexpr(current_index == desired_index) {
-            return type_wrapper<T>{};
-        }
-        else {
-            //static_assert(sizeof...(Ts) > 0, "index out of range");
-            return get_type_from_index_in_pack_func<current_index+1, desired_index, Ts...>();
-        }
-    }
-
-    template<std::size_t index, typename...Ts>
-    using get_type_from_index_in_pack = typename decltype(get_type_from_index_in_pack_func<0,index, Ts...>())::T;
-
     template<std::size_t current_index, std::size_t max_index, typename arg_t, typename...arg_ts>
     constexpr std::size_t count_positionals_before_index_func() {
         if constexpr(current_index < max_index) {
@@ -452,7 +433,7 @@ namespace cppli::detail {
                     info.flags.insert(std::string{type::short_name});
 
                     info.flag_or_option_short_name_to_long_name.emplace(T::short_name, T::name);
-                    info.flag_or_option_long_name_to_short_name.emplace(T::long_name,  T::short_name);
+                    info.flag_or_option_long_name_to_short_name.emplace(T::name,  std::string{T::short_name});
                 }
             }
             else if constexpr(arg_info_t::is_option) {
@@ -471,7 +452,7 @@ namespace cppli::detail {
                     info.option_argument_is_optional.emplace(std::string{type::short_name}, type::argument_optional);
 
                     info.flag_or_option_short_name_to_long_name.emplace(T::short_name, T::name);
-                    info.flag_or_option_long_name_to_short_name.emplace(T::long_name,  T::short_name);
+                    info.flag_or_option_long_name_to_short_name.emplace(T::name,  std::string{T::short_name});
                 }
             }
             else if constexpr(arg_info_t::is_positional) { // positional

@@ -137,3 +137,25 @@ TEST_CASE("passing invalid characters in flag groups throws") {
         REQUIRE_THREW(cppli::user_error, FLAG_GIVEN_AN_ARGUMENT, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 }
+
+TEST_CASE("repeated flag throw error") {
+    {
+        const char* argv[] = {"program", "flagtest", "--foo", "--foo"};
+        REQUIRE_THREW(cppli::user_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    }
+
+    {
+        const char* argv[] = {"program", "flagtest", "--foo", "-f"};
+        REQUIRE_THREW(cppli::user_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    }
+
+    {
+        const char* argv[] = {"program", "flagtest", "-f", "-f"};
+        REQUIRE_THREW(cppli::user_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    }
+
+    {
+        const char* argv[] = {"program", "flagtest", "-ff"};
+        REQUIRE_THREW(cppli::user_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    }
+}

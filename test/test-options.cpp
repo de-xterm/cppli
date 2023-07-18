@@ -397,3 +397,25 @@ TEST_CASE("optional argument options work") {
         }
     }
 }
+
+TEST_CASE("repeating options causes error") {
+    {
+        const char* argv[] = {"program", "opttest", "--color=blue", "--color=blue"};
+        REQUIRE_THREW(cppli::user_error, OPTION_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    }
+
+    {
+        const char* argv[] = {"program", "opttest", "--color=blue", "-cblue"};
+        REQUIRE_THREW(cppli::user_error, OPTION_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    }
+
+    {
+        const char* argv[] = {"program", "opttest", "-cblue", "--color=blue"};
+        REQUIRE_THREW(cppli::user_error, OPTION_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    }
+
+    {
+        const char* argv[] = {"program", "opttest", "-cblue", "-cblue"};
+        REQUIRE_THREW(cppli::user_error, OPTION_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+    }
+}

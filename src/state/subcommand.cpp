@@ -61,57 +61,76 @@ namespace cppli::detail {
 
     void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option) {
         const auto& inputs_info = subcommand_name_to_inputs_info().at(subcommand.name);
-        const std::string& short_name = inputs_info.flag_or_option_long_name_to_short_name.at(flag_or_option);
+        std::optional<std::reference_wrapper<const std::string>> short_name;
+        if(inputs_info.flag_or_option_long_name_to_short_name.contains(flag_or_option)) {
+            short_name = std::ref(inputs_info.flag_or_option_long_name_to_short_name.at(flag_or_option));
+        }
 
         std::stringstream ss;
 
         if(inputs_info.flags.contains(flag_or_option)) {
             if(subcommand.inputs.flags.contains(flag_or_option) ||
-               subcommand.inputs.flags.contains(short_name)) {
+               (short_name && subcommand.inputs.flags.contains(*short_name))) {
 
                 ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " flag --" << flag_or_option << " included multiple times";
 
-                if(subcommand.inputs.flags.contains(short_name)) {
-                    ss << "(previously included with short name '" << short_name << "'\n";
+                if(subcommand.inputs.flags.contains(*short_name)) {
+                    ss << "(previously included with short name '" << short_name->get() << '\'';
                 }
-                else {
-                    ss << '\n';
-                }
-            }
 
-            print_throw_or_do_nothing(FLAG_INCLUDED_MULTIPLE_TIMES, ss.str());
+                print_throw_or_do_nothing(FLAG_INCLUDED_MULTIPLE_TIMES, ss.str());
+            }
         }
         else {
             if(subcommand.inputs.options_to_values.contains(flag_or_option) ||
-               subcommand.inputs.options_to_values.contains(short_name)) {
+                    (short_name && subcommand.inputs.options_to_values.contains(*short_name))) {
 
                 ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " option --" << flag_or_option << " included multiple times";
 
-                if(subcommand.inputs.options_to_values.contains(short_name)) {
-                    ss << "(previously included with short name '" << short_name;
+                if(subcommand.inputs.options_to_values.contains(*short_name)) {
+                    ss << "(previously included with short name '" << short_name->get() << '\'';
                 }
-                else {
-                }
-            }
 
-            print_throw_or_do_nothing(OPTION_INCLUDED_MULTIPLE_TIMES, ss.str(), "\nThe value of the first instance of this option will be used, and all other instances will be ignored");
+                print_throw_or_do_nothing(OPTION_INCLUDED_MULTIPLE_TIMES, ss.str(), "\nThe value of the first instance of this option will be used, and all other instances will be ignored\n");
+            }
         }
     }
 
     void error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& short_flag_or_option) {
         const auto& inputs_info = subcommand_name_to_inputs_info().at(subcommand.name);
-        const std::string& short_name = inputs_info.flag_or_option_short_name_to_long_name.at(short_flag_or_option[0]);
+        const std::string& long_name = inputs_info.flag_or_option_short_name_to_long_name.at(short_flag_or_option[0]);
 
-        bool already_included;
+        std::stringstream ss;
+
         if(inputs_info.flags.contains(short_flag_or_option)) {
-            already_included =  subcommand.inputs.flags.contains(short_flag_or_option) ||
-                                subcommand.inputs.flags.contains(short_name);
+            if(subcommand.inputs.flags.contains(short_flag_or_option) ||
+               subcommand.inputs.flags.contains(long_name)) {
+
+                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                   << " flag --" << short_flag_or_option << " included multiple times";
+
+                if(subcommand.inputs.flags.contains(long_name)) {
+                    ss << "(previously included with long name \"" << long_name << '\"';
+                }
+                print_throw_or_do_nothing(FLAG_INCLUDED_MULTIPLE_TIMES, ss.str());
+            }
+
         }
         else {
-            already_included =  subcommand.inputs.options_to_values.contains(short_flag_or_option) ||
-                                subcommand.inputs.options_to_values.contains(short_name);
+            if(subcommand.inputs.options_to_values.contains(short_flag_or_option) ||
+               subcommand.inputs.options_to_values.contains(long_name)) {
+
+                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                   << " option --" << short_flag_or_option << " included multiple times";
+
+                if(subcommand.inputs.options_to_values.contains(long_name)) {
+                    ss << "(previously included with long name \"" << long_name << '\"';
+                }
+
+                print_throw_or_do_nothing(OPTION_INCLUDED_MULTIPLE_TIMES, ss.str(), "\nThe value of the first instance of this option will be used, and all other instances will be ignored\n");
+            }
         }
     }
 
