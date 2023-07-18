@@ -16,81 +16,83 @@ namespace cppli {
     extern documentation_verbosity default_help_verbosity;
     extern unsigned default_help_recursion_level;
 
-    namespace detail {
-        struct flag_documentation_t {
-            std::string name,
-                        documentation;
+    struct flag_documentation_t {
+        std::string name,
+                documentation;
 
-            char short_name;
+        char short_name;
 
-            flag_documentation_t(const std::string& name, const std::string& documentation, char short_name);
+        flag_documentation_t(const std::string& name, const std::string& documentation, char short_name);
 
-            bool operator<(const flag_documentation_t& rhs) const;
-        };
+        bool operator<(const flag_documentation_t& rhs) const;
+    };
 
-        struct option_documentation_t {
-            std::string type,
-                        name,
-                        argument_text,
-                        documentation;
+    struct option_documentation_t {
+        std::string type,
+                name,
+                argument_text,
+                documentation;
 
-            char short_name;
+        char short_name;
 
-            bool is_optional,
-                 argument_is_optional;
+        bool is_optional,
+                argument_is_optional;
 
-            option_documentation_t(const std::string& type, const std::string& name, const std::string& argument_text,
-                                   const std::string& documentation, char short_name, bool is_optional, bool argument_is_optional);
+        option_documentation_t(const std::string& type, const std::string& name, const std::string& argument_text,
+                               const std::string& documentation, char short_name, bool is_optional, bool argument_is_optional);
 
-            bool operator<(const option_documentation_t& rhs) const;
-        };
+        bool operator<(const option_documentation_t& rhs) const;
+    };
 
-        struct positional_documentation_t {
-            std::string type,
-                        name,
-                        documentation;
+    struct positional_documentation_t {
+        std::string type,
+                name,
+                documentation;
 
-            positional_documentation_t(const std::string& type, const std::string& name, const std::string& documentation,
-                                       bool optional);
+        positional_documentation_t(const std::string& type, const std::string& name, const std::string& documentation,
+                                   bool optional);
 
-            bool optional;
-        };
+        bool optional;
+    };
 
-        struct variadic_documentation_t {
-            std::string type,
-                        name,
-                        documentation;
+    struct variadic_documentation_t {
+        std::string type,
+                    name,
+                    documentation;
 
-            variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation);
-        };
+        variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation);
+    };
 
-        struct subcommand_documentation_t {
-            std::string  name; // this is what we're sorting by
-            std::string description;
+    struct subcommand_documentation_t {
+        std::string name; // this is what we're sorting by
+        std::string description;
 
-            std::set<flag_documentation_t>          flags; // using ordered set because we want to print commands alphabetically
-            std::set<option_documentation_t>        options;
-            std::vector<positional_documentation_t> positionals;
-            std::optional<variadic_documentation_t> variadic; // not vector because only one is allowed
+        std::set<flag_documentation_t>          flags; // using ordered set because we want to print commands alphabetically
+        std::set<option_documentation_t>        options;
+        std::vector<positional_documentation_t> positionals;
+        std::optional<variadic_documentation_t> variadic; // not vector because only one is allowed
 
-            std::set<std::string>          subcommands;
+        std::set<std::string>                   subcommands;
 
-            bool is_namespace = true;
+        bool is_namespace = true;
 
-            subcommand_documentation_t() = default;
+        subcommand_documentation_t() = default;
+        subcommand_documentation_t(const std::string& name, const char* description);
 
-            subcommand_documentation_t(const std::string& name, const char* description);
+        bool operator<(const subcommand_documentation_t& rhs) const;
+    };
 
-            bool operator<(const subcommand_documentation_t& rhs) const;
-        };
+    using get_documentation_string_t = std::string(*)(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion);
+    get_documentation_string_t& get_documentation_string_callback();
 
-        std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
-        std::set<std::string>& top_level_subcommands(); // TODO: remove this if it doesn't turn out to be necessary
-    }
-
-    std::string get_documentation_string(const detail::subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion);
+    std::string get_documentation_string(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion);
 
     /// returns documentation for the main command
     std::string get_documentation_string(documentation_verbosity verbosity, unsigned max_recursion_level);
 
+    namespace detail {
+        std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
+
+        const subcommand_documentation_t& get_command_docs_from_name(const subcommand_name_t& name);
+    }
 }

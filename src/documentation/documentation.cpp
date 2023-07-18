@@ -5,54 +5,49 @@ namespace cppli {
     documentation_verbosity default_help_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
     unsigned default_help_recursion_level          = -1;
 
+    bool flag_documentation_t::operator<(const flag_documentation_t& rhs) const {
+        return (name < rhs.name);
+    }
+
+    flag_documentation_t::flag_documentation_t(const std::string& name, const std::string& documentation, char short_name) : name(name),
+                                                                                                                             documentation(
+                                                                                                                                     documentation),
+                                                                                                                             short_name(
+                                                                                                                                     short_name) {}
+
+    bool option_documentation_t::operator<(const option_documentation_t& rhs) const {
+        return std::tie(is_optional, argument_is_optional, name) <
+               std::tie(rhs.is_optional, rhs.argument_is_optional, rhs.name);
+    }
+
+    option_documentation_t::option_documentation_t(const std::string& type, const std::string& name, const std::string& argument_text,
+                                                   const std::string& documentation, char short_name, bool is_optional,
+                                                   bool argument_is_optional) : type(type), name(name), argument_text(argument_text),
+                                                                                documentation(documentation), short_name(short_name),
+                                                                                is_optional(is_optional),
+                                                                                argument_is_optional(argument_is_optional) {}
+
+    positional_documentation_t::positional_documentation_t(const std::string& type, const std::string& name,
+                                                           const std::string& documentation, bool optional) : type(type), name(name),
+                                                                                                              documentation(documentation),
+                                                                                                              optional(optional) {}
+
+    variadic_documentation_t::variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation) : type(type),
+                                                                                                                                             name(name),
+                                                                                                                                             documentation(documentation) {}
+
+
+    subcommand_documentation_t::subcommand_documentation_t(const std::string& name, const char* description) : name(name), description(description), is_namespace(false) {}
+
+    bool subcommand_documentation_t::operator<(const subcommand_documentation_t& rhs) const {
+        return (name.back() < rhs.name.back());
+    }
+
     namespace detail {
         std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs() {
             static std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t> subcommand_name_to_docs_;
 
             return subcommand_name_to_docs_;
-        }
-
-        std::set<std::string>& top_level_subcommands() {
-            static std::set<std::string> ret;
-            return ret;
-        }
-
-        bool flag_documentation_t::operator<(const flag_documentation_t& rhs) const {
-            return (name < rhs.name);
-        }
-
-        flag_documentation_t::flag_documentation_t(const std::string& name, const std::string& documentation, char short_name) : name(name),
-                                                                                                                                 documentation(
-                                                                                                                                         documentation),
-                                                                                                                                 short_name(
-                                                                                                                                         short_name) {}
-
-        bool option_documentation_t::operator<(const option_documentation_t& rhs) const {
-            return std::tie(is_optional, argument_is_optional, name) <
-                   std::tie(rhs.is_optional, rhs.argument_is_optional, rhs.name);
-        }
-
-        option_documentation_t::option_documentation_t(const std::string& type, const std::string& name, const std::string& argument_text,
-                                                       const std::string& documentation, char short_name, bool is_optional,
-                                                       bool argument_is_optional) : type(type), name(name), argument_text(argument_text),
-                                                                                    documentation(documentation), short_name(short_name),
-                                                                                    is_optional(is_optional),
-                                                                                    argument_is_optional(argument_is_optional) {}
-
-        positional_documentation_t::positional_documentation_t(const std::string& type, const std::string& name,
-                                                               const std::string& documentation, bool optional) : type(type), name(name),
-                                                                                                                  documentation(documentation),
-                                                                                                                  optional(optional) {}
-
-        variadic_documentation_t::variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation) : type(type),
-                                                                                                                                                 name(name),
-                                                                                                                                                 documentation(documentation) {}
-
-
-        subcommand_documentation_t::subcommand_documentation_t(const std::string& name, const char* description) : name(name), description(description), is_namespace(false) {}
-
-        bool subcommand_documentation_t::operator<(const subcommand_documentation_t& rhs) const {
-            return (name.back() < rhs.name.back());
         }
 
         std::string add_appropriate_brackets(const std::string& source, bool optional) {
@@ -70,7 +65,7 @@ namespace cppli {
                         description;
         };
 
-        std::string get_documentation_string_impl(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, unsigned current_recursion_level, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
+        std::string get_documentation_string_impl(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, unsigned current_recursion_level, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
 
             #define FOUR_SPACES "    "
             #define EIGHT_SPACES "        "
@@ -283,9 +278,19 @@ namespace cppli {
         }
     }
 
-    std::string get_documentation_string(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level) {
-        if((name == detail::subcommand_name_t{"MAIN"}) ||
-           (name == detail::subcommand_name_t{})) {
+    const subcommand_documentation_t& get_command_docs_from_name(const subcommand_name_t& name) {
+        return detail::subcommand_name_to_docs().at(name);
+    }
+
+    get_documentation_string_t& get_documentation_string_callback() {
+        static get_documentation_string_t ret = get_documentation_string;
+
+        return ret;
+    }
+
+    std::string get_documentation_string(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level) {
+        if((name == subcommand_name_t{"MAIN"}) ||
+           (name == subcommand_name_t{})) {
             return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, detail::name_and_description_t{detail::program_name(), detail::program_description()});
         }
         else {
