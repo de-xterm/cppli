@@ -796,72 +796,84 @@ namespace cppli {
 }
 //end of "parameter_types.h" include
 
-namespace cppli::detail {
-    struct subcommand_inputs_t {
-        std::vector<std::string> positional_args;
-        std::unordered_map<std::string, std::optional<std::string>> options_to_values;
-        std::unordered_set<std::string> flags;
-
-        bool is_empty() const;
-    };
-
+namespace cppli {
     using subcommand_name_t = std::vector<std::string>;
 
-    std::string to_string(const subcommand_name_t& name, const char* delimiter = "::");
+    namespace detail {
+        struct subcommand_inputs_t {
+            std::vector<std::string> positional_args;
+            std::unordered_map<std::string, std::optional<std::string>> options_to_values;
+            std::unordered_set<std::string> flags;
+
+            bool is_empty() const;
+        };
 
 
-    /// this is just boost::hash_combine, but I don't want to drag boost into this library just for one function
-    template<typename T>
-    std::size_t hash_combine(std::size_t& seed, const T& val) {
-        return (seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+        std::string to_string(const subcommand_name_t& name, const char* delimiter = "::");
+
+
+        /// this is just boost::hash_combine, but I don't want to drag boost into this library just for one function
+        template<typename T>
+        std::size_t hash_combine(std::size_t& seed, const T& val) {
+            return (seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+        }
+
+        struct subcommand_name_hash_t {
+            std::size_t operator()(const subcommand_name_t& name) const noexcept;
+        };
+
+        struct subcommand_t {
+            subcommand_name_t name;
+            subcommand_inputs_t inputs;
+        };
+
+        using subcommand_func_t = void (*)(const subcommand_t&);
+
+        struct subcommand_inputs_info_t {
+            std::unordered_set<std::string> flags;
+            std::unordered_map<std::string, bool> option_argument_is_optional;
+
+            std::unordered_map<std::string, std::string> flag_or_option_long_name_to_short_name;
+            std::unordered_map<char, std::string> flag_or_option_short_name_to_long_name;
+        };
+
+        std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>&
+        subcommand_name_to_inputs_info();
+
+        std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>& subcommand_name_to_func();
+
+        std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>&
+        subcommand_name_to_error_checking_func();
+
+
+        /// if arg appended to parent_command_names forms a valid subcommand,
+        /// pushes back arg to parent_command_names and returns true.
+        /// Otherwise, just returns false
+        bool is_valid_subcommand(subcommand_name_t& parent_command_names, const std::string& arg);
+
+        bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name);
+
+        bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name);
+
+        bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name);
+
+        /// string shouldn't included the leading '-' or "--"
+        void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
+
+        void
+        error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
+
+        bool is_namespace(const subcommand_name_t& subcommand);
+
+        void set_program_name_and_description(std::string&& name,
+                                              std::string&& description); // todo: these should probably be in documentation.h/cpp
+
+        const std::string& program_name();
+
+        const std::string& program_description();
+
+        bool main_command_is_namespace();
     }
-
-    struct subcommand_name_hash_t {
-        std::size_t operator()(const subcommand_name_t& name) const noexcept;
-    };
-
-    struct subcommand_t {
-        subcommand_name_t name;
-        subcommand_inputs_t inputs;
-    };
-
-    using subcommand_func_t = void(*)(const subcommand_t&);
-
-    struct subcommand_inputs_info_t {
-        std::unordered_set<std::string> flags;
-        std::unordered_map<std::string, bool> option_argument_is_optional;
-
-        std::unordered_map<std::string, std::string> flag_or_option_long_name_to_short_name;
-        std::unordered_map<char, std::string> flag_or_option_short_name_to_long_name;
-    };
-
-    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>& subcommand_name_to_inputs_info();
-    std::unordered_map<subcommand_name_t, subcommand_func_t,        subcommand_name_hash_t>& subcommand_name_to_func();
-    std::unordered_map<subcommand_name_t, subcommand_func_t,        subcommand_name_hash_t>& subcommand_name_to_error_checking_func();
-
-
-    /// if arg appended to parent_command_names forms a valid subcommand,
-    /// pushes back arg to parent_command_names and returns true.
-    /// Otherwise, just returns false
-    bool is_valid_subcommand(subcommand_name_t& parent_command_names, const std::string& arg);
-
-    bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name);
-    bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name);
-
-    bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name);
-
-                                                                                                        /// string shouldn't included the leading '-' or "--"
-    void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
-    void error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
-
-    bool is_namespace(const subcommand_name_t& subcommand);
-
-    void set_program_name_and_description(std::string&& name, std::string&& description); // todo: these should probably be in documentation.h/cpp
-
-    const std::string& program_name();
-    const std::string& program_description();
-
-    bool main_command_is_namespace();
 }
 //end of "subcommand.h" include
 
@@ -895,82 +907,85 @@ namespace cppli {
     extern documentation_verbosity default_help_verbosity;
     extern unsigned default_help_recursion_level;
 
-    namespace detail {
-        struct flag_documentation_t {
-            std::string name,
-                        documentation;
+    struct flag_documentation_t {
+        std::string name,
+                documentation;
 
-            char short_name;
+        char short_name;
 
-            flag_documentation_t(const std::string& name, const std::string& documentation, char short_name);
+        flag_documentation_t(const std::string& name, const std::string& documentation, char short_name);
 
-            bool operator<(const flag_documentation_t& rhs) const;
-        };
+        bool operator<(const flag_documentation_t& rhs) const;
+    };
 
-        struct option_documentation_t {
-            std::string type,
-                        name,
-                        argument_text,
-                        documentation;
+    struct option_documentation_t {
+        std::string type,
+                name,
+                argument_text,
+                documentation;
 
-            char short_name;
+        char short_name;
 
-            bool is_optional,
-                 argument_is_optional;
+        bool is_optional,
+                argument_is_optional;
 
-            option_documentation_t(const std::string& type, const std::string& name, const std::string& argument_text,
-                                   const std::string& documentation, char short_name, bool is_optional, bool argument_is_optional);
+        option_documentation_t(const std::string& type, const std::string& name, const std::string& argument_text,
+                               const std::string& documentation, char short_name, bool is_optional, bool argument_is_optional);
 
-            bool operator<(const option_documentation_t& rhs) const;
-        };
+        bool operator<(const option_documentation_t& rhs) const;
+    };
 
-        struct positional_documentation_t {
-            std::string type,
-                        name,
-                        documentation;
+    struct positional_documentation_t {
+        std::string type,
+                name,
+                documentation;
 
-            positional_documentation_t(const std::string& type, const std::string& name, const std::string& documentation,
-                                       bool optional);
+        positional_documentation_t(const std::string& type, const std::string& name, const std::string& documentation,
+                                   bool optional);
 
-            bool optional;
-        };
+        bool optional;
+    };
 
-        struct variadic_documentation_t {
-            std::string type,
-                        name,
-                        documentation;
+    struct variadic_documentation_t {
+        std::string type,
+                    name,
+                    documentation;
 
-            variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation);
-        };
+        variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation);
+    };
 
-        struct subcommand_documentation_t {
-            std::string  name; // this is what we're sorting by
-            std::string description;
+    struct subcommand_documentation_t {
+        std::string name; // this is what we're sorting by
+        std::string description;
 
-            std::set<flag_documentation_t>          flags; // using ordered set because we want to print commands alphabetically
-            std::set<option_documentation_t>        options;
-            std::vector<positional_documentation_t> positionals;
-            std::optional<variadic_documentation_t> variadic; // not vector because only one is allowed
+        std::set<flag_documentation_t>          flags; // using ordered set because we want to print commands alphabetically
+        std::set<option_documentation_t>        options;
+        std::vector<positional_documentation_t> positionals;
+        std::optional<variadic_documentation_t> variadic; // not vector because only one is allowed
 
-            std::set<std::string>          subcommands;
+        std::set<std::string>                   subcommands;
 
-            bool is_namespace = true;
+        bool is_namespace = true;
 
-            subcommand_documentation_t() = default;
+        subcommand_documentation_t() = default;
+        subcommand_documentation_t(const std::string& name, const char* description);
 
-            subcommand_documentation_t(const std::string& name, const char* description);
+        bool operator<(const subcommand_documentation_t& rhs) const;
+    };
 
-            bool operator<(const subcommand_documentation_t& rhs) const;
-        };
+    using get_documentation_string_t = std::string(*)(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion);
+    get_documentation_string_t& get_documentation_string_callback();
 
-        std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
-    }
-
-    std::string get_documentation_string(const detail::subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion);
+    std::string get_documentation_string(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion);
 
     /// returns documentation for the main command
     std::string get_documentation_string(documentation_verbosity verbosity, unsigned max_recursion_level);
 
+    namespace detail {
+        std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
+
+        const subcommand_documentation_t& get_command_docs_from_name(const subcommand_name_t& name);
+    }
 }
 //end of "documentation.h" include
 
@@ -1656,7 +1671,7 @@ namespace cppli::detail {
                             }
                             else {
                                 if(option_name == "help") {
-                                    std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
+                                    std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level);
                                     return {{}, true};
                                 }
                                 else if(in_namespace) {
@@ -1708,7 +1723,7 @@ namespace cppli::detail {
                             }
                             else {
                                 if(option_or_flag_name == "help") {
-                                    std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
+                                    std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level);
                                     return {{}, true};
                                 }
                                 else if(in_namespace) {
@@ -1767,7 +1782,7 @@ namespace cppli::detail {
                             args.flags.emplace(char_string);
                         }
                         else if(char_string == "h") {
-                            std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
+                            std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level);
                             return {{}, true};
                         }
                         else if(in_namespace) {
@@ -1821,7 +1836,7 @@ namespace cppli::detail {
                 }
                 else { // positional arg
                     if(arg_string == "help") {
-                        std::cout << get_documentation_string(subcommand_name, default_help_verbosity, default_help_recursion_level);
+                        std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level);
                         return {{}, true};
                     }
                     else if(in_namespace) {
@@ -1889,7 +1904,7 @@ namespace cppli::detail {
                 std::cout << '\"' << to_string(commands.back().name)
                           << "\" is a namespace, so using it without further subcommands doesn't do anything. Here is its help page: \n";
                 //}
-                std::cout << get_documentation_string(commands.back().name, default_help_verbosity,
+                std::cout << (get_documentation_string_callback())(commands.back().name, default_help_verbosity,
                                                       default_help_recursion_level);
                 return {{}, true};
             }
@@ -1915,54 +1930,49 @@ namespace cppli {
     documentation_verbosity default_help_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
     unsigned default_help_recursion_level          = -1;
 
+    bool flag_documentation_t::operator<(const flag_documentation_t& rhs) const {
+        return (name < rhs.name);
+    }
+
+    flag_documentation_t::flag_documentation_t(const std::string& name, const std::string& documentation, char short_name) : name(name),
+                                                                                                                             documentation(
+                                                                                                                                     documentation),
+                                                                                                                             short_name(
+                                                                                                                                     short_name) {}
+
+    bool option_documentation_t::operator<(const option_documentation_t& rhs) const {
+        return std::tie(is_optional, argument_is_optional, name) <
+               std::tie(rhs.is_optional, rhs.argument_is_optional, rhs.name);
+    }
+
+    option_documentation_t::option_documentation_t(const std::string& type, const std::string& name, const std::string& argument_text,
+                                                   const std::string& documentation, char short_name, bool is_optional,
+                                                   bool argument_is_optional) : type(type), name(name), argument_text(argument_text),
+                                                                                documentation(documentation), short_name(short_name),
+                                                                                is_optional(is_optional),
+                                                                                argument_is_optional(argument_is_optional) {}
+
+    positional_documentation_t::positional_documentation_t(const std::string& type, const std::string& name,
+                                                           const std::string& documentation, bool optional) : type(type), name(name),
+                                                                                                              documentation(documentation),
+                                                                                                              optional(optional) {}
+
+    variadic_documentation_t::variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation) : type(type),
+                                                                                                                                             name(name),
+                                                                                                                                             documentation(documentation) {}
+
+
+    subcommand_documentation_t::subcommand_documentation_t(const std::string& name, const char* description) : name(name), description(description), is_namespace(false) {}
+
+    bool subcommand_documentation_t::operator<(const subcommand_documentation_t& rhs) const {
+        return (name.back() < rhs.name.back());
+    }
+
     namespace detail {
         std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs() {
             static std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t> subcommand_name_to_docs_;
 
             return subcommand_name_to_docs_;
-        }
-
-        std::set<std::string>& top_level_subcommands() {
-            static std::set<std::string> ret;
-            return ret;
-        }
-
-        bool flag_documentation_t::operator<(const flag_documentation_t& rhs) const {
-            return (name < rhs.name);
-        }
-
-        flag_documentation_t::flag_documentation_t(const std::string& name, const std::string& documentation, char short_name) : name(name),
-                                                                                                                                 documentation(
-                                                                                                                                         documentation),
-                                                                                                                                 short_name(
-                                                                                                                                         short_name) {}
-
-        bool option_documentation_t::operator<(const option_documentation_t& rhs) const {
-            return std::tie(is_optional, argument_is_optional, name) <
-                   std::tie(rhs.is_optional, rhs.argument_is_optional, rhs.name);
-        }
-
-        option_documentation_t::option_documentation_t(const std::string& type, const std::string& name, const std::string& argument_text,
-                                                       const std::string& documentation, char short_name, bool is_optional,
-                                                       bool argument_is_optional) : type(type), name(name), argument_text(argument_text),
-                                                                                    documentation(documentation), short_name(short_name),
-                                                                                    is_optional(is_optional),
-                                                                                    argument_is_optional(argument_is_optional) {}
-
-        positional_documentation_t::positional_documentation_t(const std::string& type, const std::string& name,
-                                                               const std::string& documentation, bool optional) : type(type), name(name),
-                                                                                                                  documentation(documentation),
-                                                                                                                  optional(optional) {}
-
-        variadic_documentation_t::variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation) : type(type),
-                                                                                                                                                 name(name),
-                                                                                                                                                 documentation(documentation) {}
-
-
-        subcommand_documentation_t::subcommand_documentation_t(const std::string& name, const char* description) : name(name), description(description), is_namespace(false) {}
-
-        bool subcommand_documentation_t::operator<(const subcommand_documentation_t& rhs) const {
-            return (name.back() < rhs.name.back());
         }
 
         std::string add_appropriate_brackets(const std::string& source, bool optional) {
@@ -1980,7 +1990,7 @@ namespace cppli {
                         description;
         };
 
-        std::string get_documentation_string_impl(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, unsigned current_recursion_level, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
+        std::string get_documentation_string_impl(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, unsigned current_recursion_level, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
 
             #define FOUR_SPACES "    "
             #define EIGHT_SPACES "        "
@@ -2193,9 +2203,19 @@ namespace cppli {
         }
     }
 
-    std::string get_documentation_string(const detail::subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level) {
-        if((name == detail::subcommand_name_t{"MAIN"}) ||
-           (name == detail::subcommand_name_t{})) {
+    const subcommand_documentation_t& get_command_docs_from_name(const subcommand_name_t& name) {
+        return detail::subcommand_name_to_docs().at(name);
+    }
+
+    get_documentation_string_t& get_documentation_string_callback() {
+        static get_documentation_string_t ret = get_documentation_string;
+
+        return ret;
+    }
+
+    std::string get_documentation_string(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level) {
+        if((name == subcommand_name_t{"MAIN"}) ||
+           (name == subcommand_name_t{})) {
             return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, detail::name_and_description_t{detail::program_name(), detail::program_description()});
         }
         else {
@@ -2437,7 +2457,7 @@ namespace cppli {
 ////
 
 namespace cppli {
-    template<detail::string_literal program_name, detail::string_literal description>
+    template<detail::string_literal program_name, detail::string_literal description> // TODO: put run in its own file
     void run(int argc, const char* const* const argv) {
         static_assert(detail::all_lowercase_numeral_or_hyphen<program_name>(), "command names can only contain lowercase characters, numerals, and hyphens");
 
