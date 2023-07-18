@@ -320,6 +320,51 @@ namespace cppli::detail {
 #include <stdexcept>
 #include <variant>
 
+
+//included from file "template_utils.h"
+
+#include <type_traits>
+
+namespace cppli::detail {
+    template<typename T_>
+    struct type_wrapper { using T = T_; };
+
+    template<std::size_t current_index, std::size_t desired_index, typename T, typename...Ts>
+    static constexpr auto get_type_from_index_in_pack_func() {
+        if constexpr((current_index == 0) && (desired_index > sizeof...(Ts))) {
+            return type_wrapper<void>{};
+        }
+        else if constexpr(current_index == desired_index) {
+            return type_wrapper<T>{};
+        }
+        else {
+            //static_assert(sizeof...(Ts) > 0, "index out of range");
+            return get_type_from_index_in_pack_func<current_index+1, desired_index, Ts...>();
+        }
+    }
+
+    template<std::size_t index, typename...Ts>
+    using get_type_from_index_in_pack = typename decltype(get_type_from_index_in_pack_func<0,index, Ts...>())::T;
+
+
+    template<typename T, typename U, typename...Ts>
+    static constexpr auto get_type_index_in_pack_func() {
+        if constexpr(std::is_same_v<T, U>) {
+            return 0;
+        }
+        else if constexpr(sizeof...(Ts) > 0) {
+            return 1+get_type_index_in_pack_func<T, Ts...>();
+        }
+        else {
+            static_assert(std::is_same_v<T, U>, "pack did not contain type");
+        }
+    }
+
+    template<typename T, typename...Ts>
+    static constexpr std::size_t get_type_index_in_pack_v = get_type_index_in_pack_func<T, Ts...>();
+}
+//end of "template_utils.h" include
+
 namespace cppli {
     namespace detail {
         using error_enum_underlying_t = uint_fast8_t;
@@ -329,8 +374,7 @@ namespace cppli {
         INVALID_FLAG,
         FLAG_INCLUDED_MULTIPLE_TIMES,
         FLAG_GIVEN_AN_ARGUMENT,
-        OPTION_INCLUDED_MULTIPLE_TIMES_WITH_SAME_ARGUMENT,
-        OPTION_INCLUDED_MULTIPLE_TIMES_WITH_DIFFERENT_ARGUMENTS,
+        OPTION_INCLUDED_MULTIPLE_TIMES,
         EXCESS_POSITIONAL,
         EXCESS_POSITIONAL_WITH_SUSPICIOUS_OPTION,
         ARGUMENT_GIVEN_TO_NAMESPACE,
@@ -350,11 +394,10 @@ namespace cppli {
     class user_error : public std::runtime_error {
     public:
         using error_variant_t = std::variant<minor_error_type,
-                                major_error_type>;
+                                             major_error_type>;
 
     private:
-        std::variant<minor_error_type,
-                major_error_type> error_variant_;
+        error_variant_t error_variant_;
 
     public:
         user_error(const std::string& what, minor_error_type e);
@@ -364,16 +407,25 @@ namespace cppli {
         const error_variant_t& error_type() const;
     };
 
+
+    template<typename T, typename...variant_ts>
+    bool is_a(const std::variant<variant_ts...>& v) {
+        return v.index() == detail::get_type_index_in_pack_v<std::remove_cvref_t<T>, std::remove_cvref_t<variant_ts>...>;
+    }
+
     //source: https://stackoverflow.com/a/62708827
     // A trait to check that T is one of 'Types...'
     template <typename T, typename...Types>
     struct is_one_of final : std::disjunction<std::is_same<T, Types>...> {};
 
-    template<typename... Types, typename T>
+    template<typename...Types, typename T>
     auto operator==(const std::variant<Types...>& v, T const& t) noexcept
     -> std::enable_if_t<is_one_of<T, Types...>::value, bool>
     {
-        return std::get<T>(v) == t;
+
+        return
+            is_a<T>(v) &&
+            (std::get<T>(v) == t);
     }
 }
 //end of "exceptions.h" include
@@ -778,6 +830,9 @@ namespace cppli::detail {
     struct subcommand_inputs_info_t {
         std::unordered_set<std::string> flags;
         std::unordered_map<std::string, bool> option_argument_is_optional;
+
+        std::unordered_map<std::string, std::string> flag_or_option_long_name_to_short_name;
+        std::unordered_map<char, std::string> flag_or_option_short_name_to_long_name;
     };
 
     std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>& subcommand_name_to_inputs_info();
@@ -794,6 +849,10 @@ namespace cppli::detail {
     bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name);
 
     bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name);
+
+                                                                                                        /// string shouldn't included the leading '-' or "--"
+    void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
+    void error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
 
     bool is_namespace(const subcommand_name_t& subcommand);
 
@@ -931,7 +990,7 @@ namespace cppli {
 
     void print_throw_or_do_nothing(minor_error_type error_type,
                                    const std::string& if_error_or_mesasge,
-                                   const std::string& only_if_message);
+                                   const std::string& only_if_message = "");
 
     error_behavior& minor_error_behavior(minor_error_type error_type);
 }
@@ -1169,26 +1228,6 @@ namespace cppli::detail {
         }
     }
 
-    template<typename T_>
-    struct type_wrapper { using T = T_; };
-
-    template<std::size_t current_index, std::size_t desired_index, typename T, typename...Ts>
-    static constexpr auto get_type_from_index_in_pack_func() {
-        if constexpr((current_index == 0) && (desired_index > sizeof...(Ts))) {
-            return type_wrapper<void>{};
-        }
-        else if constexpr(current_index == desired_index) {
-            return type_wrapper<T>{};
-        }
-        else {
-            //static_assert(sizeof...(Ts) > 0, "index out of range");
-            return get_type_from_index_in_pack_func<current_index+1, desired_index, Ts...>();
-        }
-    }
-
-    template<std::size_t index, typename...Ts>
-    using get_type_from_index_in_pack = typename decltype(get_type_from_index_in_pack_func<0,index, Ts...>())::T;
-
     template<std::size_t current_index, std::size_t max_index, typename arg_t, typename...arg_ts>
     constexpr std::size_t count_positionals_before_index_func() {
         if constexpr(current_index < max_index) {
@@ -1364,7 +1403,8 @@ namespace cppli::detail {
 
     template<typename return_t, typename arg_t, typename...arg_ts>                      // don't actually care about func, just need to deduce args
     void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, return_t(*func)(arg_t, arg_ts...) = nullptr) {
-        using arg_info_t = argument_info_t<std::remove_cvref_t<arg_t>>;
+        using T = std::remove_cvref_t<arg_t>;
+        using arg_info_t = argument_info_t<T>;
 
         if constexpr(!arg_info_t::is_raw_type) {
             using type = std::remove_cvref_t<arg_t>;
@@ -1379,8 +1419,11 @@ namespace cppli::detail {
 
                 info.flags.insert(type::name.string());
 
-                if(type::short_name) {
+                if constexpr(type::short_name != '\0') {
                     info.flags.insert(std::string{type::short_name});
+
+                    info.flag_or_option_short_name_to_long_name.emplace(T::short_name, T::name);
+                    info.flag_or_option_long_name_to_short_name.emplace(T::name,  std::string{T::short_name});
                 }
             }
             else if constexpr(arg_info_t::is_option) {
@@ -1397,6 +1440,9 @@ namespace cppli::detail {
 
                 if constexpr(type::short_name != '\0') {
                     info.option_argument_is_optional.emplace(std::string{type::short_name}, type::argument_optional);
+
+                    info.flag_or_option_short_name_to_long_name.emplace(T::short_name, T::name);
+                    info.flag_or_option_long_name_to_short_name.emplace(T::name,  std::string{T::short_name});
                 }
             }
             else if constexpr(arg_info_t::is_positional) { // positional
@@ -1547,9 +1593,8 @@ namespace cppli::detail {
         // skip the program name
         subcommand_name_t subcommand_name = {"MAIN"};
 
-        subcommand_inputs_t args;
-
-        std::vector<subcommand_t> commands{{subcommand_name, args}};
+        //subcommand_inputs_t args;
+        std::vector<subcommand_t> commands{{subcommand_name}};
 
         bool disambiguate_next_arg = false;
 
@@ -1576,17 +1621,18 @@ namespace cppli::detail {
                 command_or_subcommand = "subcommand";
                 current_subcommand_name_string = to_string(subcommand_name);
 
-                commands.back().inputs = std::move(args);
-                args = {};
+                //commands.back().inputs = std::move(args);
+                //args = {};
 
                 commands.push_back({subcommand_name});
             }
             else {
+                subcommand_inputs_t& args = commands.back().inputs;
                 /*if(in_namespace) { // I forgot why this doesn't work
                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                     continue;
-                }*/                                                              // so that string like "-" and " - " can be used as positionals without issue
-                if((arg_string.substr(0,2) == "--") && !disambiguate_next_arg && contains_letters(arg_string)) { // long flag (these are ez)
+                }*/
+                if((arg_string.substr(0,2) == "--") && !disambiguate_next_arg) { // long flag (these are ez)
                                                     // we need this check so that we can handle the case where "--" is the thing we're trying to disambiguate. Ex: "program -- --"
                     if((arg_string.size() == 2) /*&& (!disambiguate_next_arg)*/) { // if the whole string is just "--", then this arg is used to disambiguate the next
                         disambiguate_next_arg = true; // ( "--" just means "the next arg is positional, even if it looks like an option/flag (starts with '-' or "--"), or a subcommand (matches a subcommand name))
@@ -1598,6 +1644,7 @@ namespace cppli::detail {
                                         option_value = arg_string.substr(equals_pos+1, arg_string.size()-(equals_pos+1));
 
                             if(subcommand_takes_option(subcommand_name, option_name)) {
+                                error_if_flag_or_option_already_included(commands.back(), option_name);
                                 args.options_to_values.emplace(option_name, option_value);
                             }
                             else if(subcommand_takes_flag(subcommand_name, option_name)) {
@@ -1632,7 +1679,11 @@ namespace cppli::detail {
                         else {
                             std::string option_or_flag_name = arg_string.substr(2, arg_string.size()-1);
 
+                            //error_if_flag_or_option_already_included(commands.back(), option_or_flag_name);
+
                             if(subcommand_takes_option(subcommand_name, option_or_flag_name)) {
+                                error_if_flag_or_option_already_included(commands.back(), option_or_flag_name);
+
                                 if(subcommand_option_argument_is_optional(subcommand_name, option_or_flag_name)) {
                                     args.options_to_values.emplace(option_or_flag_name, std::nullopt);
                                     optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, arg_string);
@@ -1653,6 +1704,7 @@ namespace cppli::detail {
                                 }
                             }
                             else if(subcommand_takes_flag(subcommand_name, option_or_flag_name)) {
+                                error_if_flag_or_option_already_included(commands.back(), option_or_flag_name);
                                 args.flags.emplace(option_or_flag_name);
                             }
                             else {
@@ -1671,8 +1723,8 @@ namespace cppli::detail {
                             }
                         }
                     }
-                }
-                else if((arg_string[0] == '-') && !disambiguate_next_arg) { // short flag(s) and/or option (these are not so ez)
+                }                                                           // so that string like "-" and " - " can be used as positionals without issue
+                else if((arg_string[0] == '-') && !disambiguate_next_arg && contains_letters(arg_string)) { // short flag(s) and/or option (these are not so ez)
                     bool invalid_character_in_flag_group = false;
                     unsigned invalid_character_index;
                     std::stringstream invalid_character_in_flag_group_message;
@@ -1681,6 +1733,7 @@ namespace cppli::detail {
                         std::string char_string = arg_string.substr(char_i,1);
 
                         if(subcommand_takes_option(subcommand_name, char_string)) { // there is an argument
+                            error_if_short_flag_or_option_already_included(commands.back(), char_string);
                             if(char_i < arg_string.size()-1) { // no equals sign, so everything after this character is the argument    // TODO: maybe check to see if the string contains any flags with required args, and then if not we can employ this logic
                                 args.options_to_values.emplace(char_string, arg_string.substr(char_i+1+(arg_string[char_i+1] == '='), arg_string.size()));
                                 break;                                                                 // ^ discard a leading '='!!
@@ -1711,6 +1764,7 @@ namespace cppli::detail {
                             }
                         }
                         else if(subcommand_takes_flag(subcommand_name, char_string)) {
+                            error_if_short_flag_or_option_already_included(commands.back(), char_string);
                             args.flags.emplace(char_string);
                         }
                         else if(char_string == "h") {
@@ -1843,7 +1897,7 @@ namespace cppli::detail {
         }
 
         //if(commands.size() > 0) {
-            commands.back().inputs = std::move(args);
+            //commands.back().inputs = std::move(args);
         //}
 
         for(const auto& command : commands) {
@@ -2158,9 +2212,8 @@ namespace cppli {
 
 //included from file "subcommand.cpp"
 
-
 #include <tuple>
-
+#include <sstream>
 
 namespace cppli::detail {
 
@@ -2202,13 +2255,11 @@ namespace cppli::detail {
     }
 
     bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name) {
-        return subcommand_name_to_inputs_info().contains(subcommand) &&
-               subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
+        return subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
     }
 
     bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name) {
-        return subcommand_name_to_inputs_info().contains(subcommand) &&
-               subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
+        return subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
     }
 
     bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name) {
@@ -2217,6 +2268,82 @@ namespace cppli::detail {
         }
         return false;
     }
+
+    void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option) {
+        const auto& inputs_info = subcommand_name_to_inputs_info().at(subcommand.name);
+        std::optional<std::reference_wrapper<const std::string>> short_name;
+        if(inputs_info.flag_or_option_long_name_to_short_name.contains(flag_or_option)) {
+            short_name = std::ref(inputs_info.flag_or_option_long_name_to_short_name.at(flag_or_option));
+        }
+
+        std::stringstream ss;
+
+        if(inputs_info.flags.contains(flag_or_option)) {
+            if(subcommand.inputs.flags.contains(flag_or_option) ||
+               (short_name && subcommand.inputs.flags.contains(*short_name))) {
+
+                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                   << " flag --" << flag_or_option << " included multiple times";
+
+                if(subcommand.inputs.flags.contains(*short_name)) {
+                    ss << "(previously included with short name '" << short_name->get() << '\'';
+                }
+
+                print_throw_or_do_nothing(FLAG_INCLUDED_MULTIPLE_TIMES, ss.str());
+            }
+        }
+        else {
+            if(subcommand.inputs.options_to_values.contains(flag_or_option) ||
+                    (short_name && subcommand.inputs.options_to_values.contains(*short_name))) {
+
+                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                   << " option --" << flag_or_option << " included multiple times";
+
+                if(subcommand.inputs.options_to_values.contains(*short_name)) {
+                    ss << "(previously included with short name '" << short_name->get() << '\'';
+                }
+
+                print_throw_or_do_nothing(OPTION_INCLUDED_MULTIPLE_TIMES, ss.str(), "\nThe value of the first instance of this option will be used, and all other instances will be ignored\n");
+            }
+        }
+    }
+
+    void error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& short_flag_or_option) {
+        const auto& inputs_info = subcommand_name_to_inputs_info().at(subcommand.name);
+        const std::string& long_name = inputs_info.flag_or_option_short_name_to_long_name.at(short_flag_or_option[0]);
+
+        std::stringstream ss;
+
+        if(inputs_info.flags.contains(short_flag_or_option)) {
+            if(subcommand.inputs.flags.contains(short_flag_or_option) ||
+               subcommand.inputs.flags.contains(long_name)) {
+
+                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                   << " flag --" << short_flag_or_option << " included multiple times";
+
+                if(subcommand.inputs.flags.contains(long_name)) {
+                    ss << "(previously included with long name \"" << long_name << '\"';
+                }
+                print_throw_or_do_nothing(FLAG_INCLUDED_MULTIPLE_TIMES, ss.str());
+            }
+
+        }
+        else {
+            if(subcommand.inputs.options_to_values.contains(short_flag_or_option) ||
+               subcommand.inputs.options_to_values.contains(long_name)) {
+
+                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                   << " option --" << short_flag_or_option << " included multiple times";
+
+                if(subcommand.inputs.options_to_values.contains(long_name)) {
+                    ss << "(previously included with long name \"" << long_name << '\"';
+                }
+
+                print_throw_or_do_nothing(OPTION_INCLUDED_MULTIPLE_TIMES, ss.str(), "\nThe value of the first instance of this option will be used, and all other instances will be ignored\n");
+            }
+        }
+    }
+
 
     bool is_namespace(const subcommand_name_t& subcommand) {
         return subcommand_name_to_docs().at(subcommand).is_namespace;
