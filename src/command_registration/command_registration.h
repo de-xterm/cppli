@@ -2,7 +2,7 @@
 
 #include "subcommand.h"
 #include "documentation.h"
-#include "exceptions.h"
+#include "user_error.h"
 #include "configuration.h"
 #include "template_utils.h"
 

@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 #include "constexpr_string_literal.h"
-#include "exceptions.h"
+#include "user_error.h"
 
 namespace cppli {
     namespace conversions {

@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "configuration.h"
-#include "exceptions.h"
+#include "user_error.h"
 
 namespace cppli {
     void print_throw_or_do_nothing(minor_error_type error_type,

@@ -1,5 +1,5 @@
 
-#include "exceptions.h"
+#include "user_error.h"
 
 namespace cppli {
     user_error::user_error(const std::string& what, enum minor_error_type  e) : std::runtime_error(what), error_variant_(e) {}

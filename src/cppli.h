@@ -9,7 +9,7 @@
     #include "arg_parsing.cpp"
     #include "documentation.cpp"
     #include "subcommand.cpp"
-    #include "exceptions.cpp"
+    #include "user_error.cpp"
 #endif
 
 
@@ -21,7 +21,6 @@
     #endif
 #endif
 
-////
 
 namespace cppli {
     bool current_command_is_leaf();

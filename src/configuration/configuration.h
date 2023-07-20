@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "exceptions.h"
+#include "user_error.h"
 
 namespace cppli {
     enum error_behavior {
