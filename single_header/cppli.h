@@ -2457,6 +2457,12 @@ namespace cppli {
 ////
 
 namespace cppli {
+    bool current_command_is_leaf();
+
+    namespace detail {
+        extern bool current_command_is_leaf_;
+    }
+
     template<detail::string_literal program_name, detail::string_literal description> // TODO: put run in its own file
     void run(int argc, const char* const* const argv) {
         static_assert(detail::all_lowercase_numeral_or_hyphen<program_name>(), "command names can only contain lowercase characters, numerals, and hyphens");
@@ -2477,13 +2483,17 @@ namespace cppli {
                 }
             #endif
 
+
             bool runnable_command_found = false;
+
+            detail::current_command_is_leaf_ = commands_vec.size() < 2;
             if(!detail::subcommand_name_to_docs()[{"MAIN"}].is_namespace) {
                 (detail::subcommand_name_to_func()[{"MAIN"}])(commands_vec[0]);
                 runnable_command_found = true;
             }
 
             for(unsigned i = 1; i < commands_vec.size(); ++i) {
+                detail::current_command_is_leaf_ = (i == commands_vec.size()-1);
                 if((detail::subcommand_name_to_func().contains(commands_vec[i].name))) {
                     runnable_command_found = true;
                     (detail::subcommand_name_to_func()[commands_vec[i].name])(commands_vec[i]);
