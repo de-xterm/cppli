@@ -7,7 +7,7 @@
 using namespace cppli::detail;
 namespace cppli {
     namespace detail {
-        static bool current_command_is_leaf_;
+        bool current_command_is_leaf_;
     }
     bool current_command_is_leaf() {
         return detail::current_command_is_leaf_;

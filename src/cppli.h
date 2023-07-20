@@ -28,7 +28,6 @@ namespace cppli {
 
     namespace detail {
         extern bool current_command_is_leaf_;
-
     }
 
     template<detail::string_literal program_name, detail::string_literal description> // TODO: put run in its own file
