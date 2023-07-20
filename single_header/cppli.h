@@ -2443,6 +2443,25 @@ namespace cppli {
     }
 }
 //end of "exceptions.cpp" include
+
+//included from file "cppli.cpp"
+
+#include <iostream>
+
+
+using namespace cppli::detail;
+namespace cppli {
+    namespace detail {
+        bool current_command_is_leaf_;
+    }
+    bool current_command_is_leaf() {
+        return detail::current_command_is_leaf_;
+    }
+   /* void run(int argc, const char* const* const argv) {
+
+    }*/
+}
+//end of "cppli.cpp" include
 #endif
 
 
