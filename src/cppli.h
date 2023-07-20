@@ -10,6 +10,7 @@
     #include "documentation.cpp"
     #include "subcommand.cpp"
     #include "exceptions.cpp"
+    #include "cppli.cpp"
 #endif
 
 
