@@ -1,7 +1,6 @@
 
 #include <iostream>
 
-#include "cppli.h"
 #include "arg_parsing.h"
 
 using namespace cppli::detail;

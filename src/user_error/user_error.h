@@ -48,23 +48,29 @@ namespace cppli {
     };
 
 
-    template<typename T, typename...variant_ts>
-    bool is_a(const std::variant<variant_ts...>& v) {
-        return v.index() == detail::get_type_index_in_pack_v<std::remove_cvref_t<T>, std::remove_cvref_t<variant_ts>...>;
-    }
+    namespace detail {
+        template<typename T, typename...variant_ts>
+        bool is_a(const std::variant<variant_ts...>& v) {
+            return v.index() ==
+                   detail::get_type_index_in_pack_v<std::remove_cvref_t<T>, std::remove_cvref_t<variant_ts>...>;
+        }
 
-    //source: https://stackoverflow.com/a/62708827
-    // A trait to check that T is one of 'Types...'
-    template <typename T, typename...Types>
-    struct is_one_of final : std::disjunction<std::is_same<T, Types>...> {};
+        //source: https://stackoverflow.com/a/62708827
+        /// modified by me because it was bugged
 
-    template<typename...Types, typename T>
-    auto operator==(const std::variant<Types...>& v, T const& t) noexcept
-    -> std::enable_if_t<is_one_of<T, Types...>::value, bool>
-    {
+        // A trait to check that T is one of 'Types...'
+        template<typename T, typename...Types>
+        struct is_one_of final : std::disjunction<std::is_same<T, Types>...> {
+        };
 
-        return
-            is_a<T>(v) &&
-            (std::get<T>(v) == t);
+        template<typename...Types, typename T>
+        auto operator==(const std::variant<Types...>& v, T const& t) noexcept
+        -> std::enable_if_t<is_one_of<T, Types...>::value, bool> {
+
+            return
+                    is_a<T>(v) &&
+                    (std::get<T>(v) == t);
+        }
+        // /source
     }
 }

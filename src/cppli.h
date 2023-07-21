@@ -9,7 +9,12 @@
     #include "arg_parsing.cpp"
     #include "documentation.cpp"
     #include "subcommand.cpp"
+<<<<<<< HEAD
     #include "user_error.cpp"
+=======
+    #include "exceptions.cpp"
+    #include "cppli.cpp"
+>>>>>>> ab774f9588f9415834ba0e4500280789af89656f
 #endif
 
 
