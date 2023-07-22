@@ -57,17 +57,22 @@ namespace cppli::detail {
         std::string first_command_name = argv[0];
 
         bool in_namespace = is_namespace({"MAIN"});
-        //commands.push_back({{program_name()}, args});
 
-        std::string command_or_subcommand = "command";
+        std::optional<unsigned> help_command_index;
+
+        std::string command_or_subcommand = "main command";
 
         std::string current_subcommand_name_string = to_string(subcommand_name);
 
+        parse_ret_t ret;
 
         for(unsigned arg_i = 1; arg_i < argc; ++arg_i) {
             std::string arg_string = argv[arg_i];
 
             if(is_valid_subcommand(subcommand_name, arg_string) && !disambiguate_next_arg) {
+                if(arg_string == "help") {
+                    ret.help_command_index = commands.size();
+                }
                 in_namespace = is_namespace(subcommand_name);
 
                 command_or_subcommand = "subcommand";
@@ -348,14 +353,7 @@ namespace cppli::detail {
             }
         }
 
-        //if(commands.size() > 0) {
-            //commands.back().inputs = std::move(args);
-        //}
-
-        for(const auto& command : commands) {
-
-        }
-
-        return {std::move(commands), false};
+        ret.subcommands = std::move(commands);
+        return ret;
     }
 }

@@ -43,7 +43,12 @@ namespace cppli {
 
         auto parse_ret = detail::parse(argc, argv);
 
-        if(!parse_ret.printed_help) {
+        if(parse_ret.help_command_index && !parse_ret.printed_help) {
+            // help command is special. Skip all other execution if it is encountered
+            const auto& help_command = parse_ret.subcommands[*parse_ret.help_command_index];
+            (detail::subcommand_name_to_func()[help_command.name])(help_command);
+        }
+        else if(!parse_ret.printed_help) {
             const auto& commands_vec = parse_ret.subcommands;
 
             #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN

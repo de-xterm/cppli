@@ -179,6 +179,10 @@ namespace cppli::detail {
             return all_same;
         }
 
+        constexpr char operator[](std::size_t i) const {
+            return value[i];
+        }
+
         constexpr std::size_t size() const {
             return N;
         }

@@ -16,6 +16,8 @@ namespace cppli {
         template<string_literal name_, string_literal documentation_, char short_name_ = '\0'>
         class flag {
             static_assert(short_name_ == '\0' || isletter(short_name_), "flag short name must be a letter");
+            static_assert(isletter(name_[0]), "flag long name must begin with a letter");
+            static_assert(!contains_uppercase<name_>(), "flag long name cannot  contain uppercase characters");
 
         public:
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
@@ -32,6 +34,8 @@ namespace cppli {
                 bool optional_, bool argument_optional_,
                 char short_name_ = '\0'>
         class option {
+            static_assert(isletter(name_[0]), "option long name must begin with a letter");
+            static_assert(!contains_uppercase<name_>(), "option long name cannot  contain uppercase characters");
             static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
             static_assert(!optional_ || std::is_constructible_v<type_, std::string> || std::is_move_constructible_v<type_>,
                           "The type parameter of an optional option must be constructible from an std::string or have a move constructor available");
@@ -66,6 +70,8 @@ namespace cppli {
             bool was_included_ = false;
 
             static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
+            static_assert(isletter(name_[0]), "option long name must begin with a letter");
+            static_assert(!contains_uppercase<name_>(), "option long name cannot  contain uppercase characters");
 
         public:
             using type = type_;
