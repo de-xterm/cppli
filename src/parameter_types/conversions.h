@@ -2,6 +2,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <limits>
 
 #include "constexpr_string_literal.h"
 #include "user_error.h"
@@ -60,6 +61,29 @@ namespace cppli {
                 catch(std::out_of_range& e) {
                     throw user_error("Could not form a valid integer from string \"" + str + "\" because the resulting integer would be out of range", STRING_CONVERSION_ERROR);
                 }
+            }
+
+            static constexpr detail::string_literal type_string = "integer";
+        };
+
+        template<>
+        struct conversion_t<unsigned> {
+            int operator()(const std::string& str) const {
+                unsigned long ret;
+                try {
+                    ret = std::stoul(str);
+                }
+                catch(std::invalid_argument& e) {
+                    throw user_error("Could not form a valid integer from string \"" + str + "\"", STRING_CONVERSION_ERROR);
+                }
+                catch(std::out_of_range& e) {
+                    throw user_error("Could not form a valid integer from string \"" + str + "\" because the resulting integer would be out of range", STRING_CONVERSION_ERROR);
+                }
+                if(ret > std::numeric_limits<unsigned>::max()) {
+                    throw user_error("Could not form a valid unsigned integer from string \"" + str + "\" because the resulting integer would be out of range", STRING_CONVERSION_ERROR);
+                }
+
+                return ret;
             }
 
             static constexpr detail::string_literal type_string = "integer";

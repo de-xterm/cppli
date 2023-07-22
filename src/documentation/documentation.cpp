@@ -2,8 +2,10 @@
 #include "documentation.h"
 
 namespace cppli {
-    documentation_verbosity default_help_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
-    unsigned default_help_recursion_level          = -1;
+    constinit documentation_verbosity default_help_verbosity = NAME_AND_DESCRIPTION;
+    constinit unsigned default_help_recursion_level          = -1;
+    constinit bool     default_hide_help_status              = true;
+
 
     bool flag_documentation_t::operator<(const flag_documentation_t& rhs) const {
         return (name < rhs.name);
@@ -65,7 +67,7 @@ namespace cppli {
                         description;
         };
 
-        std::string get_documentation_string_impl(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, unsigned current_recursion_level, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
+        std::string get_documentation_string_impl(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, unsigned current_recursion_level, bool hide_help, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
 
             #define FOUR_SPACES "    "
             #define EIGHT_SPACES "        "
@@ -239,17 +241,14 @@ namespace cppli {
                             ret += e.name;
                             ret += ": ";
                             ret += e.docs;
-
-                            if(&option_doc_strings.back() == &e) {
-                                ret += '\n';
-                            }
+                            ret += '\n';
                         }
                     }
                 }
             }
 
             if(current_recursion_level+1 <= max_recursion_level) {
-                if(docs.subcommands.size()) {
+                if((docs.subcommands.size() > 1) || !hide_help || ((docs.subcommands.size() > 0) && (!docs.subcommands.contains("help")))) {
                     ret += indent;
                     ret += FOUR_SPACES "Subcommands:\n";
 
@@ -257,15 +256,16 @@ namespace cppli {
                     subcommand_name.resize(subcommand_name.size()+1);
                     for(const auto& e : docs.subcommands) {
                         subcommand_name.back() = e;
+                        if((!hide_help) || (subcommand_name.back() != "help")) {
+                            ret += get_documentation_string_impl(subcommand_name, verbosity, max_recursion_level, current_recursion_level + 1, hide_help);
 
-                        ret += get_documentation_string_impl(subcommand_name, verbosity, max_recursion_level, current_recursion_level + 1);
 
-
-                        if((verbosity != NAME_ONLY) &&
-                           (verbosity != NAME_AND_ARGS) &&
-                           (&e != &*(--docs.subcommands.end()))) {
-                            ret += indent;
-                            ret += '\n';
+                            if((verbosity != NAME_ONLY) &&
+                               (verbosity != NAME_AND_ARGS) &&
+                               (&e != &*(--docs.subcommands.end()))) {
+                                ret += indent;
+                                ret += '\n';
+                            }
                         }
                     }
                 }
@@ -283,22 +283,22 @@ namespace cppli {
     }
 
     get_documentation_string_t& get_documentation_string_callback() {
-        static get_documentation_string_t ret = get_documentation_string;
+        static get_documentation_string_t ret = default_get_documentation_string_callback;
 
         return ret;
     }
 
-    std::string get_documentation_string(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level) {
+    std::string default_get_documentation_string_callback(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help) {
         if((name == subcommand_name_t{"MAIN"}) ||
            (name == subcommand_name_t{})) {
-            return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, detail::name_and_description_t{detail::program_name(), detail::program_description()});
+            return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, hide_help, detail::name_and_description_t{detail::program_name(), detail::program_description()});
         }
         else {
-            return detail::get_documentation_string_impl(name, verbosity, max_recursion_level, 0);
+            return detail::get_documentation_string_impl(name, verbosity, max_recursion_level, 0, hide_help);
         }
     }
 
-    std::string get_documentation_string(documentation_verbosity verbosity, unsigned max_recursion_level) {
+    /*std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help) {
         return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, detail::name_and_description_t{detail::program_name(), detail::program_description()});
-    }
+    }*/
 }

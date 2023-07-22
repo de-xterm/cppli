@@ -9,12 +9,9 @@
     #include "arg_parsing.cpp"
     #include "documentation.cpp"
     #include "subcommand.cpp"
-<<<<<<< HEAD
     #include "user_error.cpp"
-=======
-    #include "exceptions.cpp"
     #include "cppli.cpp"
->>>>>>> ab774f9588f9415834ba0e4500280789af89656f
+    #include "command_registration.cpp"
 #endif
 
 
@@ -32,6 +29,7 @@ namespace cppli {
 
     namespace detail {
         extern bool current_command_is_leaf_;
+        extern subcommand_name_t last_subcommand_;
     }
 
     template<detail::string_literal program_name, detail::string_literal description> // TODO: put run in its own file
@@ -61,9 +59,11 @@ namespace cppli {
             if(!detail::subcommand_name_to_docs()[{"MAIN"}].is_namespace) {
                 (detail::subcommand_name_to_func()[{"MAIN"}])(commands_vec[0]);
                 runnable_command_found = true;
+                detail::last_subcommand_ = {};
             }
 
             for(unsigned i = 1; i < commands_vec.size(); ++i) {
+                detail::last_subcommand_ = commands_vec[i-1].name;
                 detail::current_command_is_leaf_ = (i == commands_vec.size()-1);
                 if((detail::subcommand_name_to_func().contains(commands_vec[i].name))) {
                     runnable_command_found = true;

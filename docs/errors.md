@@ -30,7 +30,7 @@ The behavior when encountering a nonfatal error can be configured by assigning t
 This can be set to one of the following enumerators:
   
 `THROW`  
-throw a user error explaining what happened
+throw a `user_error` explaining what happened
   
 `MESSAGE`  
 print a message to stderr explaining what happened  

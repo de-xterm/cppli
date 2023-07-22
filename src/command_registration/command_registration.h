@@ -479,8 +479,20 @@ namespace cppli::detail {
     }
 
 
+
+    void default_help_callback(const flag<"name-only", "only print subcommand names">&, bool name_only,
+                               const flag<"name-and-description", "print subcommand name and description">&, bool name_and_description,
+                               const flag<"name-and-args", "print subcommand name and args">&, bool name_and_args,
+                               const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
+                               const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
+                               const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
+                               const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
+
+                               const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
+
+
     template<auto func>
-    dummy_t register_subcommand(const subcommand_name_t& name, const char* description) {
+    dummy_t register_subcommand(const subcommand_name_t& name, const char* description, bool is_help = false) {
         subcommand_inputs_info_t   info;
         subcommand_documentation_t docs(name.back(), description);
 
@@ -506,10 +518,10 @@ namespace cppli::detail {
         subcommand_name_to_inputs_info().emplace(name, std::move(info));
 
         if(name == subcommand_name_t{"MAIN"}) {
-            subcommand_name_to_docs()[name].flags = std::move(docs.flags);
-            subcommand_name_to_docs()[name].options = std::move(docs.options);
+            subcommand_name_to_docs()[name].flags       = std::move(docs.flags);
+            subcommand_name_to_docs()[name].options     = std::move(docs.options);
             subcommand_name_to_docs()[name].positionals = std::move(docs.positionals);
-            subcommand_name_to_docs()[name].variadic = std::move(docs.variadic);
+            subcommand_name_to_docs()[name].variadic    = std::move(docs.variadic);
 
             subcommand_name_to_docs()[name].is_namespace = false;
 
@@ -517,6 +529,15 @@ namespace cppli::detail {
         }
         else {
             subcommand_name_to_docs().insert_or_assign(name, std::move(docs));
+        }
+
+        if(!is_help) {
+            subcommand_name_t temp = name;
+            temp.push_back("help");
+
+            if(!subcommand_name_to_func().contains(temp)) {
+                register_subcommand<default_help_callback>(temp, "print help for this command", true);
+            }
         }
 
         return {};

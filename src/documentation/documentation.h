@@ -15,6 +15,7 @@ namespace cppli {
 
     extern documentation_verbosity default_help_verbosity;
     extern unsigned default_help_recursion_level;
+    extern bool default_hide_help_status;
 
     struct flag_documentation_t {
         std::string name,
@@ -82,13 +83,13 @@ namespace cppli {
         bool operator<(const subcommand_documentation_t& rhs) const;
     };
 
-    using get_documentation_string_t = std::string(*)(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion);
+    using get_documentation_string_t = std::string(*)(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion, bool hide_help);
     get_documentation_string_t& get_documentation_string_callback();
 
-    std::string get_documentation_string(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion);
+    std::string default_get_documentation_string_callback(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion, bool hide_help);
 
     /// returns documentation for the main command
-    std::string get_documentation_string(documentation_verbosity verbosity, unsigned max_recursion_level);
+    //std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help);
 
     namespace detail {
         std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
