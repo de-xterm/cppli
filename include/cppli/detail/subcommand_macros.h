@@ -1,6 +1,8 @@
 #pragma once
 
 namespace cppli::detail {
+
+    /// All the recursive expansion stuff is taken from https://www.scs.stanford.edu/~dm/blog/va-opt.html
     struct evaluate_at_file_scope_dummy_t {
         template<typename T>
         evaluate_at_file_scope_dummy_t(T&&) {}
@@ -45,10 +47,35 @@ namespace cppli::detail {
     #define FINAL_CAT_AGAIN() FINAL_CAT_HELPER
     #define NOT_FINAL_CAT_AGAIN() cppli_internal_NOT_FINAL_CAT_HELPER
 
-    #define cppli_internal_UNIQUE_NAME(NAME) cppli_internal_CAT(NAME, __COUNTER__)
+    #ifdef __COUNTER__
+        #define cppli_internal_UNIQUE_NAME(NAME) cppli_internal_CAT(NAME, __COUNTER__) // use counter if it's available
+    #else
+        #define cppli_internal_UNIQUE_NAME(NAME) cppli_internal_CAT(NAME, __LINE__)  // if not, line should suffice
+    #endif
 
     #define cppli_internal_EVALUATE_AT_FILE_SCOPE(EXPR)                        \
     namespace {                                                 \
-        ::cppli::detail::evaluate_at_file_scope_dummy_t cppli_internal_UNIQUE_NAME(cppli_DUMMY) = EXPR;      \
+        const ::cppli::detail::evaluate_at_file_scope_dummy_t cppli_internal_UNIQUE_NAME(cppli_DUMMY) = EXPR;      \
     }
+
+    // source: http://cupofcad.com/2022/05/20/cross-platform-warning-suppression-in-c/
+    #if defined(_MSC_VER)
+        #define WARNING_DISABLE \
+            __pragma(warning(push, 0)) \
+            __pragma(warning(disable: 4701)) \
+            __pragma(warning(disable: 4702))
+        #define WARNING_ENABLE \
+          __pragma(warning(default: 4701)) \
+          __pragma(warning(default: 4702)) \
+          __pragma(warning(pop ))
+    #elif defined(__GNUC__) || defined(__clang__)
+        #define WARNING_DISABLE \
+            _Pragma("GCC diagnostic push") \
+            _Pragma("GCC diagnostic ignored \"-Wunused-variable\"") \
+            _Pragma("GCC diagnostic ignored \"-Wunused-const-variable\"")
+        #define WARNING_ENABLE _Pragma("GCC diagnostic pop")
+    #else
+        #define WARNING_DISABLE
+        #define WARNING_ENABLE
+    #endif
 }

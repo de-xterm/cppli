@@ -17,15 +17,15 @@ namespace cppli {
     //#define CPPLI_NAMESPACE(NAME, DESCRIPTION)
 
     #define CPPLI_MAIN_COMMAND(/*parameters*/...) \
-    extern "C" void CPPLI_GENERATED_MAIN (__VA_ARGS__); \
-    cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<CPPLI_GENERATED_MAIN>({"MAIN"}, "")) \
-    extern "C" void CPPLI_GENERATED_MAIN (__VA_ARGS__)
+    extern "C" void CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK (__VA_ARGS__); \
+    cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK>({"MAIN"}, "")) \
+    extern "C" void CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK (__VA_ARGS__)
 
     #define CPPLI_SUBCOMMAND(name, DESCRIPTION, /*parameters*/...) \
-    extern "C" void cppli_internal_CAT(CPPLI_GENERATED, name) (__VA_ARGS__); \
+    extern "C" void cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name) (__VA_ARGS__); \
     static_assert(!::cppli::detail::contains_uppercase<cppli_internal_STRINGIFY(cppli_internal_CAT(name))>(), "subcommand names cannot contain uppercase characters"); \
-    cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<cppli_internal_CAT(CPPLI_GENERATED, name)>({cppli_internal_FOR_EACH(cppli_internal_STRINGIFY_WITH_COMMA, MAIN, name)}, DESCRIPTION)) \
-    extern "C" void cppli_internal_CAT(CPPLI_GENERATED, name) (__VA_ARGS__)
+    cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name)>({cppli_internal_FOR_EACH(cppli_internal_STRINGIFY_WITH_COMMA, MAIN, name)}, DESCRIPTION)) \
+    extern "C" void cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name) (__VA_ARGS__)
 
     #define CPPLI_NAME(...) __VA_ARGS__
 
