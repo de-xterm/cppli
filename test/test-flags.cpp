@@ -1,7 +1,13 @@
 
 #include "catch_test_macros.hpp"
 
-#include "cppli.h"
+#ifdef CPPLI_SINGLE_HEADER
+    #include "cppli.h"
+#else
+    #include "cppli/run.h"
+    #include "cppli/command_macros.h"
+#endif
+
 #include "test_utils.h"
 
 using namespace cppli::detail;

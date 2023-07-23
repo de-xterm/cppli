@@ -5,6 +5,7 @@
 #include "subcommand.h"
 #include "documentation.h"
 #include "configuration.h"
+
 namespace cppli::detail {
 
     // construct on first use idiom

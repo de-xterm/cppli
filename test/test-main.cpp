@@ -5,7 +5,11 @@
     #define CPPLI_IMPLEMENTATION
 #endif
 
-#include "cppli.h"
+#ifdef CPPLI_SINGLE_HEADER
+    #include "cppli.h"
+#else
+    #include "cppli/configuration.h"
+#endif
 
 int main(int argc, char** argv) {
     //cppli::run<"program", "does stuff">(argc, argv);

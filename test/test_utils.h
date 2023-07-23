@@ -2,6 +2,12 @@
 
 #include <cstddef>
 
+#ifdef CPPLI_SINGLE_HEADER
+    #include "cppli.h"
+#else
+    #include "cppli/detail/user_error.h"
+#endif
+
 namespace cppli::detail {
     template<typename T, std::size_t N>
     constexpr std::size_t lengthof(const T(&arr)[N]) {
@@ -17,7 +23,7 @@ namespace cppli::detail {
     }                                                             \
     catch(EXCEPTION_TYPE& e) {                                    \
         threw = true;                                             \
-        REQUIRE(e.error_type() == ERROR_TYPE_ENUM);               \
+        REQUIRE(equal(e.error_type(), ERROR_TYPE_ENUM));               \
     }                                                             \
     REQUIRE(threw);                                               \
 } (void)0 // force a semicolon

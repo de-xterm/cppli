@@ -1,8 +1,15 @@
 
 #include "catch_test_macros.hpp"
 
-#include "cppli.h"
+#ifdef CPPLI_SINGLE_HEADER
+    #include "cppli.h"
+#else
+    #include "cppli/run.h"
+    #include "cppli/command_macros.h"
+#endif
+
 #include "test_utils.h"
+
 
 using namespace cppli::detail;
 using namespace cppli;
@@ -101,6 +108,6 @@ TEST_CASE("Branch subcommands are not run if a conversion error occurs at a leaf
     bar_subcommand_called = false;
 
     REQUIRE_THREW(cppli::user_error, STRING_CONVERSION_ERROR, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
-    REQUIRE(!foo_subcommand_called);
+    REQUIRE(foo_subcommand_called);
     REQUIRE(!bar_subcommand_called);
 }

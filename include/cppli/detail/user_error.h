@@ -67,10 +67,19 @@ namespace cppli {
         auto operator==(const std::variant<Types...>& v, T const& t) noexcept
         -> std::enable_if_t<is_one_of<T, Types...>::value, bool> {
 
-            return
-                    is_a<T>(v) &&
-                    (std::get<T>(v) == t);
+            return is_a<T>(v) &&
+                   (std::get<T>(v) == t);
         }
         // /source
+
+        template<typename...Types, typename T>
+        bool equal(const std::variant<Types...>& v, T const& t) {
+            return v == t;
+        }
+
+        template<typename...Types, typename T>
+        bool equal(T const& t, const std::variant<Types...>& v) {
+            return v == t;
+        }
     }
 }
