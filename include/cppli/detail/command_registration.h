@@ -511,11 +511,11 @@ namespace cppli::detail {
 
         generate_input_info_and_docs(info, docs, func);
 
-        subcommand_name_to_func().emplace(name, call_func<func>);
+        subcommand_name_to_func().insert_or_assign(name, call_func<func>);
         #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
-            subcommand_name_to_error_checking_func().emplace(name, check_for_errors<func>);
+            subcommand_name_to_error_checking_func().insert_or_assign(name, check_for_errors<func>);
         #endif
-        subcommand_name_to_inputs_info().emplace(name, std::move(info));
+        subcommand_name_to_inputs_info().insert_or_assign(name, std::move(info));
 
         if(name == subcommand_name_t{"MAIN"}) {
             subcommand_name_to_docs()[name].flags       = std::move(docs.flags);

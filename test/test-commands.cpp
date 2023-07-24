@@ -50,6 +50,18 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(namespace, foo),
     foo_in_namespace_called = true;
 }
 
+static bool help_subcommand_called = false;
+static bool help_is_leaf = false;
+
+CPPLI_SUBCOMMAND(CPPLI_NAME(foo, help),
+                 "custom help subcommand",
+
+                 CPPLI_OPTIONAL_POSITIONAL(int, size, "size positional")) {
+
+    help_subcommand_called = true;
+    help_is_leaf = cppli::current_command_is_leaf();
+}
+
 
 TEST_CASE("main command callback gets called") {
     const char* argv[] = {"program"};
@@ -110,4 +122,15 @@ TEST_CASE("Branch subcommands are not run if a conversion error occurs at a leaf
     REQUIRE_THREW(cppli::user_error, STRING_CONVERSION_ERROR, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     REQUIRE(foo_subcommand_called);
     REQUIRE(!bar_subcommand_called);
+}
+
+TEST_CASE("custom help subcommand gets called") {
+    help_subcommand_called = false;
+    help_is_leaf = false;
+
+    const char* argv[] = {"program", "foo", "help"};
+    cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+    REQUIRE(help_is_leaf);
+    REQUIRE(help_subcommand_called);
 }
