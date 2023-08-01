@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 # this is a simple script for expanding a file's includes in order to produce a single header library
-# it only considers includes made with quotes, not ones with angular brackets (so as not to in
+# it only considers includes made with quotes, not ones with angular brackets (so as not to expand standard includes)
 
-# usage: amalgamate.py <header whose includes we're going to expand> <output header> <directory containing project files (.cpp and .h)>
+# usage: amalgamate.py (takes no args, all relative paths are hardcoded)
 
-# This script is hardcoded to fit the specific needs of this library, and it probably won't work for all libraries without some troubleshooting
+# This script is hardcoded to fit the specific needs of this library, and it probably won't work for other projects without some troubleshooting
 
 
-# this script 
+
+
 
 # TODO: don't expand commented out includes
 # TODO: more error checks
@@ -22,41 +23,41 @@ def err(*args, **kwargs):
     exit(1)
 
 
-
+"""
 if(len(sys.argv) < 4):
     err("incorrect number of args provided")
+"""
 
-
-input_header_path = sys.argv[1]
-output_header_path = sys.argv[2]
-includes_dir = sys.argv[3]
+input_header_path = "./cppli_single_header.h"
+output_header_path = "../single_header/cppli.h"
+include_dirs = ["../include/", "../src/"]
 
 
 include_filenames_to_full_paths = {}
 
+for dir in include_dirs
+    for subdir, dirs, files in os.walk(dir):
+        for file in files:
+            include_filenames_to_full_paths[file] = os.path.join(subdir, file)
+            include_filenames_to_full_paths[file] = os.path.join(subdir, os.path.basename(os.path.parent(file)) + "/" + file)
 
-for subdir, dirs, files in os.walk(includes_dir):
-    for file in files:
-        include_filenames_to_full_paths[file] = os.path.join(subdir, file)
-        print("Discovered file \""+file+'\"')
+                print("Discovered file \""+file+'\"')
 
-
+print("")
 
 def expand_includes(filepath, already_expanded_files=set()):
     contents = ""
 
-    
-
     file = open(filepath, "r")
     lines = file.readlines()
-    
+
     for line in lines:
         if("#include" in line and '\"' in line):
             first_quote_index = line.index('\"')+1
             second_quote_index = line.index('\"', first_quote_index)
-    
+
             include_filename = line[first_quote_index:second_quote_index]
-            
+
             if(include_filename not in already_expanded_files):
                 print("expanding file \""+include_filename+'\"')
 
@@ -69,12 +70,16 @@ def expand_includes(filepath, already_expanded_files=set()):
             contents += line
 
     return contents
-    
+
 
 output_text = "#pragma once\n\n"
 output_text += expand_includes(input_header_path)
-output_text += '\n'
+output_text += "\n\n"
+
+print("successfully expanded includes\n")
 
 out_file = open(output_header_path, "w")
 
 out_file.write(output_text)
+
+print("successfully wrote output file")
