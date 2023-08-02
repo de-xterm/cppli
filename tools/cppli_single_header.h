@@ -11,7 +11,6 @@
     #include "documentation.cpp"
     #include "subcommand.cpp"
     #include "user_error.cpp"
-    #include "cppli.cpp"
     #include "command_registration.cpp"
 #endif
 

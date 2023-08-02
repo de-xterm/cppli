@@ -2,12 +2,17 @@
 
 
 
-//included from file "subcommand_macros.h"
+//included from file "command_macros.h"
+
+
+//included from file "detail/subcommand_macros.h"
 
 namespace cppli::detail {
+
+    /// All the recursive expansion stuff is taken from https://www.scs.stanford.edu/~dm/blog/va-opt.html
     struct evaluate_at_file_scope_dummy_t {
         template<typename T>
-        evaluate_at_file_scope_dummy_t(T&&) {}
+        evaluate_at_file_scope_dummy_t(T&&) noexcept {}
     };
 
     #define cppli_internal_PARENS ()
@@ -49,16 +54,23 @@ namespace cppli::detail {
     #define FINAL_CAT_AGAIN() FINAL_CAT_HELPER
     #define NOT_FINAL_CAT_AGAIN() cppli_internal_NOT_FINAL_CAT_HELPER
 
-    #define cppli_internal_UNIQUE_NAME(NAME) cppli_internal_CAT(NAME, __COUNTER__)
+    #ifdef __COUNTER__
+        #define cppli_internal_UNIQUE_NAME(NAME) cppli_internal_CAT(NAME, __COUNTER__) // use counter if it's available
+    #else
+        #define cppli_internal_UNIQUE_NAME(NAME) cppli_internal_CAT(NAME, __LINE__)  // if not, line should suffice
+    #endif
 
     #define cppli_internal_EVALUATE_AT_FILE_SCOPE(EXPR)                        \
-    namespace {                                                 \
-        ::cppli::detail::evaluate_at_file_scope_dummy_t cppli_internal_UNIQUE_NAME(cppli_DUMMY) = EXPR;      \
+    namespace {                                                                \
+        [[maybe_unused]]\
+        const ::cppli::detail::evaluate_at_file_scope_dummy_t cppli_internal_UNIQUE_NAME(cppli_DUMMY) = EXPR; /* NOLINT */      \
     }
-}
-//end of "subcommand_macros.h" include
 
-//included from file "arg_parsing.h"
+
+}
+//end of "detail/subcommand_macros.h" include
+
+//included from file "detail/command_registration.h"
 
 
 //included from file "subcommand.h"
@@ -263,6 +275,10 @@ namespace cppli::detail {
             return all_same;
         }
 
+        constexpr char operator[](std::size_t i) const {
+            return value[i];
+        }
+
         constexpr std::size_t size() const {
             return N;
         }
@@ -428,11 +444,20 @@ namespace cppli {
         auto operator==(const std::variant<Types...>& v, T const& t) noexcept
         -> std::enable_if_t<is_one_of<T, Types...>::value, bool> {
 
-            return
-                    is_a<T>(v) &&
-                    (std::get<T>(v) == t);
+            return is_a<T>(v) &&
+                   (std::get<T>(v) == t);
         }
         // /source
+
+        template<typename...Types, typename T>
+        bool equal(const std::variant<Types...>& v, T const& t) {
+            return v == t;
+        }
+
+        template<typename...Types, typename T>
+        bool equal(T const& t, const std::variant<Types...>& v) {
+            return v == t;
+        }
     }
 }
 //end of "user_error.h" include
@@ -569,6 +594,8 @@ namespace cppli {
         template<string_literal name_, string_literal documentation_, char short_name_ = '\0'>
         class flag {
             static_assert(short_name_ == '\0' || isletter(short_name_), "flag short name must be a letter");
+            static_assert(isletter(name_[0]), "flag long name must begin with a letter");
+            static_assert(!contains_uppercase<name_>(), "flag long name cannot  contain uppercase characters");
 
         public:
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
@@ -585,6 +612,8 @@ namespace cppli {
                 bool optional_, bool argument_optional_,
                 char short_name_ = '\0'>
         class option {
+            static_assert(isletter(name_[0]), "option long name must begin with a letter");
+            static_assert(!contains_uppercase<name_>(), "option long name cannot  contain uppercase characters");
             static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
             static_assert(!optional_ || std::is_constructible_v<type_, std::string> || std::is_move_constructible_v<type_>,
                           "The type parameter of an optional option must be constructible from an std::string or have a move constructor available");
@@ -619,6 +648,8 @@ namespace cppli {
             bool was_included_ = false;
 
             static_assert(short_name_ == '\0' || isletter(short_name_), "option short name must be a letter");
+            static_assert(isletter(name_[0]), "option long name must begin with a letter");
+            static_assert(!contains_uppercase<name_>(), "option long name cannot  contain uppercase characters");
 
         public:
             using type = type_;
@@ -906,19 +937,6 @@ namespace cppli {
     }
 }
 //end of "subcommand.h" include
-
-namespace cppli::detail {
-    struct parse_ret_t {
-        std::vector<subcommand_t> subcommands;
-        bool printed_help;
-    };
-
-    parse_ret_t parse(int argc, const char* const* const argv);
-}
-//end of "arg_parsing.h" include
-
-//included from file "command_registration.h"
-
 
 //included from file "documentation.h"
 
@@ -1521,7 +1539,8 @@ namespace cppli::detail {
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
                                const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
                                const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
-                               
+                               const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
+
                                const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
 
 
@@ -1545,11 +1564,11 @@ namespace cppli::detail {
 
         generate_input_info_and_docs(info, docs, func);
 
-        subcommand_name_to_func().emplace(name, call_func<func>);
+        subcommand_name_to_func().insert_or_assign(name, call_func<func>);
         #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
-            subcommand_name_to_error_checking_func().emplace(name, check_for_errors<func>);
+            subcommand_name_to_error_checking_func().insert_or_assign(name, check_for_errors<func>);
         #endif
-        subcommand_name_to_inputs_info().emplace(name, std::move(info));
+        subcommand_name_to_inputs_info().insert_or_assign(name, std::move(info));
 
         if(name == subcommand_name_t{"MAIN"}) {
             subcommand_name_to_docs()[name].flags       = std::move(docs.flags);
@@ -1577,7 +1596,233 @@ namespace cppli::detail {
         return {};
     }
 }
-//end of "command_registration.h" include
+//end of "detail/command_registration.h" include
+
+#ifdef _MSC_VER
+    #ifndef _MSVC_TRADITIONAL
+        #error "CPPLI won't work on this version of MSVC, sorry! The version of MSVC you're using doesn't support the new preprocessor (/Zc:preprocessor)"
+    #elif _MSVC_TRADITIONAL == 1
+        #error "You're using the traditional preprocessor, which won't work with CPPLI. Recompile with /Zc:preprocessor"
+    #endif
+#endif
+
+namespace cppli {
+    bool current_command_is_leaf();
+
+    //#define CPPLI_NAMESPACE(NAME, DESCRIPTION)
+
+    #define CPPLI_MAIN_COMMAND(/*parameters*/...) \
+    extern "C" void CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK (__VA_ARGS__); \
+    cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK>({"MAIN"}, "")) \
+    extern "C" void CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK (__VA_ARGS__)
+
+    #define CPPLI_SUBCOMMAND(name, DESCRIPTION, /*parameters*/...) \
+    extern "C" void cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name) (__VA_ARGS__); \
+    static_assert(!::cppli::detail::contains_uppercase<cppli_internal_STRINGIFY(cppli_internal_CAT(name))>(), "subcommand names cannot contain uppercase characters"); \
+    cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name)>({cppli_internal_FOR_EACH(cppli_internal_STRINGIFY_WITH_COMMA, MAIN, name)}, DESCRIPTION)) \
+    extern "C" void cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name) (__VA_ARGS__)
+
+    #define CPPLI_NAME(...) __VA_ARGS__
+
+    /// the optional last argument is a single character short name
+    #define CPPLI_FLAG(NAME, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::flag<cppli_internal_STRINGIFY(NAME), DESCRIPTION __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, bool NAME
+
+    /// the optional last argument is a single character short name
+    #define CPPLI_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const std::optional<TYPE>& NAME
+
+    /// the optional last argument is a single character short name
+    #define CPPLI_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::option<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const std::optional<TYPE>& NAME
+
+    /// same as CPPLI_OPTION, but the raw TYPE is used (without std::optional)
+    /// If the option is not provided, a default constructed object is passed to the callback instead of an empty optional
+    /// The optional last argument is a single character short name
+    #define CPPLI_OPTION_DEFAULT_CTOR(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<TYPE>, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const TYPE& NAME
+
+    #define CPPLI_OPTION_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::option<TYPE, CONVERSION_T, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const TYPE& NAME
+
+
+    /// the optional last argument is a single character short name
+    #define CPPLI_OPTIONAL_ARGUMENT_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
+
+    /// the optional last argument is a single character short name
+    #define CPPLI_OPTIONAL_ARGUMENT_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::option<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
+
+    /// the optional last argument is a single character short name
+    #define CPPLI_OPTIONAL_ARGUMENT_OPTION_DEFAULT_CTOR(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
+
+    /// the optional last argument is a single character short name
+    #define CPPLI_OPTIONAL_ARGUMENT_OPTION_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::option<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
+
+
+
+    /// the optional last argument is a single character short name
+    #define CPPLI_REQUIRED_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, false, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
+
+    /// the optional last argument is a single character short name
+    #define CPPLI_REQUIRED_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
+    const ::cppli::detail::option<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, false, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
+
+
+    #define CPPLI_POSITIONAL(TYPE, NAME, DESCRIPTION) \
+    const ::cppli::detail::positional<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
+
+    #define CPPLI_POSITIONAL_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
+    const ::cppli::detail::positional<TYPE, CONVERSION_T, false, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
+
+
+    #define CPPLI_OPTIONAL_POSITIONAL(TYPE, NAME, DESCRIPTION) \
+    const ::cppli::detail::positional<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
+
+    #define CPPLI_OPTIONAL_POSITIONAL_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
+    const ::cppli::detail::positional<TYPE, CONVERSION_T, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
+
+    #define CPPLI_OPTIONAL_POSITIONAL_DEFAULT_CTOR(TYPE, NAME, DESCRIPTION) \
+    const ::cppli::detail::positional<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
+
+    #define CPPLI_OPTIONAL_POSITIONAL_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
+    const ::cppli::detail::positional<TYPE, CONVERSION_T, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
+
+
+    #define CPPLI_VARIADIC(TYPE, NAME, DESCRIPTION) \
+    const ::cppli::detail::variadic<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
+
+    #define CPPLI_VARIADIC_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
+    const ::cppli::detail::variadic<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
+}
+//end of "command_macros.h" include
+
+//included from file "run.h"
+
+
+//included from file "detail/documentation.h"
+
+#include <string>
+
+
+namespace cppli {
+    enum documentation_verbosity {
+        NAME_ONLY,
+        NAME_AND_DESCRIPTION,
+        NAME_AND_ARGS,
+        NAME_DESCRIPTION_AND_ARGS,
+        NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS
+    };
+
+    extern documentation_verbosity default_help_verbosity;
+    extern unsigned default_help_recursion_level;
+    extern bool default_hide_help_status;
+
+    struct flag_documentation_t {
+        std::string name,
+                documentation;
+
+        char short_name;
+
+        flag_documentation_t(const std::string& name, const std::string& documentation, char short_name);
+
+        bool operator<(const flag_documentation_t& rhs) const;
+    };
+
+    struct option_documentation_t {
+        std::string type,
+                name,
+                argument_text,
+                documentation;
+
+        char short_name;
+
+        bool is_optional,
+                argument_is_optional;
+
+        option_documentation_t(const std::string& type, const std::string& name, const std::string& argument_text,
+                               const std::string& documentation, char short_name, bool is_optional, bool argument_is_optional);
+
+        bool operator<(const option_documentation_t& rhs) const;
+    };
+
+    struct positional_documentation_t {
+        std::string type,
+                name,
+                documentation;
+
+        positional_documentation_t(const std::string& type, const std::string& name, const std::string& documentation,
+                                   bool optional);
+
+        bool optional;
+    };
+
+    struct variadic_documentation_t {
+        std::string type,
+                    name,
+                    documentation;
+
+        variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation);
+    };
+
+    struct subcommand_documentation_t {
+        std::string name; // this is what we're sorting by
+        std::string description;
+
+        std::set<flag_documentation_t>          flags; // using ordered set because we want to print commands alphabetically
+        std::set<option_documentation_t>        options;
+        std::vector<positional_documentation_t> positionals;
+        std::optional<variadic_documentation_t> variadic; // not vector because only one is allowed
+
+        std::set<std::string>                   subcommands;
+
+        bool is_namespace = true;
+
+        subcommand_documentation_t() = default;
+        subcommand_documentation_t(const std::string& name, const char* description);
+
+        bool operator<(const subcommand_documentation_t& rhs) const;
+    };
+
+    using get_documentation_string_t = std::string(*)(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion, bool hide_help);
+    get_documentation_string_t& get_documentation_string_callback();
+
+    std::string default_get_documentation_string_callback(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion, bool hide_help);
+
+    /// returns documentation for the main command
+    //std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help);
+
+    namespace detail {
+        std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
+
+        const subcommand_documentation_t& get_command_docs_from_name(const subcommand_name_t& name);
+    }
+}
+//end of "detail/documentation.h" include
+
+namespace cppli {
+
+    namespace detail {
+        void run_impl_(int argc, const char* const* const argv);
+    }
+
+    template<detail::string_literal program_name, detail::string_literal description> // TODO: put run in its own file
+    void run(int argc, const char* const* const argv) {
+        static_assert(detail::all_lowercase_numeral_or_hyphen<program_name>(), "command names can only contain lowercase characters, numerals, and hyphens");
+
+        detail::set_program_name_and_description(program_name.string(), description.string());
+
+        detail::subcommand_name_to_docs()[{"MAIN"}].name = program_name;
+        detail::subcommand_name_to_docs()[{"MAIN"}].description = description;
+
+        detail::run_impl_(argc, argv);
+    }
+}
+//end of "run.h" include
 
 #ifdef CPPLI_IMPLEMENTATION
 
@@ -1619,6 +1864,20 @@ namespace cppli {
 #include <iostream>
 #include <sstream>
 
+
+//included from file "arg_parsing.h"
+
+
+namespace cppli::detail {
+    struct parse_ret_t {
+        std::vector<subcommand_t> subcommands;
+        bool printed_help = false;
+        std::optional<unsigned> help_command_index;
+    };
+
+    parse_ret_t parse(int argc, const char* const* const argv);
+}
+//end of "arg_parsing.h" include
 
 namespace cppli::detail {
     bool contains_letters(const std::string& str) {
@@ -1662,6 +1921,8 @@ namespace cppli::detail {
         std::vector<subcommand_t> commands{{subcommand_name}};
 
         bool disambiguate_next_arg = false;
+        bool disambiguate_until_subcommand = false;
+        bool disambiguate_all = false;
 
         bool invalid_input_to_namespace = false;
                                                     // possibly the longest variable name I've ever written
@@ -1670,21 +1931,28 @@ namespace cppli::detail {
         std::string first_command_name = argv[0];
 
         bool in_namespace = is_namespace({"MAIN"});
-        //commands.push_back({{program_name()}, args});
 
-        std::string command_or_subcommand = "command";
+        std::optional<unsigned> help_command_index;
+
+        std::string command_or_subcommand = "main command";
 
         std::string current_subcommand_name_string = to_string(subcommand_name);
 
+        parse_ret_t ret;
 
         for(unsigned arg_i = 1; arg_i < argc; ++arg_i) {
             std::string arg_string = argv[arg_i];
 
-            if(is_valid_subcommand(subcommand_name, arg_string) && !disambiguate_next_arg) {
+            if(is_valid_subcommand(subcommand_name, arg_string) && !(disambiguate_next_arg || disambiguate_all)) {
+                if(arg_string == "help") {
+                    ret.help_command_index = commands.size();
+                }
                 in_namespace = is_namespace(subcommand_name);
 
                 command_or_subcommand = "subcommand";
                 current_subcommand_name_string = to_string(subcommand_name);
+
+                disambiguate_until_subcommand = false;
 
                 //commands.back().inputs = std::move(args);
                 //args = {};
@@ -1697,10 +1965,16 @@ namespace cppli::detail {
                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                     continue;
                 }*/
-                if((arg_string.substr(0,2) == "--") && !disambiguate_next_arg) { // long flag (these are ez)
+                if((arg_string.substr(0,2) == "--") && !(disambiguate_next_arg || disambiguate_until_subcommand || disambiguate_all)) { // long flag (these are ez)
                                                     // we need this check so that we can handle the case where "--" is the thing we're trying to disambiguate. Ex: "program -- --"
-                    if((arg_string.size() == 2) /*&& (!disambiguate_next_arg)*/) { // if the whole string is just "--", then this arg is used to disambiguate the next
-                        disambiguate_next_arg = true; // ( "--" just means "the next arg is positional, even if it looks like an option/flag (starts with '-' or "--"), or a subcommand (matches a subcommand name))
+                    if(arg_string[2] == '1') { // arg_string == "--1"
+                        disambiguate_next_arg = true;
+                    }
+                    else if(arg_string.size() == 2) { // arg_string == "--"
+                        disambiguate_until_subcommand = true;
+                    }
+                    else if(arg_string[2] == '-') { // arg_string == "---"
+                        disambiguate_all = true;
                     }
                     else {
                         std::string::size_type equals_pos;
@@ -1789,7 +2063,7 @@ namespace cppli::detail {
                         }
                     }
                 }                                                           // so that string like "-" and " - " can be used as positionals without issue
-                else if((arg_string[0] == '-') && !disambiguate_next_arg && contains_letters(arg_string)) { // short flag(s) and/or option (these are not so ez)
+                else if((arg_string[0] == '-') && !(disambiguate_next_arg || disambiguate_until_subcommand || disambiguate_all)) { // short flag(s) and/or option (these are not so ez)
                     bool invalid_character_in_flag_group = false;
                     unsigned invalid_character_index;
                     std::stringstream invalid_character_in_flag_group_message;
@@ -1961,15 +2235,8 @@ namespace cppli::detail {
             }
         }
 
-        //if(commands.size() > 0) {
-            //commands.back().inputs = std::move(args);
-        //}
-
-        for(const auto& command : commands) {
-
-        }
-
-        return {std::move(commands), false};
+        ret.subcommands = std::move(commands);
+        return ret;
     }
 }
 //end of "arg_parsing.cpp" include
@@ -1978,7 +2245,7 @@ namespace cppli::detail {
 
 
 namespace cppli {
-    constinit documentation_verbosity default_help_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
+    constinit documentation_verbosity default_help_verbosity = NAME_AND_DESCRIPTION;
     constinit unsigned default_help_recursion_level          = -1;
     constinit bool     default_hide_help_status              = true;
 
@@ -2217,26 +2484,22 @@ namespace cppli {
                             ret += e.name;
                             ret += ": ";
                             ret += e.docs;
-
-                            if(&option_doc_strings.back() == &e) {
-                                ret += '\n';
-                            }
+                            ret += '\n';
                         }
                     }
                 }
             }
 
             if(current_recursion_level+1 <= max_recursion_level) {
-                if(docs.subcommands.size()) {
+                if((docs.subcommands.size() > 1) || !hide_help || ((docs.subcommands.size() > 0) && (!docs.subcommands.contains("help")))) {
                     ret += indent;
                     ret += FOUR_SPACES "Subcommands:\n";
 
                     std::vector subcommand_name = name;
                     subcommand_name.resize(subcommand_name.size()+1);
                     for(const auto& e : docs.subcommands) {
-                        if(subcommand_name.back() != "help") {
-                            subcommand_name.back() = e;
-
+                        subcommand_name.back() = e;
+                        if((!hide_help) || (subcommand_name.back() != "help")) {
                             ret += get_documentation_string_impl(subcommand_name, verbosity, max_recursion_level, current_recursion_level + 1, hide_help);
 
 
@@ -2288,6 +2551,7 @@ namespace cppli {
 
 #include <tuple>
 #include <sstream>
+
 
 namespace cppli::detail {
 
@@ -2499,32 +2763,550 @@ namespace cppli {
 }
 //end of "user_error.cpp" include
 
-//included from file "cppli.cpp"
-
-#include <iostream>
-
-
-using namespace cppli::detail;
-namespace cppli {
-    namespace detail {
-        bool current_command_is_leaf_;
-        subcommand_name_t last_subcommand_;
-    }
-    bool current_command_is_leaf() {
-        return detail::current_command_is_leaf_;
-    }
-
-    const subcommand_name_t& last_subcommand() {
-        return last_subcommand_;
-    }
-   /* void run(int argc, const char* const* const argv) {
-
-    }*/
-}
-//end of "cppli.cpp" include
-
 //included from file "command_registration.cpp"
 
+
+//included from file "command_registration.h"
+
+
+namespace cppli::detail {
+    template<typename T, typename last>
+    /*add_const_ref_if_string_t<T>::*/T process_argument(unsigned cumulative_positional_index, const subcommand_t& subcommand) {
+        using arg_info_t = argument_info_t<T>; // no need for remove_cvref, we do that before calling process_argument
+
+        std::string main_command_or_subcommand;
+
+        if(subcommand.name == subcommand_name_t{"MAIN"}) {
+            main_command_or_subcommand = "main command";
+        }
+        else {
+            main_command_or_subcommand = "subcommand";
+        }
+
+        if constexpr(arg_info_t::is_raw_type) {
+            std::string canonical_name = last::name.string();
+
+            std::optional<std::string> short_name;
+
+            if constexpr(last::has_short_name) {
+                short_name = std::string{last::short_name};
+            }
+
+            if constexpr(argument_info_t<last>::is_flag) {
+                return subcommand.inputs.flags.contains(last::name.string()) ||
+                       (short_name && subcommand.inputs.flags.contains(std::string{last::short_name}));
+            }
+            else {
+                using conversion_t = typename last::conversion_t;
+
+                if constexpr(argument_info_t<last>::is_option) {
+                    if constexpr(last::optional) { // implicitly required argument
+                        if constexpr(last::argument_optional) { // I believe default_construct_when_empty is implicity true, so no need for && here
+                            if(subcommand.inputs.options_to_values.contains(canonical_name)) {
+                                if(subcommand.inputs.options_to_values.at(canonical_name).has_value()) {
+                                    try {
+                                        return conversions::conversion_t<std::optional<typename last::type>>()(*subcommand.inputs.options_to_values.at(canonical_name)); // no need for has_value check here; returning an empty optional is valid
+                                    }
+                                    catch(user_error& e) {
+                                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
+                                    }
+                                }
+                                else {
+                                    return typename last::type();
+                                }
+                            }
+                            else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
+                                if(subcommand.inputs.options_to_values.at(*short_name).has_value()) {
+                                    try {
+                                        return conversions::conversion_t<std::optional<typename last::type>>()(*subcommand.inputs.options_to_values.at(*short_name));
+                                    }
+                                    catch (user_error& e) {
+                                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
+                                                         to_string(subcommand.name) + "\" option \"" + *short_name +
+                                                         "\" (full name \"" + canonical_name + "\"). Details: " +
+                                                         e.what(), e.error_type());
+                                    }
+                                }
+                                else {
+                                    return typename last::type();
+                                }
+                            }
+                            else {
+                                return {}; // return empty optional
+                            }
+                        }
+                        else {
+                            if(subcommand.inputs.options_to_values.contains(canonical_name)) {
+                                if(!subcommand.inputs.options_to_values.at(canonical_name).has_value()) { // TODO: aren't we doing this check in arg_parsing.cpp too?
+                                    throw user_error(main_command_or_subcommand + to_string(subcommand.name) + "\" option \"" + canonical_name + "\" "
+                                                     "requires an argument, but one was not provided (expected an argument of type "
+                                                     + static_cast<std::string>(conversion_t::type_string.make_lowercase_and_convert_underscores()) + "."
+                                                     "Note that this option is optional, so it is valid to omit it entirely, "
+                                                     "but the option's argument is required, so if the option is provided, it must come with an argument",
+                                                     OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
+                                }
+                                else {
+                                    try {
+                                        return conversion_t()(*subcommand.inputs.options_to_values.at(canonical_name)); // no need for has_value check here; returning an empty optional is valid
+                                    }
+                                    catch(user_error& e) {
+                                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
+                                    }
+                                }
+                            }
+                            else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) { // TODO: evaluating short_name could use if constexpr
+                                if(!subcommand.inputs.options_to_values.at(*short_name).has_value()) {
+                                    throw user_error(main_command_or_subcommand + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\") "
+                                                     "requires an argument, but one was not provided (expected an argument of type "
+                                                     + conversion_t::type_string.string() + "."
+                                                     "Note that this option is optional, so it is valid to omit it entirely, "
+                                                     "but the option's argument is required, so if the option is provided, it must come with an argument",
+                                                     OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
+                                }
+                                else {
+                                    try {
+                                        return conversion_t()(*subcommand.inputs.options_to_values.at(*short_name)); // no need for has_value check here; returning an empty optional is valid
+                                    }
+                                    catch(user_error& e) {
+                                        throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\"). Details: " + e.what(), e.error_type());
+                                    }
+                                }
+                            }
+                            else {
+                                return {};
+                            }
+                        }
+                    }
+                    else {
+                        if(!subcommand.inputs.options_to_values.contains(canonical_name) &&
+                           (short_name && !subcommand.inputs.options_to_values.contains(*short_name))) {
+
+                            throw user_error(main_command_or_subcommand + " \""  + to_string(subcommand.name) + "\" was not provided with required option \"" + canonical_name + '"', REQUIRED_OPTION_NOT_PROVIDED);
+                        }
+                        else if((subcommand.inputs.options_to_values.contains(canonical_name) && !subcommand.inputs.options_to_values.at(canonical_name).has_value()) ||
+                                (short_name && subcommand.inputs.options_to_values.contains(*short_name) && !subcommand.inputs.options_to_values.at(*short_name).has_value())) {
+
+                            throw user_error(main_command_or_subcommand + " \""  + to_string(subcommand.name) + "\" option \""
+                                             + canonical_name + "\" requires an argument, but one was not provided "
+                                                                "(expected an argument of type "
+                                             + conversion_t::type_string.make_lowercase_and_convert_underscores().string() + ')',
+                                             OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
+                        }
+                        else { // by this point, none of the optionals we're interested in are empty
+                            if(subcommand.inputs.options_to_values.contains(canonical_name)) {
+                                try {
+                                    return conversion_t()(*subcommand.inputs.options_to_values.at(canonical_name));
+                                }
+                                catch(user_error& e) {
+                                    throw user_error("Error initializing " + main_command_or_subcommand + " \""
+                                                     + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
+                                }
+                            }
+                            else { // has_short_name is guaranteed to be true at this point
+                                try {
+                                    return conversion_t()(*subcommand.inputs.options_to_values.at(*short_name));
+                                }
+                                catch(user_error& e) {
+                                    throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\"). Details: " + e.what(), e.error_type());
+                                }
+                            }
+                        }
+                    }
+                }
+                else if constexpr(argument_info_t<last>::is_positional) { // positional
+                    --cumulative_positional_index; // because we've already skipped over the actual parameter for the positional, cumulative_positional_index will be too big
+
+                    if constexpr(last::optional) {
+                        if(cumulative_positional_index < subcommand.inputs.positional_args.size()) {
+                            try {
+                                return conversion_t()(subcommand.inputs.positional_args[cumulative_positional_index]);
+                            }
+                            catch(user_error& e) {
+                                throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" positional argument \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
+                            }
+                        }
+                        else {
+                            return {}; // empty optional
+                        }
+                    }
+                    else {
+                        if((cumulative_positional_index >= subcommand.inputs.positional_args.size())) {
+                            throw user_error(main_command_or_subcommand + " \""  + to_string(subcommand.name) + "\" required positional argument \"" + canonical_name + "\" was not provided (expected an argument of type " + conversion_t::type_string.string() + ')', REQUIRED_POSITIONAL_NOT_PROVIDED);
+                        }
+                        else {
+                            try {
+                                return conversion_t()(subcommand.inputs.positional_args[cumulative_positional_index]);
+                            }
+                            catch(user_error& e) {
+                                throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" positional argument \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
+                            }
+                        }
+                    }
+                }
+                else { // variadic
+                    T ret; // T is a vector
+                    for(unsigned i = cumulative_positional_index; i < subcommand.inputs.positional_args.size(); ++i) {
+                        try {
+                            ret.emplace_back(conversion_t()(subcommand.inputs.positional_args[i]));
+                        }
+                        catch(user_error& e) {
+                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" variadic argument pack \"" + canonical_name + "\" at argument index " + std::to_string(i) + ". Details: " + e.what(), e.error_type());
+                        }
+                    }
+                    return ret;
+                }
+            }
+        }
+        else {
+            //using conversion_t = typename T::conversion_t;
+
+            std::string canonical_name = T::name.string();
+
+            std::optional<std::string> short_name;
+
+            if constexpr(T::has_short_name) {
+                short_name = std::string{T::short_name};
+            }
+
+            if constexpr(arg_info_t::is_option) {
+                if constexpr(T::optional && T::argument_optional) {
+                    if(subcommand.inputs.options_to_values.contains(canonical_name)) {
+                        try {
+                            return {subcommand.inputs.options_to_values.at(canonical_name)}; // no need for has_value check here; returning an empty optional is valid
+                        }
+                        catch(user_error& e) {
+                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
+                        }
+                    }
+                    else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
+                        try {
+                            return {subcommand.inputs.options_to_values.at(*short_name)}; // no need for has_value check here; returning an empty optional is valid
+                        }
+                        catch(user_error& e) {
+                            throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + *short_name + "\" (full name \"" + canonical_name + "\"). Details: " + e.what(), e.error_type());
+                        }
+                    }
+                    else {
+                        return {}; // default constructor for optional option with optional argument inits to empty optional and was_included to false
+                    }
+                }
+                else {
+                    return {}; // this variable is a dummy
+                }
+            }
+            else {
+                return {}; // dummy
+            }
+
+        }
+    }
+
+    template<std::size_t current_index, std::size_t max_index, typename arg_t, typename...arg_ts>
+    constexpr std::size_t count_positionals_before_index_func() {
+        if constexpr(current_index < max_index) {
+            return count_positionals_before_index_func<current_index+1, max_index, arg_ts...>()+argument_info_t<std::remove_cvref_t<arg_t>>::is_positional;
+        }
+        else {
+            return 0; // return 0 instead of is_positional because inclusivity is not what we want
+        }
+    }
+
+    struct dummy_t{};
+
+    // TODO: static_assert for optional positions followed by required positionals
+    template<bool optional_positional_enountered, typename arg_t, typename...arg_ts>
+    constexpr bool invalid_optional_positionals_found() {
+        using T = std::remove_cvref_t<arg_t>;
+        constexpr bool is_positional = argument_info_t<T>::is_positional;
+
+        if constexpr(sizeof...(arg_ts) > 0) {
+            if constexpr(is_positional) {
+                return (optional_positional_enountered && !T::optional) || invalid_optional_positionals_found<optional_positional_enountered || T::optional, arg_ts...>();
+            }
+            else {
+                return invalid_optional_positionals_found<optional_positional_enountered, arg_ts...>();
+            }
+        }
+        else {
+            if constexpr(is_positional) {
+                return optional_positional_enountered && !T::optional;
+            }
+            else {
+                return false;
+            }
+        }
+    }
+
+    template<typename arg_t, typename...arg_ts>
+    constexpr std::size_t count_variadics() {
+        if constexpr(sizeof...(arg_ts) > 0) {
+            return argument_info_t<arg_t>::is_variadic+count_variadics<arg_ts...>();
+        }
+        else {
+            return 0;
+        }
+    }
+
+    template<std::size_t max_index, typename...arg_ts>
+    static constexpr std::size_t count_positionals_before_index_v = count_positionals_before_index_func<0, max_index, arg_ts...>();
+
+    template<typename func_t, auto func, typename index_seq>
+    struct call_func_wrapper_impl_t;
+
+    template<typename return_t, typename...arg_ts, std::size_t...indices, auto func>
+    struct call_func_wrapper_impl_t<return_t(*)(arg_ts...), func, std::integer_sequence<std::size_t, indices...>> {
+        static void call_func(const subcommand_t& subcommand) {
+            func(process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand)...);
+        }
+
+        #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+            static void check_for_errors(const subcommand_t& subcommand) {
+                // fold over comma operator
+                (process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand), ...);
+            }
+        #endif
+    };
+
+    template<typename func_t, auto func>
+    struct call_func_wrapper_t;
+
+    template<typename return_t, typename...arg_ts, auto func>
+    struct call_func_wrapper_t<return_t(*)(arg_ts...), func> { // we need all these ugly partial specializations so that we can deduce arg_ts and indices
+        static_assert(!invalid_optional_positionals_found<false, arg_ts...>(), "Required positionals cannot follow optional positionals");
+
+        static void call_func(const subcommand_t& subcommand) {
+            constexpr auto variadic_count = count_variadics<std::remove_cvref_t<arg_ts>...>();
+            static_assert(variadic_count < 2, "A command can only have 0 or 1 variadics (two or more were found)");
+
+            call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::call_func(subcommand);
+        }
+
+        #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+            static void check_for_errors(const subcommand_t& subcommand) {
+                call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::check_for_errors(subcommand);
+            }
+        #endif
+    };
+
+    template<auto func>
+    struct call_func_wrapper_t<void(*)(), func> { // we need all this ugly partial specializations so that we can deduce arg_ts and indices
+        static void call_func(const subcommand_t& subcommand) {
+            func();
+        }
+
+        static void check_for_errors(const subcommand_t& subcommand) {
+            // do nothing
+        }
+    };
+
+    template<auto func>
+    void call_func(const subcommand_t& command) {
+        call_func_wrapper_t<decltype(func), func>::call_func(command);
+    }
+
+    #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+        template<auto func>
+        void check_for_errors(const subcommand_t& command) {
+            call_func_wrapper_t<decltype(func), func>::check_for_errors(command);
+        }
+    #endif
+
+    template<typename T, typename U, typename...Ts>
+    constexpr bool pack_contains_short_name_func() {
+        if constexpr(argument_info_t<T>::has_short_name && argument_info_t<U>::has_short_name) {
+            if constexpr(sizeof...(Ts) > 0) {
+                return (T::short_name == U::short_name) || pack_contains_short_name_func<T, Ts...>();
+            }
+            else {
+                return (T::short_name == U::short_name);
+            }
+        }
+        else {
+            return false;
+        }
+    }
+
+    template<std::size_t index, typename first_t, typename...rest_ts>
+    constexpr bool no_repeated_short_names_func() {
+        if constexpr(sizeof...(rest_ts) == 0) {
+            return true;
+        }
+        else if constexpr(index < sizeof...(rest_ts)) {
+            return (!pack_contains_short_name_func<first_t, rest_ts...>()) && no_repeated_short_names_func<index+1, rest_ts..., first_t>();
+        }
+        else {
+            return (!pack_contains_short_name_func<first_t, rest_ts...>());
+        }
+    }
+
+    template<typename...arg_ts>
+    constexpr bool no_repeated_short_names_v = no_repeated_short_names_func<0, std::remove_cvref_t<arg_ts>...>();
+
+
+    template<typename T, typename U, typename...Ts>
+    constexpr bool pack_contains_long_name_func() {
+        if constexpr(argument_info_t<T>::has_long_name && argument_info_t<U>::has_long_name) {
+            if constexpr(sizeof...(Ts) > 0) {
+                return (T::name == U::name) || pack_contains_short_name_func<T, Ts...>();
+            }
+            else {
+                return (T::name == U::name);
+            }
+        }
+        else {
+            return false;
+        }
+    }
+
+    template<std::size_t index, typename first_t, typename...rest_ts>
+    constexpr bool no_repeated_long_names_func() {
+        if constexpr(sizeof...(rest_ts) == 0) {
+            return true;
+        }
+        else if constexpr(index < sizeof...(rest_ts)) {
+            return (!pack_contains_long_name_func<first_t, rest_ts...>()) && no_repeated_long_names_func<index+1, rest_ts..., first_t>();
+        }
+        else {
+            return (!pack_contains_long_name_func<first_t, rest_ts...>());
+        }
+    }
+
+    template<typename...arg_ts>
+    constexpr bool no_repeated_long_names_v = no_repeated_long_names_func<0, std::remove_cvref_t<arg_ts>...>();
+
+    template<typename return_t, typename arg_t, typename...arg_ts>                      // don't actually care about func, just need to deduce args
+    void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, return_t(*func)(arg_t, arg_ts...) = nullptr) {
+        using T = std::remove_cvref_t<arg_t>;
+        using arg_info_t = argument_info_t<T>;
+
+        if constexpr(!arg_info_t::is_raw_type) {
+            using type = std::remove_cvref_t<arg_t>;
+
+            static_assert(no_repeated_short_names_v<arg_t, arg_ts...>, "multiple flags/options cannot share a short name");
+            static_assert(no_repeated_long_names_v<arg_t, arg_ts...>,  "multiple flags/options cannot share a long name");
+
+            if constexpr(arg_info_t::is_flag) {
+                documentation.flags.emplace(type::name.string(),
+                                            type::documentation.string(),
+                                            type::short_name);
+
+                info.flags.insert(type::name.string());
+
+                if constexpr(type::short_name != '\0') {
+                    info.flags.insert(std::string{type::short_name});
+
+                    info.flag_or_option_short_name_to_long_name.emplace(T::short_name, T::name);
+                    info.flag_or_option_long_name_to_short_name.emplace(T::name,  std::string{T::short_name});
+                }
+            }
+            else if constexpr(arg_info_t::is_option) {
+                documentation.options.emplace(type::type_string.string(),
+                                              type::name.string(),
+                                              type::argument_text.string(),
+                                              type::documentation.string(),
+                                              type::short_name,
+
+                                              type::optional,
+                                              type::argument_optional);
+
+                info.option_argument_is_optional.emplace(type::name.string(), type::argument_optional);
+
+                if constexpr(type::short_name != '\0') {
+                    info.option_argument_is_optional.emplace(std::string{type::short_name}, type::argument_optional);
+
+                    info.flag_or_option_short_name_to_long_name.emplace(T::short_name, T::name);
+                    info.flag_or_option_long_name_to_short_name.emplace(T::name,  std::string{T::short_name});
+                }
+            }
+            else if constexpr(arg_info_t::is_positional) { // positional
+                documentation.positionals.emplace_back(type::type_string.string(),
+                                                       type::name.string(),
+                                                       type::documentation.string(),
+
+                                                       type::optional);
+            }
+            else { // variadic
+                documentation.variadic = variadic_documentation_t{type::type_string.string(),
+                                          type::name.string(),
+                                          type::documentation.string()};
+            }
+        }
+
+        if constexpr(sizeof...(arg_ts) > 0) {
+            generate_input_info_and_docs<return_t, arg_ts...>(info, documentation);
+        }
+    }
+
+    inline void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, void(*func)() = nullptr) {
+        // do nothing
+    }
+
+
+
+    void default_help_callback(const flag<"name-only", "only print subcommand names">&, bool name_only,
+                               const flag<"name-and-description", "print subcommand name and description">&, bool name_and_description,
+                               const flag<"name-and-args", "print subcommand name and args">&, bool name_and_args,
+                               const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
+                               const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
+                               const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
+                               const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
+
+                               const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
+
+
+    template<auto func>
+    dummy_t register_subcommand(const subcommand_name_t& name, const char* description, bool is_help = false) {
+        subcommand_inputs_info_t   info;
+        subcommand_documentation_t docs(name.back(), description);
+
+        subcommand_name_t cumulative_name;
+        for(unsigned i = 0; i < name.size()-1; ++i) {
+            cumulative_name.push_back(name[i]);
+            if(!subcommand_name_to_docs().contains(cumulative_name)) {
+                subcommand_name_to_docs()[cumulative_name].name = cumulative_name.back();
+            }
+            subcommand_name_to_docs()[cumulative_name].subcommands.emplace(name[i+1]);
+        }
+
+        /*if(name.front() != "MAIN") {
+            subcommand_name_to_docs()[{"MAIN"}].subcommands.emplace(name.front());
+        }*/
+
+        generate_input_info_and_docs(info, docs, func);
+
+        subcommand_name_to_func().insert_or_assign(name, call_func<func>);
+        #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+            subcommand_name_to_error_checking_func().insert_or_assign(name, check_for_errors<func>);
+        #endif
+        subcommand_name_to_inputs_info().insert_or_assign(name, std::move(info));
+
+        if(name == subcommand_name_t{"MAIN"}) {
+            subcommand_name_to_docs()[name].flags       = std::move(docs.flags);
+            subcommand_name_to_docs()[name].options     = std::move(docs.options);
+            subcommand_name_to_docs()[name].positionals = std::move(docs.positionals);
+            subcommand_name_to_docs()[name].variadic    = std::move(docs.variadic);
+
+            subcommand_name_to_docs()[name].is_namespace = false;
+
+            // can't do a full assignment because that would wipe subcommands
+        }
+        else {
+            subcommand_name_to_docs().insert_or_assign(name, std::move(docs));
+        }
+
+        if(!is_help) {
+            subcommand_name_t temp = name;
+            temp.push_back("help");
+
+            if(!subcommand_name_to_func().contains(temp)) {
+                register_subcommand<default_help_callback>(temp, "print help for this command", true);
+            }
+        }
+
+        return {};
+    }
+}
+//end of "command_registration.h" include
 
 namespace cppli::detail {
     void default_help_callback(const flag<"name-only", "only print subcommand names">&, bool name_only,
@@ -2533,7 +3315,8 @@ namespace cppli::detail {
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
                                const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
                                const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
-                               
+                               const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
+
                                const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
 
         extern subcommand_name_t last_subcommand_;
@@ -2557,8 +3340,12 @@ namespace cppli::detail {
         else {
             verbosity = default_help_verbosity;
         }
-        
-        std::cout << (get_documentation_string_callback())(last_subcommand_, verbosity, recursion.value_or(default_help_recursion_level), hide_help);
+
+        if(hide_help && show_help) {
+            std::cerr << "\nhide help and show help are mutually exclusive. Help will be shown\n";
+        }
+
+        std::cout << (get_documentation_string_callback())(last_subcommand_, verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
     }
 }
 
@@ -2566,159 +3353,4 @@ namespace cppli::detail {
 #endif
 
 
-#ifdef _MSC_VER
-    #ifndef _MSVC_TRADITIONAL
-        #error "CPPLI won't work on this version of MSVC, sorry! The version of MSVC you're using doesn't support the new preprocessor (/Zc:preprocessor)"
-    #elif _MSVC_TRADITIONAL == 1
-        #error "You're using the traditional preprocessor, which won't work with CPPLI. Recompile with /Zc:preprocessor"
-    #endif
-#endif
 
-
-namespace cppli {
-    bool current_command_is_leaf();
-
-    namespace detail {
-        extern bool current_command_is_leaf_;
-        extern subcommand_name_t last_subcommand_;
-
-    }
-
-    template<detail::string_literal program_name, detail::string_literal description> // TODO: put run in its own file
-    void run(int argc, const char* const* const argv) {
-        static_assert(detail::all_lowercase_numeral_or_hyphen<program_name>(), "command names can only contain lowercase characters, numerals, and hyphens");
-
-        detail::set_program_name_and_description(program_name.string(), description.string());
-
-        detail::subcommand_name_to_docs()[{"MAIN"}].name = program_name;
-        detail::subcommand_name_to_docs()[{"MAIN"}].description = description;
-
-        auto parse_ret = detail::parse(argc, argv);
-
-        if(!parse_ret.printed_help) {
-            const auto& commands_vec = parse_ret.subcommands;
-
-            #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
-                for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
-                    (detail::subcommand_name_to_error_checking_func()[command.name])(command);
-                }
-            #endif
-
-
-            bool runnable_command_found = false;
-
-            detail::current_command_is_leaf_ = commands_vec.size() < 2;
-            if(!detail::subcommand_name_to_docs()[{"MAIN"}].is_namespace) {
-                (detail::subcommand_name_to_func()[{"MAIN"}])(commands_vec[0]);
-                runnable_command_found = true;
-                detail::last_subcommand_ = {};
-            }
-
-            for(unsigned i = 1; i < commands_vec.size(); ++i) {
-                detail::last_subcommand_ = commands_vec[i-1].name;
-                detail::current_command_is_leaf_ = (i == commands_vec.size()-1);
-                if((detail::subcommand_name_to_func().contains(commands_vec[i].name))) {
-                    runnable_command_found = true;
-                    (detail::subcommand_name_to_func()[commands_vec[i].name])(commands_vec[i]);
-                }
-            }
-
-            if(!runnable_command_found) {
-                std::cerr << "The input did not form any runnable commands\n";
-                // TODO: print help here?
-            }
-        }
-    }
-
-    namespace detail {
-        //#define CPPLI_NAMESPACE(NAME, DESCRIPTION)
-
-        #define CPPLI_MAIN_COMMAND(/*parameters*/...) \
-        extern "C" void CPPLI_GENERATED_MAIN (__VA_ARGS__); \
-        cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<CPPLI_GENERATED_MAIN>({"MAIN"}, "")) \
-        extern "C" void CPPLI_GENERATED_MAIN (__VA_ARGS__)
-
-        #define CPPLI_SUBCOMMAND(name, DESCRIPTION, /*parameters*/...) \
-        extern "C" void cppli_internal_CAT(CPPLI_GENERATED, name) (__VA_ARGS__); \
-        static_assert(!::cppli::detail::contains_uppercase<cppli_internal_STRINGIFY(cppli_internal_CAT(name))>(), "subcommand names cannot contain uppercase characters"); \
-        cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<cppli_internal_CAT(CPPLI_GENERATED, name)>({cppli_internal_FOR_EACH(cppli_internal_STRINGIFY_WITH_COMMA, MAIN, name)}, DESCRIPTION)) \
-        extern "C" void cppli_internal_CAT(CPPLI_GENERATED, name) (__VA_ARGS__)
-
-        #define CPPLI_NAME(...) __VA_ARGS__
-
-        /// the optional last argument is a single character short name
-        #define CPPLI_FLAG(NAME, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::flag<cppli_internal_STRINGIFY(NAME), DESCRIPTION __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, bool NAME
-
-        /// the optional last argument is a single character short name
-        #define CPPLI_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const std::optional<TYPE>& NAME
-
-        /// the optional last argument is a single character short name
-        #define CPPLI_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::option<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const std::optional<TYPE>& NAME
-
-        /// same as CPPLI_OPTION, but the raw TYPE is used (without std::optional)
-        /// If the option is not provided, a default constructed object is passed to the callback instead of an empty optional
-        /// The optional last argument is a single character short name
-        #define CPPLI_OPTION_DEFAULT_CTOR(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<TYPE>, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const TYPE& NAME
-
-        #define CPPLI_OPTION_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::option<TYPE, CONVERSION_T, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const TYPE& NAME
-
-
-        /// the optional last argument is a single character short name
-        #define CPPLI_OPTIONAL_ARGUMENT_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
-
-        /// the optional last argument is a single character short name
-        #define CPPLI_OPTIONAL_ARGUMENT_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::option<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
-
-        /// the optional last argument is a single character short name
-        #define CPPLI_OPTIONAL_ARGUMENT_OPTION_DEFAULT_CTOR(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
-
-        /// the optional last argument is a single character short name
-        #define CPPLI_OPTIONAL_ARGUMENT_OPTION_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::option<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
-
-
-
-        /// the optional last argument is a single character short name
-        #define CPPLI_REQUIRED_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, false, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
-
-        /// the optional last argument is a single character short name
-        #define CPPLI_REQUIRED_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-        const ::cppli::detail::option<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, false, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
-
-
-        #define CPPLI_POSITIONAL(TYPE, NAME, DESCRIPTION) \
-        const ::cppli::detail::positional<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
-
-        #define CPPLI_POSITIONAL_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
-        const ::cppli::detail::positional<TYPE, CONVERSION_T, false, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
-
-
-        #define CPPLI_OPTIONAL_POSITIONAL(TYPE, NAME, DESCRIPTION) \
-        const ::cppli::detail::positional<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
-
-        #define CPPLI_OPTIONAL_POSITIONAL_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
-        const ::cppli::detail::positional<TYPE, CONVERSION_T, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
-
-        #define CPPLI_OPTIONAL_POSITIONAL_DEFAULT_CTOR(TYPE, NAME, DESCRIPTION) \
-        const ::cppli::detail::positional<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
-
-        #define CPPLI_OPTIONAL_POSITIONAL_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
-        const ::cppli::detail::positional<TYPE, CONVERSION_T, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
-
-
-        #define CPPLI_VARIADIC(TYPE, NAME, DESCRIPTION) \
-        const ::cppli::detail::variadic<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
-
-        #define CPPLI_VARIADIC_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
-        const ::cppli::detail::variadic<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
-    }
-}

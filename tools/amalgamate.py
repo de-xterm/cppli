@@ -18,6 +18,8 @@ import sys
 import os
 import pdb
 
+
+
 def err(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
     exit(1)
@@ -30,19 +32,18 @@ if(len(sys.argv) < 4):
 
 input_header_path = "./cppli_single_header.h"
 output_header_path = "../single_header/cppli.h"
-include_dirs = ["../include/", "../src/"]
+include_dirs = ["../include/detail", "../src/"]
 
 
 include_filenames_to_full_paths = {}
 
-for dir in include_dirs
+for dir in include_dirs:
     for subdir, dirs, files in os.walk(dir):
         for file in files:
             include_filenames_to_full_paths[file] = os.path.join(subdir, file)
-            include_filenames_to_full_paths[file] = os.path.join(subdir, os.path.basename(os.path.parent(file)) + "/" + file)
+            #include_filenames_to_full_paths[os.path.basename(subdir) + '/' + file] = os.path.join(subdir, file)
 
-                print("Discovered file \""+file+'\"')
-
+            print("Discovered file \""+ os.path.join(subdir, file) +'\"')
 print("")
 
 def expand_includes(filepath, already_expanded_files=set()):
@@ -57,7 +58,10 @@ def expand_includes(filepath, already_expanded_files=set()):
             second_quote_index = line.index('\"', first_quote_index)
 
             include_filename = line[first_quote_index:second_quote_index]
-
+            
+            if("/" in include_filename):
+                include_filename = include_filename.split('/')[1]
+            
             if(include_filename not in already_expanded_files):
                 print("expanding file \""+include_filename+'\"')
 

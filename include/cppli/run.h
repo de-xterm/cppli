@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cppli/detail/documentation.h"
+#include "detail/documentation.h"
 
 namespace cppli {
 
