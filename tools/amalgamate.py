@@ -32,7 +32,7 @@ if(len(sys.argv) < 4):
 
 input_header_path = "./cppli_single_header.h"
 output_header_path = "../single_header/cppli.h"
-include_dirs = ["../include/detail", "../src/"]
+include_dirs = ["../include/", "../src/"]
 
 
 include_filenames_to_full_paths = {}
@@ -40,11 +40,17 @@ include_filenames_to_full_paths = {}
 for dir in include_dirs:
     for subdir, dirs, files in os.walk(dir):
         for file in files:
-            include_filenames_to_full_paths[file] = os.path.join(subdir, file)
+            if "detail" in subdir:
+                filename = "detail/" + file
+            else:
+                filename = file
+
+            include_filenames_to_full_paths[filename] = os.path.join(subdir, file)
             #include_filenames_to_full_paths[os.path.basename(subdir) + '/' + file] = os.path.join(subdir, file)
 
-            print("Discovered file \""+ os.path.join(subdir, file) +'\"')
+            print("Mapping \"" + filename + "\" to file with path \"" + os.path.join(subdir, file)+'\"')
 print("")
+
 
 def expand_includes(filepath, already_expanded_files=set()):
     contents = ""
@@ -59,8 +65,8 @@ def expand_includes(filepath, already_expanded_files=set()):
 
             include_filename = line[first_quote_index:second_quote_index]
             
-            if("/" in include_filename):
-                include_filename = include_filename.split('/')[1]
+            if ("src" in filepath) or ("detail" in filepath):
+                include_filename = "detail/" + include_filename
             
             if(include_filename not in already_expanded_files):
                 print("expanding file \""+include_filename+'\"')
@@ -80,7 +86,7 @@ output_text = "#pragma once\n\n"
 output_text += expand_includes(input_header_path)
 output_text += "\n\n"
 
-print("successfully expanded includes\n")
+print("\nsuccessfully expanded includes")
 
 out_file = open(output_header_path, "w")
 

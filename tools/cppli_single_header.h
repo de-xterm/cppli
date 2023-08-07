@@ -12,5 +12,7 @@
     #include "subcommand.cpp"
     #include "user_error.cpp"
     #include "command_registration.cpp"
+    #include "command_macros.cpp"
+    #include "run.cpp"
 #endif
 

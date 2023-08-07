@@ -18,9 +18,9 @@ namespace cppli::detail {
             const auto& commands_vec = parse_ret.subcommands;
 
             #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
-            for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
-                (detail::subcommand_name_to_error_checking_func()[command.name])(command);
-            }
+                for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
+                    (detail::subcommand_name_to_error_checking_func()[command.name])(command);
+                }
             #endif
 
 

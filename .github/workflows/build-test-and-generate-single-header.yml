@@ -22,10 +22,9 @@ jobs:
     
     - name: Amalgamate files into single header
       run: |
-          cd single_header
-          pwd
+          cd tools
           chmod +x ./amalgamate.py
-          ./amalgamate.py ../src/cppli.h ./cppli.h ../src/
+          ./amalgamate.py 
     
     - name: Commit generated header
       uses: EndBug/add-and-commit@v9.1.3
