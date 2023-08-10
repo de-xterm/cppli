@@ -260,6 +260,10 @@ namespace cppli::detail {
             return ret;
         }
 
+        operator std::string() const {
+            return {make_lowercase_and_convert_underscores().value};
+        }
+
         template<std::size_t N_>
         constexpr bool operator==(const string_literal<N_>& rhs) const {
             bool all_same = true;
@@ -279,7 +283,7 @@ namespace cppli::detail {
             return N;
         }
 
-        constexpr std::string string() const {
+        std::string string() const {
             std::string ret;
             ret.reserve(N);
 
@@ -288,11 +292,6 @@ namespace cppli::detail {
             }
             return ret;
         }
-
-        operator std::string() const {
-            return string();
-        }
-
     };
 
     template<std::size_t N>
@@ -1486,8 +1485,8 @@ namespace cppli::detail {
                 if constexpr(type::short_name != '\0') {
                     info.flags.insert(std::string{type::short_name});
 
-                    info.flag_or_option_short_name_to_long_name.emplace(T::short_name, T::name);
-                    info.flag_or_option_long_name_to_short_name.emplace(T::name,  std::string{T::short_name});
+                    info.flag_or_option_short_name_to_long_name.emplace(T::short_name, T::name.string());
+                    info.flag_or_option_long_name_to_short_name.emplace(T::name.string(),  std::string{T::short_name});
                 }
             }
             else if constexpr(arg_info_t::is_option) {
@@ -1505,8 +1504,8 @@ namespace cppli::detail {
                 if constexpr(type::short_name != '\0') {
                     info.option_argument_is_optional.emplace(std::string{type::short_name}, type::argument_optional);
 
-                    info.flag_or_option_short_name_to_long_name.emplace(T::short_name, T::name);
-                    info.flag_or_option_long_name_to_short_name.emplace(T::name,  std::string{T::short_name});
+                    info.flag_or_option_short_name_to_long_name.emplace(T::short_name, T::name.string());
+                    info.flag_or_option_long_name_to_short_name.emplace(T::name.string(),  std::string{T::short_name});
                 }
             }
             else if constexpr(arg_info_t::is_positional) { // positional
@@ -1814,11 +1813,11 @@ namespace cppli::detail {
     parse_ret_t parse(int argc, const char* const* const argv) {
 
         if(argc == 0) {
-            std::cerr << "argc == 0. This is very terrible and unrecoverable\n";
+            std::cerr << "Error: argc == 0. This is very terrible and unrecoverable\n";
             std::exit(-1);
         }
         if(!argv[0]) {
-            std::cerr << "argv[0] was null. This is very terrible and unrecoverable\n";
+            std::cerr << "Error: argv[0] was null. This is very terrible and unrecoverable\n";
             std::exit(-1);
         }
 
@@ -2760,9 +2759,9 @@ namespace cppli::detail {
             const auto& commands_vec = parse_ret.subcommands;
 
             #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
-            for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
-                (detail::subcommand_name_to_error_checking_func()[command.name])(command);
-            }
+                for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
+                    (detail::subcommand_name_to_error_checking_func()[command.name])(command);
+                }
             #endif
 
 
