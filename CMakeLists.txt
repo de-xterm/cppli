@@ -7,6 +7,7 @@ include(CTest)
 
 
 file(GLOB_RECURSE LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
+
 add_library(cppli ${LIBRARY_SOURCES})
 target_include_directories(cppli PRIVATE ${PROJECT_SOURCE_DIR}/include/cppli/detail/)
 

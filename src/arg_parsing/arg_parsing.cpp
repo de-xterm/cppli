@@ -30,11 +30,11 @@ namespace cppli::detail {
     parse_ret_t parse(int argc, const char* const* const argv) {
 
         if(argc == 0) {
-            std::cerr << "argc == 0. This is very terrible and unrecoverable\n";
+            std::cerr << "Error: argc == 0. This is very terrible and unrecoverable\n";
             std::exit(-1);
         }
         if(!argv[0]) {
-            std::cerr << "argv[0] was null. This is very terrible and unrecoverable\n";
+            std::cerr << "Error: argv[0] was null. This is very terrible and unrecoverable\n";
             std::exit(-1);
         }
 

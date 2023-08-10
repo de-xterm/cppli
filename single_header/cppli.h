@@ -260,10 +260,6 @@ namespace cppli::detail {
             return ret;
         }
 
-        operator std::string() const {
-            return {make_lowercase_and_convert_underscores().value};
-        }
-
         template<std::size_t N_>
         constexpr bool operator==(const string_literal<N_>& rhs) const {
             bool all_same = true;
@@ -283,7 +279,7 @@ namespace cppli::detail {
             return N;
         }
 
-        std::string string() const {
+        constexpr std::string string() const {
             std::string ret;
             ret.reserve(N);
 
@@ -292,6 +288,11 @@ namespace cppli::detail {
             }
             return ret;
         }
+
+        operator std::string() const {
+            return string();
+        }
+
     };
 
     template<std::size_t N>
