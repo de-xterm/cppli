@@ -2,7 +2,8 @@
 #include "documentation.h"
 
 namespace cppli {
-    constinit documentation_verbosity default_help_verbosity = NAME_AND_DESCRIPTION;
+    constinit documentation_verbosity default_top_level_help_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
+    constinit documentation_verbosity default_subcommand_help_verbosity = NAME_AND_DESCRIPTION;
     constinit unsigned default_help_recursion_level          = -1;
     constinit bool     default_hide_help_status              = true;
 
@@ -67,7 +68,14 @@ namespace cppli {
                         description;
         };
 
-        std::string get_documentation_string_impl(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, unsigned current_recursion_level, bool hide_help, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
+        std::string get_documentation_string_impl(const subcommand_name_t& name,
+                                                  const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
+                                                  unsigned max_recursion_level,
+                                                  unsigned current_recursion_level,
+                                                  bool hide_help,
+                                                  const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
+
+            const documentation_verbosity& verbosity = ((current_recursion_level == 0) ? top_level_verbosity : subcommand_verbosity);
 
             #define FOUR_SPACES "    "
             #define EIGHT_SPACES "        "
@@ -80,7 +88,7 @@ namespace cppli {
 
             if(main_command_override_name_and_description.has_value()) {
                 ret += "Options or arguments surrounded by square brackets are optional, ones surrounded by angular brackets are required.\n"
-                       "Arguments of the form [arg:type...] are variadic (as indicated by the \"...\") and can receive any number of arguments (including 0)\n";
+                       "Arguments of the form [arg:type...] are variadic (as indicated by the \"...\") and can receive any number of arguments (including 0)\n\n";
             }
 
 
@@ -257,14 +265,13 @@ namespace cppli {
                     for(const auto& e : docs.subcommands) {
                         subcommand_name.back() = e;
                         if((!hide_help) || (subcommand_name.back() != "help")) {
-                            ret += get_documentation_string_impl(subcommand_name, verbosity, max_recursion_level, current_recursion_level + 1, hide_help);
+                            ret += get_documentation_string_impl(subcommand_name, top_level_verbosity, subcommand_verbosity, max_recursion_level, current_recursion_level + 1, hide_help);
 
-
-                            if((verbosity != NAME_ONLY) &&
-                               (verbosity != NAME_AND_ARGS) &&
+                            if((subcommand_verbosity != NAME_ONLY) &&
+                               (subcommand_verbosity != NAME_AND_ARGS) &&
                                (&e != &*(--docs.subcommands.end()))) {
-                                ret += indent;
-                                ret += '\n';
+                                    ret += indent;
+                                    ret += '\n';
                             }
                         }
                     }
@@ -282,21 +289,20 @@ namespace cppli {
         return detail::subcommand_name_to_docs().at(name);
     }
 
-    get_documentation_string_t& get_documentation_string_callback() {
-        static get_documentation_string_t ret = default_get_documentation_string_callback;
-
-        return ret;
-    }
-
-    std::string default_get_documentation_string_callback(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help) {
+    std::string default_get_documentation_string_callback(const subcommand_name_t& name,
+                                                          const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
+                                                          unsigned max_recursion_level,
+                                                          bool hide_help) {
         if((name == subcommand_name_t{"MAIN"}) ||
            (name == subcommand_name_t{})) {
-            return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, hide_help, detail::name_and_description_t{detail::program_name(), detail::program_description()});
+            return detail::get_documentation_string_impl({"MAIN"}, top_level_verbosity, subcommand_verbosity, max_recursion_level, 0, hide_help, detail::name_and_description_t{detail::program_name(), detail::program_description()});
         }
         else {
-            return detail::get_documentation_string_impl(name, verbosity, max_recursion_level, 0, hide_help);
+            return detail::get_documentation_string_impl(name, top_level_verbosity, subcommand_verbosity, max_recursion_level, 0, hide_help);
         }
     }
+
+    constinit get_documentation_string_t get_documentation_string_callback = default_get_documentation_string_callback;
 
     /*std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help) {
         return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, detail::name_and_description_t{detail::program_name(), detail::program_description()});

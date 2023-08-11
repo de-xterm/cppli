@@ -1,12 +1,20 @@
 
 #include "arg_parsing.h"
 #include "documentation.h"
+#include "command_registration.h"
 
 namespace cppli::detail {
-        extern bool current_command_is_leaf_;
-        extern subcommand_name_t last_subcommand_;
+    extern bool current_command_is_leaf_;
+    extern subcommand_name_t last_subcommand_;
 
-        void run_impl_(int argc, const char* const* const argv) {
+    void run_impl_(int argc, const char* const* const argv) {
+        {
+            subcommand_name_t main_help = {"MAIN", "help"};
+            if(!subcommand_name_to_func().contains(main_help)) {
+                register_command<default_help_callback>(main_help, "print help for this command", true);
+            }
+        }
+
         auto parse_ret = detail::parse(argc, argv);
 
         if(parse_ret.help_command_index && !parse_ret.printed_help) {

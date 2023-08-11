@@ -124,7 +124,7 @@ namespace cppli::detail {
                             }
                             else {
                                 if(option_name == "help") {
-                                    std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                                    std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                                     return {{}, true};
                                 }
                                 else if(in_namespace) {
@@ -176,7 +176,7 @@ namespace cppli::detail {
                             }
                             else {
                                 if(option_or_flag_name == "help") {
-                                    std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                                    std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                                     return {{}, true};
                                 }
                                 else if(in_namespace) {
@@ -235,7 +235,7 @@ namespace cppli::detail {
                             args.flags.emplace(char_string);
                         }
                         else if(char_string == "h") {
-                            std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                            std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                             return {{}, true};
                         }
                         else if(in_namespace) {
@@ -289,7 +289,7 @@ namespace cppli::detail {
                 }
                 else { // positional arg
                     if(arg_string == "help") {
-                        std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                        std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                         return {{}, true};
                     }
                     else if(in_namespace) {
@@ -357,8 +357,8 @@ namespace cppli::detail {
                 std::cout << '\"' << to_string(commands.back().name)
                           << "\" is a namespace, so using it without further subcommands doesn't do anything. Here is its help page: \n";
                 //}
-                std::cout << (get_documentation_string_callback())(commands.back().name, default_help_verbosity,
-                                                      default_help_recursion_level, default_hide_help_status);
+                std::cout << get_documentation_string_callback(commands.back().name, default_top_level_help_verbosity, default_subcommand_help_verbosity,
+                                                                 default_help_recursion_level, default_hide_help_status);
                 return {{}, true};
             }
         }

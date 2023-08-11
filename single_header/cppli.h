@@ -385,6 +385,7 @@ namespace cppli::detail {
 namespace cppli {
     namespace detail {
         using error_enum_underlying_t = uint_fast8_t;
+
     }
     enum minor_error_type : detail::error_enum_underlying_t {
         UNRECOGNIZED_FLAG,
@@ -952,13 +953,14 @@ namespace cppli {
         NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS
     };
 
-    extern documentation_verbosity default_help_verbosity;
+    extern documentation_verbosity default_top_level_help_verbosity;
+    extern documentation_verbosity default_subcommand_help_verbosity;
     extern unsigned default_help_recursion_level;
     extern bool default_hide_help_status;
 
     struct flag_documentation_t {
         std::string name,
-                documentation;
+                    documentation;
 
         char short_name;
 
@@ -1007,10 +1009,10 @@ namespace cppli {
         std::string name; // this is what we're sorting by
         std::string description;
 
-        std::set<flag_documentation_t>          flags; // using ordered set because we want to print commands alphabetically
+        std::set<flag_documentation_t>          flags;    // using ordered set because we want to print commands sorted lexicographically
         std::set<option_documentation_t>        options;
         std::vector<positional_documentation_t> positionals;
-        std::optional<variadic_documentation_t> variadic; // not vector because only one is allowed
+        std::optional<variadic_documentation_t> variadic; // optional instead of vector because only one is allowed
 
         std::set<std::string>                   subcommands;
 
@@ -1022,10 +1024,16 @@ namespace cppli {
         bool operator<(const subcommand_documentation_t& rhs) const;
     };
 
-    using get_documentation_string_t = std::string(*)(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion, bool hide_help);
-    get_documentation_string_t& get_documentation_string_callback();
+    using get_documentation_string_t = std::string(*)(const subcommand_name_t&,
+                                                      const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
+                                                      unsigned recursion, bool hide_help);
 
-    std::string default_get_documentation_string_callback(const subcommand_name_t&, documentation_verbosity verbosity, unsigned recursion, bool hide_help);
+    std::string default_get_documentation_string_callback(const subcommand_name_t&,
+                                                          const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
+                                                          unsigned recursion, bool hide_help);
+
+    extern get_documentation_string_t get_documentation_string_callback;
+
 
     /// returns documentation for the main command
     //std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help);
@@ -1051,9 +1059,11 @@ namespace cppli {
         THROW
     };
 
-    void print_throw_or_do_nothing(minor_error_type error_type,
-                                   const std::string& if_error_or_mesasge,
-                                   const std::string& only_if_message = "");
+    namespace detail {
+        void print_throw_or_do_nothing(minor_error_type error_type,
+                                       const std::string& if_error_or_mesasge,
+                                       const std::string& only_if_message = "");
+    }
 
     error_behavior& minor_error_behavior(minor_error_type error_type);
 }
@@ -1533,19 +1543,26 @@ namespace cppli::detail {
 
 
 
-    void default_help_callback(const flag<"name-only", "only print subcommand names">&, bool name_only,
-                               const flag<"name-and-description", "print subcommand name and description">&, bool name_and_description,
-                               const flag<"name-and-args", "print subcommand name and args">&, bool name_and_args,
+    void default_help_callback(const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
+                               const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
+                               const flag<"name-and-args", "print subcommand name and args">&,                           bool name_and_args,
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
-                               const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
-                               const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
-                               const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
+                               const flag<"verbose", "print subcommand name and description", 'v'>&,                     bool verbose,
+                               const flag<"hide-help", "don't show help when printing subcommands">&,                    bool hide_help,
+                               const flag<"show-help", "do show help when printing subcommands">&,                       bool show_help,
+
+                               const flag<"subcommands-name-only", "only print subcommand names">&,                                  bool subcommands_name_only,
+                               const flag<"subcommands-name-and-description", "print subcommand name and description">&,             bool subcommands_name_and_description,
+                               const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
+                               const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
+                               const flag<"subcommands-verbose", "print subcommand name and description", 'v'>&,                     bool subcommands_verbose,
+                               const flag<"subcommands-hide-help", "don't show help when printing subcommands">&,                    bool subcommands_hide_help,
+                               const flag<"subcommands-show-help", "do show help when printing subcommands">&,                       bool subcommands_show_help,
 
                                const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
 
-
     template<auto func>
-    dummy_t register_subcommand(const subcommand_name_t& name, const char* description, bool is_help = false) {
+    dummy_t register_command(const subcommand_name_t& name, const char* description, bool is_help = false) {
         subcommand_inputs_info_t   info;
         subcommand_documentation_t docs(name.back(), description);
 
@@ -1589,7 +1606,7 @@ namespace cppli::detail {
             temp.push_back("help");
 
             if(!subcommand_name_to_func().contains(temp)) {
-                register_subcommand<default_help_callback>(temp, "print help for this command", true);
+                register_command<default_help_callback>(temp, "print help for this command", true);
             }
         }
 
@@ -1613,13 +1630,13 @@ namespace cppli {
 
     #define CPPLI_MAIN_COMMAND(/*parameters*/...) \
     extern "C" void CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK (__VA_ARGS__); \
-    cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK>({"MAIN"}, "")) \
+    cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_command<CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK>({"MAIN"}, "")) \
     extern "C" void CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK (__VA_ARGS__)
 
     #define CPPLI_SUBCOMMAND(name, DESCRIPTION, /*parameters*/...) \
     extern "C" void cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name) (__VA_ARGS__); \
     static_assert(!::cppli::detail::contains_uppercase<cppli_internal_STRINGIFY(cppli_internal_CAT(name))>(), "subcommand names cannot contain uppercase characters"); \
-    cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_subcommand<cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name)>({cppli_internal_FOR_EACH(cppli_internal_STRINGIFY_WITH_COMMA, MAIN, name)}, DESCRIPTION)) \
+    cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_command<cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name)>({cppli_internal_FOR_EACH(cppli_internal_STRINGIFY_WITH_COMMA, MAIN, name)}, DESCRIPTION)) \
     extern "C" void cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name) (__VA_ARGS__)
 
     #define CPPLI_NAME(...) __VA_ARGS__
@@ -1743,17 +1760,18 @@ namespace cppli {
 
 
 namespace cppli {
-    void print_throw_or_do_nothing(minor_error_type error_type,
-                                   const std::string& print_if_error_or_mesasge,
-                                   const std::string& print_only_if_message) {
-        if(minor_error_behavior(error_type) == THROW) {
-            throw user_error(print_if_error_or_mesasge, error_type);
-        }
-        else {
-            std::cerr << print_if_error_or_mesasge << print_only_if_message;
+    namespace detail {
+        void print_throw_or_do_nothing(minor_error_type error_type,
+                                       const std::string& print_if_error_or_mesasge,
+                                       const std::string& print_only_if_message) {
+            if(minor_error_behavior(error_type) == THROW) {
+                throw user_error(print_if_error_or_mesasge, error_type);
+            }
+            else {
+                std::cerr << print_if_error_or_mesasge << print_only_if_message;
+            }
         }
     }
-
 
     error_behavior& minor_error_behavior(minor_error_type error_type) {
         static std::unordered_map<minor_error_type, error_behavior> minor_error_code_to_behavior;
@@ -1907,7 +1925,7 @@ namespace cppli::detail {
                             }
                             else {
                                 if(option_name == "help") {
-                                    std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                                    std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                                     return {{}, true};
                                 }
                                 else if(in_namespace) {
@@ -1959,7 +1977,7 @@ namespace cppli::detail {
                             }
                             else {
                                 if(option_or_flag_name == "help") {
-                                    std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                                    std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                                     return {{}, true};
                                 }
                                 else if(in_namespace) {
@@ -2018,7 +2036,7 @@ namespace cppli::detail {
                             args.flags.emplace(char_string);
                         }
                         else if(char_string == "h") {
-                            std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                            std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                             return {{}, true};
                         }
                         else if(in_namespace) {
@@ -2072,7 +2090,7 @@ namespace cppli::detail {
                 }
                 else { // positional arg
                     if(arg_string == "help") {
-                        std::cout << (get_documentation_string_callback())(subcommand_name, default_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                        std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                         return {{}, true};
                     }
                     else if(in_namespace) {
@@ -2140,8 +2158,8 @@ namespace cppli::detail {
                 std::cout << '\"' << to_string(commands.back().name)
                           << "\" is a namespace, so using it without further subcommands doesn't do anything. Here is its help page: \n";
                 //}
-                std::cout << (get_documentation_string_callback())(commands.back().name, default_help_verbosity,
-                                                      default_help_recursion_level, default_hide_help_status);
+                std::cout << get_documentation_string_callback(commands.back().name, default_top_level_help_verbosity, default_subcommand_help_verbosity,
+                                                                 default_help_recursion_level, default_hide_help_status);
                 return {{}, true};
             }
         }
@@ -2156,7 +2174,8 @@ namespace cppli::detail {
 
 
 namespace cppli {
-    constinit documentation_verbosity default_help_verbosity = NAME_AND_DESCRIPTION;
+    constinit documentation_verbosity default_top_level_help_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
+    constinit documentation_verbosity default_subcommand_help_verbosity = NAME_AND_DESCRIPTION;
     constinit unsigned default_help_recursion_level          = -1;
     constinit bool     default_hide_help_status              = true;
 
@@ -2221,7 +2240,8 @@ namespace cppli {
                         description;
         };
 
-        std::string get_documentation_string_impl(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, unsigned current_recursion_level, bool hide_help, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
+        std::string get_documentation_string_impl(const subcommand_name_t& name, const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity, unsigned max_recursion_level, unsigned current_recursion_level, bool hide_help, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
+            const documentation_verbosity& verbosity = (current_recursion_level == 0 ? top_level_verbosity : subcommand_verbosity);
 
             #define FOUR_SPACES "    "
             #define EIGHT_SPACES "        "
@@ -2411,7 +2431,7 @@ namespace cppli {
                     for(const auto& e : docs.subcommands) {
                         subcommand_name.back() = e;
                         if((!hide_help) || (subcommand_name.back() != "help")) {
-                            ret += get_documentation_string_impl(subcommand_name, verbosity, max_recursion_level, current_recursion_level + 1, hide_help);
+                            ret += get_documentation_string_impl(subcommand_name, top_level_verbosity, subcommand_verbosity, max_recursion_level, current_recursion_level + 1, hide_help);
 
 
                             if((verbosity != NAME_ONLY) &&
@@ -2436,21 +2456,20 @@ namespace cppli {
         return detail::subcommand_name_to_docs().at(name);
     }
 
-    get_documentation_string_t& get_documentation_string_callback() {
-        static get_documentation_string_t ret = default_get_documentation_string_callback;
-
-        return ret;
-    }
-
-    std::string default_get_documentation_string_callback(const subcommand_name_t& name, documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help) {
+    std::string default_get_documentation_string_callback(const subcommand_name_t& name,
+                                                          const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
+                                                          unsigned max_recursion_level,
+                                                          bool hide_help) {
         if((name == subcommand_name_t{"MAIN"}) ||
            (name == subcommand_name_t{})) {
-            return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, hide_help, detail::name_and_description_t{detail::program_name(), detail::program_description()});
+            return detail::get_documentation_string_impl({"MAIN"}, top_level_verbosity, subcommand_verbosity, max_recursion_level, 0, hide_help, detail::name_and_description_t{detail::program_name(), detail::program_description()});
         }
         else {
-            return detail::get_documentation_string_impl(name, verbosity, max_recursion_level, 0, hide_help);
+            return detail::get_documentation_string_impl(name, top_level_verbosity, subcommand_verbosity, max_recursion_level, 0, hide_help);
         }
     }
+
+    constinit get_documentation_string_t get_documentation_string_callback = default_get_documentation_string_callback;
 
     /*std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help) {
         return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, detail::name_and_description_t{detail::program_name(), detail::program_description()});
@@ -2678,43 +2697,71 @@ namespace cppli {
 
 
 namespace cppli::detail {
-    void default_help_callback(const flag<"name-only", "only print subcommand names">&, bool name_only,
-                               const flag<"name-and-description", "print subcommand name and description">&, bool name_and_description,
-                               const flag<"name-and-args", "print subcommand name and args">&, bool name_and_args,
+    void default_help_callback(const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
+                               const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
+                               const flag<"name-and-args", "print subcommand name and args">&,                           bool name_and_args,
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
-                               const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
-                               const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
-                               const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
+                               const flag<"verbose", "print subcommand name and description", 'v'>&,                     bool verbose,
+                               const flag<"hide-help", "don't show help when printing subcommands">&,                    bool hide_help,
+                               const flag<"show-help", "do show help when printing subcommands">&,                       bool show_help,
+
+                               const flag<"subcommands-name-only", "only print subcommand names">&,                                  bool subcommands_name_only,
+                               const flag<"subcommands-name-and-description", "print subcommand name and description">&,             bool subcommands_name_and_description,
+                               const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
+                               const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
+                               const flag<"subcommands-verbose", "print subcommand name and description", 'v'>&,                     bool subcommands_verbose,
+                               const flag<"subcommands-hide-help", "don't show help when printing subcommands">&,                    bool subcommands_hide_help,
+                               const flag<"subcommands-show-help", "do show help when printing subcommands">&,                       bool subcommands_show_help,
 
                                const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
 
         extern subcommand_name_t last_subcommand_;
 
-        documentation_verbosity verbosity;
+        documentation_verbosity top_level_verbosity;
         if(verbose) {
-            verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
+            top_level_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
         }
         else if(name_description_and_args) {
-            verbosity = NAME_DESCRIPTION_AND_ARGS;
+            top_level_verbosity = NAME_DESCRIPTION_AND_ARGS;
         }
         else if(name_and_args) {
-            verbosity = NAME_AND_ARGS;
+            top_level_verbosity = NAME_AND_ARGS;
         }
         else if(name_and_description) {
-            verbosity = NAME_AND_DESCRIPTION;
+            top_level_verbosity = NAME_AND_DESCRIPTION;
         }
         else if(name_only) {
-            verbosity = NAME_ONLY;
+            top_level_verbosity = NAME_ONLY;
         }
         else {
-            verbosity = default_help_verbosity;
+            top_level_verbosity = default_top_level_help_verbosity;
+        }
+
+        documentation_verbosity subcommand_verbosity;
+        if(verbose) {
+            subcommand_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
+        }
+        else if(name_description_and_args) {
+            subcommand_verbosity = NAME_DESCRIPTION_AND_ARGS;
+        }
+        else if(name_and_args) {
+            subcommand_verbosity = NAME_AND_ARGS;
+        }
+        else if(name_and_description) {
+            subcommand_verbosity = NAME_AND_DESCRIPTION;
+        }
+        else if(name_only) {
+            subcommand_verbosity = NAME_ONLY;
+        }
+        else {
+            subcommand_verbosity = default_subcommand_help_verbosity;
         }
 
         if(hide_help && show_help) {
             std::cerr << "\nhide help and show help are mutually exclusive. Help will be shown\n";
         }
 
-        std::cout << (get_documentation_string_callback())(last_subcommand_, verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
+        std::cout << get_documentation_string_callback(last_subcommand_, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
     }
 }
 

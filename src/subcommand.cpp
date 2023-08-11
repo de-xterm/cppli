@@ -46,11 +46,15 @@ namespace cppli::detail {
     }
 
     bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name) {
-        return subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
+        return
+            subcommand_name_to_inputs_info().contains(subcommand) &&
+            subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
     }
 
     bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name) {
-        return subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
+        return
+            subcommand_name_to_inputs_info().contains(subcommand) &&
+            subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
     }
 
     bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name) {

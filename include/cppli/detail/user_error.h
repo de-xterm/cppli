@@ -8,6 +8,7 @@
 namespace cppli {
     namespace detail {
         using error_enum_underlying_t = uint_fast8_t;
+
     }
     enum minor_error_type : detail::error_enum_underlying_t {
         UNRECOGNIZED_FLAG,

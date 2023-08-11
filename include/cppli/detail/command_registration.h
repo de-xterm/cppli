@@ -363,7 +363,7 @@ namespace cppli::detail {
         }
     }
 
-    template<std::size_t index, typename first_t, typename...rest_ts>
+    template<std::size_t index, typename first_t, typename...rest_ts> // this is broken
     constexpr bool no_repeated_short_names_func() {
         if constexpr(sizeof...(rest_ts) == 0) {
             return true;
@@ -420,7 +420,7 @@ namespace cppli::detail {
             using type = std::remove_cvref_t<arg_t>;
 
             static_assert(no_repeated_short_names_v<arg_t, arg_ts...>, "multiple flags/options cannot share a short name");
-            static_assert(no_repeated_long_names_v<arg_t, arg_ts...>,  "multiple flags/options cannot share a long name");
+            static_assert(no_repeated_long_names_v<arg_t, arg_ts...>,  "multiple flags/options cannot share a long name"); // I don't think this is necessary anymore
 
             if constexpr(arg_info_t::is_flag) {
                 documentation.flags.emplace(type::name.string(),
@@ -480,19 +480,26 @@ namespace cppli::detail {
 
 
 
-    void default_help_callback(const flag<"name-only", "only print subcommand names">&, bool name_only,
-                               const flag<"name-and-description", "print subcommand name and description">&, bool name_and_description,
-                               const flag<"name-and-args", "print subcommand name and args">&, bool name_and_args,
+    void default_help_callback(const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
+                               const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
+                               const flag<"name-and-args", "print subcommand name and args">&,                           bool name_and_args,
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
-                               const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
-                               const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
-                               const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
+                               const flag<"verbose", "print subcommand name and description", 'v'>&,                     bool verbose,
+                               const flag<"hide-help", "don't show help when printing subcommands">&,                    bool hide_help,
+                               const flag<"show-help", "do show help when printing subcommands">&,                       bool show_help,
+
+                               const flag<"subcommands-name-only", "only print subcommand names">&,                                  bool subcommands_name_only,
+                               const flag<"subcommands-name-and-description", "print subcommand name and description">&,             bool subcommands_name_and_description,
+                               const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
+                               const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
+                               const flag<"subcommands-verbose", "print subcommand name and description">&,                     bool subcommands_verbose,
+                               const flag<"subcommands-hide-help", "don't show help when printing subcommands">&,                    bool subcommands_hide_help,
+                               const flag<"subcommands-show-help", "do show help when printing subcommands">&,                       bool subcommands_show_help,
 
                                const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
 
-
     template<auto func>
-    dummy_t register_subcommand(const subcommand_name_t& name, const char* description, bool is_help = false) {
+    dummy_t register_command(const subcommand_name_t& name, const char* description, bool is_help = false) {
         subcommand_inputs_info_t   info;
         subcommand_documentation_t docs(name.back(), description);
 
@@ -536,7 +543,7 @@ namespace cppli::detail {
             temp.push_back("help");
 
             if(!subcommand_name_to_func().contains(temp)) {
-                register_subcommand<default_help_callback>(temp, "print help for this command", true);
+                register_command<default_help_callback>(temp, "print help for this command", true);
             }
         }
 

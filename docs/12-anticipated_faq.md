@@ -4,7 +4,7 @@
 **Why can't flags and options contain uppercase letters, underscores, or other symbols?**  
 I don't think it's nice to make the user touch the shift key
   
-**Why do all strings have to be `constexpr`?**  
+**Why do all strings have to be compile time contants?**  
 Because an application that doesn't depend on external files (e.g., for documentation) will be more robust than one that does.  
 Also it made a lot of stuff easier to implement :P
 
