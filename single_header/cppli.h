@@ -1426,7 +1426,7 @@ namespace cppli::detail {
         }
     }
 
-    template<std::size_t index, typename first_t, typename...rest_ts>
+    template<std::size_t index, typename first_t, typename...rest_ts> // this is broken
     constexpr bool no_repeated_short_names_func() {
         if constexpr(sizeof...(rest_ts) == 0) {
             return true;
@@ -1483,7 +1483,7 @@ namespace cppli::detail {
             using type = std::remove_cvref_t<arg_t>;
 
             static_assert(no_repeated_short_names_v<arg_t, arg_ts...>, "multiple flags/options cannot share a short name");
-            static_assert(no_repeated_long_names_v<arg_t, arg_ts...>,  "multiple flags/options cannot share a long name");
+            static_assert(no_repeated_long_names_v<arg_t, arg_ts...>,  "multiple flags/options cannot share a long name"); // I don't think this is necessary anymore
 
             if constexpr(arg_info_t::is_flag) {
                 documentation.flags.emplace(type::name.string(),
@@ -1555,7 +1555,7 @@ namespace cppli::detail {
                                const flag<"subcommands-name-and-description", "print subcommand name and description">&,             bool subcommands_name_and_description,
                                const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
-                               const flag<"subcommands-verbose", "print subcommand name and description", 'v'>&,                     bool subcommands_verbose,
+                               const flag<"subcommands-verbose", "print subcommand name and description">&,                     bool subcommands_verbose,
                                const flag<"subcommands-hide-help", "don't show help when printing subcommands">&,                    bool subcommands_hide_help,
                                const flag<"subcommands-show-help", "do show help when printing subcommands">&,                       bool subcommands_show_help,
 
@@ -2240,8 +2240,14 @@ namespace cppli {
                         description;
         };
 
-        std::string get_documentation_string_impl(const subcommand_name_t& name, const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity, unsigned max_recursion_level, unsigned current_recursion_level, bool hide_help, const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
-            const documentation_verbosity& verbosity = (current_recursion_level == 0 ? top_level_verbosity : subcommand_verbosity);
+        std::string get_documentation_string_impl(const subcommand_name_t& name,
+                                                  const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
+                                                  unsigned max_recursion_level,
+                                                  unsigned current_recursion_level,
+                                                  bool hide_help,
+                                                  const std::optional<name_and_description_t>& main_command_override_name_and_description = std::nullopt) {
+
+            const documentation_verbosity& verbosity = ((current_recursion_level == 0) ? top_level_verbosity : subcommand_verbosity);
 
             #define FOUR_SPACES "    "
             #define EIGHT_SPACES "        "
@@ -2254,7 +2260,7 @@ namespace cppli {
 
             if(main_command_override_name_and_description.has_value()) {
                 ret += "Options or arguments surrounded by square brackets are optional, ones surrounded by angular brackets are required.\n"
-                       "Arguments of the form [arg:type...] are variadic (as indicated by the \"...\") and can receive any number of arguments (including 0)\n";
+                       "Arguments of the form [arg:type...] are variadic (as indicated by the \"...\") and can receive any number of arguments (including 0)\n\n";
             }
 
 
@@ -2433,12 +2439,11 @@ namespace cppli {
                         if((!hide_help) || (subcommand_name.back() != "help")) {
                             ret += get_documentation_string_impl(subcommand_name, top_level_verbosity, subcommand_verbosity, max_recursion_level, current_recursion_level + 1, hide_help);
 
-
-                            if((verbosity != NAME_ONLY) &&
-                               (verbosity != NAME_AND_ARGS) &&
+                            if((subcommand_verbosity != NAME_ONLY) &&
+                               (subcommand_verbosity != NAME_AND_ARGS) &&
                                (&e != &*(--docs.subcommands.end()))) {
-                                ret += indent;
-                                ret += '\n';
+                                    ret += indent;
+                                    ret += '\n';
                             }
                         }
                     }
@@ -2523,11 +2528,15 @@ namespace cppli::detail {
     }
 
     bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name) {
-        return subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
+        return
+            subcommand_name_to_inputs_info().contains(subcommand) &&
+            subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
     }
 
     bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name) {
-        return subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
+        return
+            subcommand_name_to_inputs_info().contains(subcommand) &&
+            subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
     }
 
     bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name) {
@@ -2709,7 +2718,7 @@ namespace cppli::detail {
                                const flag<"subcommands-name-and-description", "print subcommand name and description">&,             bool subcommands_name_and_description,
                                const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
-                               const flag<"subcommands-verbose", "print subcommand name and description", 'v'>&,                     bool subcommands_verbose,
+                               const flag<"subcommands-verbose", "print subcommand name and description">&,                          bool subcommands_verbose,
                                const flag<"subcommands-hide-help", "don't show help when printing subcommands">&,                    bool subcommands_hide_help,
                                const flag<"subcommands-show-help", "do show help when printing subcommands">&,                       bool subcommands_show_help,
 
@@ -2738,19 +2747,19 @@ namespace cppli::detail {
         }
 
         documentation_verbosity subcommand_verbosity;
-        if(verbose) {
+        if(subcommands_verbose) {
             subcommand_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
         }
-        else if(name_description_and_args) {
+        else if(subcommands_name_description_and_args) {
             subcommand_verbosity = NAME_DESCRIPTION_AND_ARGS;
         }
-        else if(name_and_args) {
+        else if(subcommands_name_and_args) {
             subcommand_verbosity = NAME_AND_ARGS;
         }
-        else if(name_and_description) {
+        else if(subcommands_name_and_description) {
             subcommand_verbosity = NAME_AND_DESCRIPTION;
         }
-        else if(name_only) {
+        else if(subcommands_name_only) {
             subcommand_verbosity = NAME_ONLY;
         }
         else {
@@ -2791,10 +2800,17 @@ namespace cppli {
 
 
 namespace cppli::detail {
-        extern bool current_command_is_leaf_;
-        extern subcommand_name_t last_subcommand_;
+    extern bool current_command_is_leaf_;
+    extern subcommand_name_t last_subcommand_;
 
-        void run_impl_(int argc, const char* const* const argv) {
+    void run_impl_(int argc, const char* const* const argv) {
+        {
+            subcommand_name_t main_help = {"MAIN", "help"};
+            if(!subcommand_name_to_func().contains(main_help)) {
+                register_command<default_help_callback>(main_help, "print help for this command", true);
+            }
+        }
+
         auto parse_ret = detail::parse(argc, argv);
 
         if(parse_ret.help_command_index && !parse_ret.printed_help) {
