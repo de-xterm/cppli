@@ -9,7 +9,7 @@ on:
         type: string
       
 env:
-  BUILD_TYPE: Debug
+  BUILD_TYPE: Release
   GH_TOKEN: ${{ github.token }}      
   
 jobs:
