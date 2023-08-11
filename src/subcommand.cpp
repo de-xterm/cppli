@@ -80,7 +80,7 @@ namespace cppli::detail {
                 ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " flag --" << flag_or_option << " included multiple times";
 
-                if(subcommand.inputs.flags.contains(*short_name)) {
+                if(short_name && subcommand.inputs.flags.contains(*short_name)) {
                     ss << "(previously included with short name '" << short_name->get() << '\'';
                 }
 
@@ -94,7 +94,7 @@ namespace cppli::detail {
                 ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " option --" << flag_or_option << " included multiple times";
 
-                if(subcommand.inputs.options_to_values.contains(*short_name)) {
+                if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
                     ss << "(previously included with short name '" << short_name->get() << '\'';
                 }
 
