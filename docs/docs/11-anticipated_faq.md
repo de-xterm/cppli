@@ -24,3 +24,6 @@ I could have also used separate getters and setters, but they increase the amoun
 Originally, I only included `error_type()` for testing purposes. After I added it, I figured there was no reason not to add it to the public API.  
 During testing, I didn't actually need to catch exceptions of some types and let other types propagate; 
 I just needed to make sure that an exception was thrown and that it had the correct error type
+
+**Why does the library require C++20?**  
+The only C++20 feature that I really _needed_ was `__VA_OPT__`, but I also use `constinit` 
