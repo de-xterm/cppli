@@ -861,6 +861,10 @@ namespace cppli {
 namespace cppli {
     using subcommand_name_t = std::vector<std::string>;
 
+    struct command_context_t {
+        bool  current_command_is_leaf;
+    };
+
     namespace detail {
         struct subcommand_inputs_t {
             std::vector<std::string> positional_args;
@@ -889,7 +893,8 @@ namespace cppli {
             subcommand_inputs_t inputs;
         };
 
-        using subcommand_func_t = void (*)(const subcommand_t&);
+        using subcommand_func_t = void (*)(const subcommand_t&, const command_context_t& command_context);
+        using subcommand_error_checking_func_t = void (*)(const subcommand_t&);
 
         struct subcommand_inputs_info_t {
             std::unordered_set<std::string> flags;
@@ -904,7 +909,7 @@ namespace cppli {
 
         std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>& subcommand_name_to_func();
 
-        std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>&
+        std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t , subcommand_name_hash_t>&
         subcommand_name_to_error_checking_func();
 
 
@@ -1069,7 +1074,8 @@ namespace cppli {
 }
 //end of "detail/configuration.h" include
 
-namespace cppli::detail {
+namespace cppli {
+namespace detail {
     template<typename T, typename last>
     /*add_const_ref_if_string_t<T>::*/T process_argument(unsigned cumulative_positional_index, const subcommand_t& subcommand) {
         using arg_info_t = argument_info_t<T>; // no need for remove_cvref, we do that before calling process_argument
@@ -1314,22 +1320,22 @@ namespace cppli::detail {
     struct dummy_t{};
 
     // TODO: static_assert for optional positions followed by required positionals
-    template<bool optional_positional_enountered, typename arg_t, typename...arg_ts>
+    template<bool optional_positional_encountered, typename arg_t, typename...arg_ts>
     constexpr bool invalid_optional_positionals_found() {
         using T = std::remove_cvref_t<arg_t>;
         constexpr bool is_positional = argument_info_t<T>::is_positional;
 
         if constexpr(sizeof...(arg_ts) > 0) {
             if constexpr(is_positional) {
-                return (optional_positional_enountered && !T::optional) || invalid_optional_positionals_found<optional_positional_enountered || T::optional, arg_ts...>();
+                return (optional_positional_encountered && !T::optional) || invalid_optional_positionals_found<optional_positional_encountered || T::optional, arg_ts...>();
             }
             else {
-                return invalid_optional_positionals_found<optional_positional_enountered, arg_ts...>();
+                return invalid_optional_positionals_found<optional_positional_encountered, arg_ts...>();
             }
         }
         else {
             if constexpr(is_positional) {
-                return optional_positional_enountered && !T::optional;
+                return optional_positional_encountered && !T::optional;
             }
             else {
                 return false;
@@ -1354,9 +1360,9 @@ namespace cppli::detail {
     struct call_func_wrapper_impl_t;
 
     template<typename return_t, typename...arg_ts, std::size_t...indices, auto func>
-    struct call_func_wrapper_impl_t<return_t(*)(arg_ts...), func, std::integer_sequence<std::size_t, indices...>> {
-        static void call_func(const subcommand_t& subcommand) {
-            func(process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand)...);
+    struct call_func_wrapper_impl_t<return_t(*)(const command_context_t&, arg_ts...), func, std::integer_sequence<std::size_t, indices...>> {
+        static void call_func(const subcommand_t& subcommand, const command_context_t& command_context) {
+            func(command_context, process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand)...);
         }
 
         #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
@@ -1371,14 +1377,14 @@ namespace cppli::detail {
     struct call_func_wrapper_t;
 
     template<typename return_t, typename...arg_ts, auto func>
-    struct call_func_wrapper_t<return_t(*)(arg_ts...), func> { // we need all these ugly partial specializations so that we can deduce arg_ts and indices
+    struct call_func_wrapper_t<return_t(*)(const command_context_t&, arg_ts...), func> { // we need all these ugly partial specializations so that we can deduce arg_ts and indices
         static_assert(!invalid_optional_positionals_found<false, arg_ts...>(), "Required positionals cannot follow optional positionals");
 
-        static void call_func(const subcommand_t& subcommand) {
+        static void call_func(const subcommand_t& subcommand, const command_context_t& command_context) {
             constexpr auto variadic_count = count_variadics<std::remove_cvref_t<arg_ts>...>();
             static_assert(variadic_count < 2, "A command can only have 0 or 1 variadics (two or more were found)");
 
-            call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::call_func(subcommand);
+            call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::call_func(subcommand, command_context);
         }
 
         #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
@@ -1389,9 +1395,9 @@ namespace cppli::detail {
     };
 
     template<auto func>
-    struct call_func_wrapper_t<void(*)(), func> { // we need all this ugly partial specializations so that we can deduce arg_ts and indices
-        static void call_func(const subcommand_t& subcommand) {
-            func();
+    struct call_func_wrapper_t<void(*)(const command_context_t&), func> { // we need all this ugly partial specializations so that we can deduce arg_ts and indices
+        static void call_func(const subcommand_t& subcommand, const command_context_t& command_context) {
+            func(command_context);
         }
 
         static void check_for_errors(const subcommand_t& subcommand) {
@@ -1400,8 +1406,8 @@ namespace cppli::detail {
     };
 
     template<auto func>
-    void call_func(const subcommand_t& command) {
-        call_func_wrapper_t<decltype(func), func>::call_func(command);
+    void call_func(const subcommand_t& command, const command_context_t& command_context) {
+        call_func_wrapper_t<decltype(func), func>::call_func(command, command_context);
     }
 
     #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
@@ -1543,7 +1549,9 @@ namespace cppli::detail {
 
 
 
-    void default_help_callback(const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
+    void default_help_callback(const command_context_t& cppli_current_command,
+
+                               const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
                                const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
                                const flag<"name-and-args", "print subcommand name and args">&,                           bool name_and_args,
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
@@ -1555,9 +1563,7 @@ namespace cppli::detail {
                                const flag<"subcommands-name-and-description", "print subcommand name and description">&,             bool subcommands_name_and_description,
                                const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
-                               const flag<"subcommands-verbose", "print subcommand name and description">&,                     bool subcommands_verbose,
-                               const flag<"subcommands-hide-help", "don't show help when printing subcommands">&,                    bool subcommands_hide_help,
-                               const flag<"subcommands-show-help", "do show help when printing subcommands">&,                       bool subcommands_show_help,
+                               const flag<"subcommands-verbose", "print subcommand name and description">&,                          bool subcommands_verbose,
 
                                const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
 
@@ -1613,6 +1619,7 @@ namespace cppli::detail {
         return {};
     }
 }
+}
 //end of "detail/command_registration.h" include
 
 #ifdef _MSC_VER
@@ -1629,15 +1636,15 @@ namespace cppli {
     //#define CPPLI_NAMESPACE(NAME, DESCRIPTION)
 
     #define CPPLI_MAIN_COMMAND(/*parameters*/...) \
-    extern "C" void CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK (__VA_ARGS__); \
+    extern "C" void CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK (const command_context_t& __VA_OPT__(, __VA_ARGS__)); \
     cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_command<CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK>({"MAIN"}, "")) \
-    extern "C" void CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK (__VA_ARGS__)
+    extern "C" void CPPLI_INTERNAL_GENERATED_MAIN_COMMAND_CALLBACK (const cppli::command_context_t& cppli __VA_OPT__(, __VA_ARGS__))
 
     #define CPPLI_SUBCOMMAND(name, DESCRIPTION, /*parameters*/...) \
-    extern "C" void cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name) (__VA_ARGS__); \
+    extern "C" void cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name) (const cppli::command_context_t& __VA_OPT__(, __VA_ARGS__)); \
     static_assert(!::cppli::detail::contains_uppercase<cppli_internal_STRINGIFY(cppli_internal_CAT(name))>(), "subcommand names cannot contain uppercase characters"); \
     cppli_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_command<cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name)>({cppli_internal_FOR_EACH(cppli_internal_STRINGIFY_WITH_COMMA, MAIN, name)}, DESCRIPTION)) \
-    extern "C" void cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name) (__VA_ARGS__)
+    extern "C" void cppli_internal_CAT(CPPLI_INTERNAL_GENERATED_SUBCOMMAND_CALLBACK, name) (const cppli::command_context_t& cppli __VA_OPT__(, __VA_ARGS__))
 
     #define CPPLI_NAME(...) __VA_ARGS__
 
@@ -2504,8 +2511,8 @@ namespace cppli::detail {
         return subcommand_name_to_func_;
     }
 
-    std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>& subcommand_name_to_error_checking_func() {
-        static std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t> subcommand_name_to_error_checking_func_;
+    std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t, subcommand_name_hash_t>& subcommand_name_to_error_checking_func() {
+        static std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t , subcommand_name_hash_t> subcommand_name_to_error_checking_func_;
 
         return subcommand_name_to_error_checking_func_;
     }
@@ -2706,7 +2713,9 @@ namespace cppli {
 
 
 namespace cppli::detail {
-    void default_help_callback(const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
+    void default_help_callback(const command_context_t& cppli_current_command,
+
+                               const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
                                const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
                                const flag<"name-and-args", "print subcommand name and args">&,                           bool name_and_args,
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
@@ -2719,8 +2728,6 @@ namespace cppli::detail {
                                const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
                                const flag<"subcommands-verbose", "print subcommand name and description">&,                          bool subcommands_verbose,
-                               const flag<"subcommands-hide-help", "don't show help when printing subcommands">&,                    bool subcommands_hide_help,
-                               const flag<"subcommands-show-help", "do show help when printing subcommands">&,                       bool subcommands_show_help,
 
                                const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
 
@@ -2779,20 +2786,8 @@ namespace cppli::detail {
 //included from file "command_macros.cpp"
 
 
-namespace cppli {
-    namespace detail {
-        bool current_command_is_leaf_;
-        subcommand_name_t last_subcommand_;
-    }
-
-    using namespace detail;
-    bool current_command_is_leaf() {
-        return detail::current_command_is_leaf_;
-    }
-
-    const subcommand_name_t& last_subcommand() {
-        return last_subcommand_;
-    }
+namespace cppli::detail {
+    subcommand_name_t last_subcommand_;
 }
 //end of "command_macros.cpp" include
 
@@ -2800,7 +2795,6 @@ namespace cppli {
 
 
 namespace cppli::detail {
-    extern bool current_command_is_leaf_;
     extern subcommand_name_t last_subcommand_;
 
     void run_impl_(int argc, const char* const* const argv) {
@@ -2816,8 +2810,8 @@ namespace cppli::detail {
         if(parse_ret.help_command_index && !parse_ret.printed_help) {
             // help command is special. Skip all other execution if it is encountered
             const auto& help_command = parse_ret.subcommands[*parse_ret.help_command_index];
-            (detail::subcommand_name_to_func()[help_command.name])(help_command);
-        }
+            (detail::subcommand_name_to_func()[help_command.name])(help_command, {true});
+        }                                                                         // help is always leaf
         else if(!parse_ret.printed_help) {
             const auto& commands_vec = parse_ret.subcommands;
 
@@ -2830,19 +2824,17 @@ namespace cppli::detail {
 
             bool runnable_command_found = false;
 
-            detail::current_command_is_leaf_ = (commands_vec.size() < 2);
             if(!detail::subcommand_name_to_docs()[{"MAIN"}].is_namespace) {
-                (detail::subcommand_name_to_func()[{"MAIN"}])(commands_vec[0]);
+                (detail::subcommand_name_to_func()[{"MAIN"}])(commands_vec[0], {(commands_vec.size() < 2)});
                 runnable_command_found = true;
                 detail::last_subcommand_ = {};
             }
 
             for(unsigned i = 1; i < commands_vec.size(); ++i) {
                 detail::last_subcommand_ = commands_vec[i-1].name;
-                detail::current_command_is_leaf_ = (i == commands_vec.size()-1);
                 if((detail::subcommand_name_to_func().contains(commands_vec[i].name))) {
                     runnable_command_found = true;
-                    (detail::subcommand_name_to_func()[commands_vec[i].name])(commands_vec[i]);
+                    (detail::subcommand_name_to_func()[commands_vec[i].name])(commands_vec[i], {(i == commands_vec.size()-1)});
                 }
             }
 
