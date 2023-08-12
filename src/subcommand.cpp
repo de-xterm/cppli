@@ -22,8 +22,8 @@ namespace cppli::detail {
         return subcommand_name_to_func_;
     }
 
-    std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>& subcommand_name_to_error_checking_func() {
-        static std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t> subcommand_name_to_error_checking_func_;
+    std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t, subcommand_name_hash_t>& subcommand_name_to_error_checking_func() {
+        static std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t , subcommand_name_hash_t> subcommand_name_to_error_checking_func_;
 
         return subcommand_name_to_error_checking_func_;
     }

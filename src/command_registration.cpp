@@ -2,7 +2,9 @@
 #include "command_registration.h"
 
 namespace cppli::detail {
-    void default_help_callback(const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
+    void default_help_callback(const command_context_t& cppli_current_command,
+
+                               const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
                                const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
                                const flag<"name-and-args", "print subcommand name and args">&,                           bool name_and_args,
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
@@ -15,8 +17,6 @@ namespace cppli::detail {
                                const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
                                const flag<"subcommands-verbose", "print subcommand name and description">&,                          bool subcommands_verbose,
-                               const flag<"subcommands-hide-help", "don't show help when printing subcommands">&,                    bool subcommands_hide_help,
-                               const flag<"subcommands-show-help", "do show help when printing subcommands">&,                       bool subcommands_show_help,
 
                                const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
 

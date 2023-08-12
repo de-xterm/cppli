@@ -14,6 +14,10 @@
 namespace cppli {
     using subcommand_name_t = std::vector<std::string>;
 
+    struct command_context_t {
+        bool  current_command_is_leaf;
+    };
+
     namespace detail {
         struct subcommand_inputs_t {
             std::vector<std::string> positional_args;
@@ -42,7 +46,8 @@ namespace cppli {
             subcommand_inputs_t inputs;
         };
 
-        using subcommand_func_t = void (*)(const subcommand_t&);
+        using subcommand_func_t = void (*)(const subcommand_t&, const command_context_t& command_context);
+        using subcommand_error_checking_func_t = void (*)(const subcommand_t&);
 
         struct subcommand_inputs_info_t {
             std::unordered_set<std::string> flags;
@@ -57,7 +62,7 @@ namespace cppli {
 
         std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>& subcommand_name_to_func();
 
-        std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>&
+        std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t , subcommand_name_hash_t>&
         subcommand_name_to_error_checking_func();
 
 

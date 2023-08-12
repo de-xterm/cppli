@@ -23,7 +23,7 @@ static bool bar_is_leaf;
 CPPLI_MAIN_COMMAND() {
     main_command_called = true;
 
-    main_is_leaf = cppli::current_command_is_leaf();
+    main_is_leaf = cppli.current_command_is_leaf;
 }
 
 static bool foo_subcommand_called = false;
@@ -31,7 +31,7 @@ CPPLI_SUBCOMMAND(foo,
                  "the foo subcommand") {
 
     foo_subcommand_called = true;
-    foo_is_leaf = cppli::current_command_is_leaf();
+    foo_is_leaf = cppli.current_command_is_leaf;
 }
 
 static bool bar_subcommand_called = false;
@@ -41,7 +41,7 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(foo, bar),
                  CPPLI_OPTIONAL_POSITIONAL(int, size, "size positional")) {
 
     bar_subcommand_called = true;
-    bar_is_leaf = cppli::current_command_is_leaf();
+    bar_is_leaf = cppli.current_command_is_leaf;
 }
 
 static bool foo_in_namespace_called = false;
@@ -59,7 +59,7 @@ CPPLI_SUBCOMMAND(CPPLI_NAME(foo, help),
                  CPPLI_OPTIONAL_POSITIONAL(int, size, "size positional")) {
 
     help_subcommand_called = true;
-    help_is_leaf = cppli::current_command_is_leaf();
+    help_is_leaf = cppli.current_command_is_leaf;
 }
 
 
