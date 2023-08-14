@@ -18,7 +18,7 @@ namespace cppli::detail {
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
                                const flag<"subcommands-verbose", "print subcommand name and description">&,                          bool subcommands_verbose,
 
-                               const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
+                               const option<unsigned, conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
 
         extern subcommand_name_t last_subcommand_;
 

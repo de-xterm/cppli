@@ -47,7 +47,7 @@ namespace cppli {
 
             static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
+            static constexpr auto type_string = conversion_t::type_string;
             static constexpr auto cppli_type_string = type_string;
             static constexpr auto short_name = short_name_;
             static constexpr auto documentation = documentation_;
@@ -79,7 +79,7 @@ namespace cppli {
 
             static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
+            static constexpr auto type_string = conversion_t::type_string;
             static constexpr auto cppli_type_string = type_string;
             static constexpr auto short_name = short_name_;
             static constexpr auto documentation = documentation_;
@@ -93,7 +93,7 @@ namespace cppli {
 
             option(const std::optional<std::string>& str) : was_included_(true) {
                 if (str.has_value()) {
-                    value_ = conversions::conversion_t<type_>()(*str);
+                    value_ = conversion_t()(*str);
                 }
                 else {
                     value_ = std::nullopt;
@@ -170,7 +170,7 @@ namespace cppli {
 
             static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_;
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
+            static constexpr auto type_string = conversion_t::type_string;
             static constexpr auto optional = true;
             static constexpr auto documentation = documentation_;
 
@@ -186,7 +186,7 @@ namespace cppli {
 
             static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_;
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string; // TODO: delete one of these
+            static constexpr auto type_string = conversion_t::type_string; // TODO: delete one of these
             static constexpr auto cppli_type_string = type_string;
             static constexpr auto optional = false;
             static constexpr auto documentation = documentation_;
@@ -205,7 +205,7 @@ namespace cppli {
 
             static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_;
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string; // TODO: delete one of these
+            static constexpr auto type_string = conversion_t::type_string; // TODO: delete one of these
             static constexpr auto cppli_type_string = type_string;
             static constexpr auto optional = false;
             static constexpr auto documentation = documentation_;

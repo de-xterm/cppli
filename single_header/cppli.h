@@ -464,7 +464,7 @@ namespace cppli {
 //end of "detail/user_error.h" include
 
 namespace cppli {
-    namespace conversions {
+    current_command_is_leafversions {
         template<typename T>
         struct conversion_t {
             T operator()(const std::string& str) const {
@@ -626,7 +626,7 @@ namespace cppli {
 
             static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
+            static constexpr auto type_string = conversion_t<type_>::type_string;
             static constexpr auto cppli_type_string = type_string;
             static constexpr auto short_name = short_name_;
             static constexpr auto documentation = documentation_;
@@ -658,7 +658,7 @@ namespace cppli {
 
             static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_.make_lowercase_and_convert_underscores();
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
+            static constexpr auto type_string = conversion_t<type_>::type_string;
             static constexpr auto cppli_type_string = type_string;
             static constexpr auto short_name = short_name_;
             static constexpr auto documentation = documentation_;
@@ -672,7 +672,7 @@ namespace cppli {
 
             option(const std::optional<std::string>& str) : was_included_(true) {
                 if (str.has_value()) {
-                    value_ = conversions::conversion_t<type_>()(*str);
+                    value_ = conversion_t<type_>()(*str);
                 }
                 else {
                     value_ = std::nullopt;
@@ -749,7 +749,7 @@ namespace cppli {
 
             static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_;
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string;
+            static constexpr auto type_string = conversion_t<type_>::type_string;
             static constexpr auto optional = true;
             static constexpr auto documentation = documentation_;
 
@@ -765,7 +765,7 @@ namespace cppli {
 
             static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_;
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string; // TODO: delete one of these
+            static constexpr auto type_string = conversion_t<type_>::type_string; // TODO: delete one of these
             static constexpr auto cppli_type_string = type_string;
             static constexpr auto optional = false;
             static constexpr auto documentation = documentation_;
@@ -784,7 +784,7 @@ namespace cppli {
 
             static constexpr auto default_construct_when_empty = default_construct_when_empty_;
             static constexpr auto name = name_;
-            static constexpr auto type_string = conversions::conversion_t<type_>::type_string; // TODO: delete one of these
+            static constexpr auto type_string = conversion_t<type_>::type_string; // TODO: delete one of these
             static constexpr auto cppli_type_string = type_string;
             static constexpr auto optional = false;
             static constexpr auto documentation = documentation_;
@@ -1105,7 +1105,7 @@ namespace cppli::detail {
                             if(subcommand.inputs.options_to_values.contains(canonical_name)) {
                                 if(subcommand.inputs.options_to_values.at(canonical_name).has_value()) {
                                     try {
-                                        return conversions::conversion_t<std::optional<typename last::type>>()(*subcommand.inputs.options_to_values.at(canonical_name)); // no need for has_value check here; returning an empty optional is valid
+                                        return conversion_t<std::optional<typename last::type>>()(*subcommand.inputs.options_to_values.at(canonical_name)); // no need for has_value check here; returning an empty optional is valid
                                     }
                                     catch(user_error& e) {
                                         throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
@@ -1118,7 +1118,7 @@ namespace cppli::detail {
                             else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
                                 if(subcommand.inputs.options_to_values.at(*short_name).has_value()) {
                                     try {
-                                        return conversions::conversion_t<std::optional<typename last::type>>()(*subcommand.inputs.options_to_values.at(*short_name));
+                                        return conversion_t<std::optional<typename last::type>>()(*subcommand.inputs.options_to_values.at(*short_name));
                                     }
                                     catch (user_error& e) {
                                         throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
@@ -1559,7 +1559,7 @@ namespace cppli::detail {
                                const flag<"subcommands-hide-help", "don't show help when printing subcommands">&,                    bool subcommands_hide_help,
                                const flag<"subcommands-show-help", "do show help when printing subcommands">&,                       bool subcommands_show_help,
 
-                               const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
+                               const option<unsigned, conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
 
     template<auto func>
     dummy_t register_command(const subcommand_name_t& name, const char* description, bool is_help = false) {
@@ -1647,7 +1647,7 @@ namespace cppli {
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const std::optional<TYPE>& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const std::optional<TYPE>& NAME
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
@@ -1657,7 +1657,7 @@ namespace cppli {
     /// If the option is not provided, a default constructed object is passed to the callback instead of an empty optional
     /// The optional last argument is a single character short name
     #define CPPLI_OPTION_DEFAULT_CTOR(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<TYPE>, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const TYPE& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<TYPE>, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const TYPE& NAME
 
     #define CPPLI_OPTION_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
     const ::cppli::detail::option<TYPE, CONVERSION_T, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>, const TYPE& NAME
@@ -1665,7 +1665,7 @@ namespace cppli {
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTIONAL_ARGUMENT_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTIONAL_ARGUMENT_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
@@ -1673,7 +1673,7 @@ namespace cppli {
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTIONAL_ARGUMENT_OPTION_DEFAULT_CTOR(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<std::optional<TYPE>>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTIONAL_ARGUMENT_OPTION_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
@@ -1683,7 +1683,7 @@ namespace cppli {
 
     /// the optional last argument is a single character short name
     #define CPPLI_REQUIRED_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, false, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<TYPE>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, false, false __VA_OPT__(, cppli_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
 
     /// the optional last argument is a single character short name
     #define CPPLI_REQUIRED_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
@@ -1691,27 +1691,27 @@ namespace cppli {
 
 
     #define CPPLI_POSITIONAL(TYPE, NAME, DESCRIPTION) \
-    const ::cppli::detail::positional<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
+    const ::cppli::detail::positional<TYPE, ::cppli::conversion_t<TYPE>, false, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
 
     #define CPPLI_POSITIONAL_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
     const ::cppli::detail::positional<TYPE, CONVERSION_T, false, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
 
 
     #define CPPLI_OPTIONAL_POSITIONAL(TYPE, NAME, DESCRIPTION) \
-    const ::cppli::detail::positional<TYPE, ::cppli::conversions::conversion_t<std::optional<TYPE>>, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
+    const ::cppli::detail::positional<TYPE, ::cppli::conversion_t<std::optional<TYPE>>, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
 
     #define CPPLI_OPTIONAL_POSITIONAL_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
     const ::cppli::detail::positional<TYPE, CONVERSION_T, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
 
     #define CPPLI_OPTIONAL_POSITIONAL_DEFAULT_CTOR(TYPE, NAME, DESCRIPTION) \
-    const ::cppli::detail::positional<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
+    const ::cppli::detail::positional<TYPE, ::cppli::conversion_t<TYPE>, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
 
     #define CPPLI_OPTIONAL_POSITIONAL_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
     const ::cppli::detail::positional<TYPE, CONVERSION_T, false, true, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
 
 
     #define CPPLI_VARIADIC(TYPE, NAME, DESCRIPTION) \
-    const ::cppli::detail::variadic<TYPE, ::cppli::conversions::conversion_t<TYPE>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
+    const ::cppli::detail::variadic<TYPE, ::cppli::conversion_t<TYPE>, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
 
     #define CPPLI_VARIADIC_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
     const ::cppli::detail::variadic<TYPE, CONVERSION_T, false, cppli_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
@@ -2722,7 +2722,7 @@ namespace cppli::detail {
                                const flag<"subcommands-hide-help", "don't show help when printing subcommands">&,                    bool subcommands_hide_help,
                                const flag<"subcommands-show-help", "do show help when printing subcommands">&,                       bool subcommands_show_help,
 
-                               const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
+                               const option<unsigned, conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
 
         extern subcommand_name_t last_subcommand_;
 

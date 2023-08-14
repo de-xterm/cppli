@@ -12,7 +12,7 @@
 
 using namespace cppli::detail;
 
-namespace cppli::conversions {
+namespace cppli {
 
     template<>
     struct conversion_t<std::vector<int>> {

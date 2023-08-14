@@ -43,7 +43,7 @@ namespace detail {
                             if(subcommand.inputs.options_to_values.contains(canonical_name)) {
                                 if(subcommand.inputs.options_to_values.at(canonical_name).has_value()) {
                                     try {
-                                        return conversions::conversion_t<std::optional<typename last::type>>()(*subcommand.inputs.options_to_values.at(canonical_name)); // no need for has_value check here; returning an empty optional is valid
+                                        return conversion_t()(*subcommand.inputs.options_to_values.at(canonical_name)); // no need for has_value check here; returning an empty optional is valid
                                     }
                                     catch(user_error& e) {
                                         throw user_error("Error initializing " + main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \"" + canonical_name + "\". Details: " + e.what(), e.error_type());
@@ -56,7 +56,7 @@ namespace detail {
                             else if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
                                 if(subcommand.inputs.options_to_values.at(*short_name).has_value()) {
                                     try {
-                                        return conversions::conversion_t<std::optional<typename last::type>>()(*subcommand.inputs.options_to_values.at(*short_name));
+                                        return conversion_t()(*subcommand.inputs.options_to_values.at(*short_name));
                                     }
                                     catch (user_error& e) {
                                         throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
@@ -497,7 +497,7 @@ namespace detail {
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
                                const flag<"subcommands-verbose", "print subcommand name and description">&,                          bool subcommands_verbose,
 
-                               const option<unsigned, conversions::conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
+                               const option<unsigned, conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
 
     template<auto func>
     dummy_t register_command(const subcommand_name_t& name, const char* description, bool is_help = false) {
