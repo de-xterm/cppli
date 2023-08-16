@@ -3,7 +3,7 @@
 #include "parameter_types.h"
 
 namespace cppli::detail {
-    template<typename T, typename last, typename conversion_t>
+    template<typename T, typename last, typename conversion_t_>
     T process_positional(unsigned cumulative_positional_index, const subcommand_t& subcommand,
                          const std::string& main_command_or_subcommand, const std::string& long_name) {
         --cumulative_positional_index; // because we've already skipped over the actual parameter for the positional, cumulative_positional_index will be too big
@@ -11,7 +11,7 @@ namespace cppli::detail {
         if constexpr(last::optional) {
             if (cumulative_positional_index < subcommand.inputs.positional_args.size()) {
                 try {
-                    return conversion_t()(
+                    return conversion_t_()(
                             subcommand.inputs.positional_args[cumulative_positional_index]);
                 }
                 catch (user_error& e) {
@@ -29,12 +29,12 @@ namespace cppli::detail {
                 throw user_error(main_command_or_subcommand + " \"" + to_string(subcommand.name) +
                                  "\" required positional argument \"" + long_name +
                                  "\" was not provided (expected an argument of type " +
-                                 conversion_t::type_string.string() + ')',
+                                 conversion_t_::type_string.string() + ')',
                                  REQUIRED_POSITIONAL_NOT_PROVIDED);
             }
             else {
                 try {
-                    return conversion_t()(
+                    return conversion_t_()(
                             subcommand.inputs.positional_args[cumulative_positional_index]);
                 }
                 catch (user_error& e) {
@@ -46,14 +46,14 @@ namespace cppli::detail {
         }
     }
 
-    template<typename T, typename last, typename conversion_t>
+    template<typename T, typename last, typename conversion_t_>
     T process_variadic(unsigned cumulative_positional_index, const subcommand_t& subcommand,
                        const std::string& main_command_or_subcommand, const std::string& long_name) {
         T ret; // T is a vector
         for (unsigned i = cumulative_positional_index;
              i < subcommand.inputs.positional_args.size(); ++i) {
             try {
-                ret.emplace_back(conversion_t()(subcommand.inputs.positional_args[i]));
+                ret.emplace_back(conversion_t_()(subcommand.inputs.positional_args[i]));
             }
             catch (user_error& e) {
                 throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
@@ -65,7 +65,7 @@ namespace cppli::detail {
         return ret;
     }
 
-    template<typename T, typename last, typename conversion_t>
+    template<typename T, typename last, typename conversion_t_>
     T process_required_option(const subcommand_t& subcommand,
                                        const std::string& main_command_or_subcommand,
                                        const std::string& long_name, const std::optional<std::string>& short_name) {
@@ -86,14 +86,14 @@ namespace cppli::detail {
                     main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \""
                     + long_name + "\" requires an argument, but one was not provided "
                                        "(expected an argument of type "
-                    + conversion_t::type_string.make_lowercase_and_convert_underscores().string() +
+                    + conversion_t_::type_string.make_lowercase_and_convert_underscores().string() +
                     ')',
                     OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
         }
         else { // by this point, none of the optionals we're interested in are empty
             if (subcommand.inputs.options_to_values.contains(long_name)) {
                 try {
-                    return conversion_t()(*subcommand.inputs.options_to_values.at(long_name));
+                    return conversion_t_()(*subcommand.inputs.options_to_values.at(long_name));
                 }
                 catch (user_error& e) {
                     throw user_error("Error initializing " + main_command_or_subcommand + " \""
@@ -103,7 +103,7 @@ namespace cppli::detail {
             }
             else { // has_short_name is guaranteed to be true at this point
                 try {
-                    return conversion_t()(*subcommand.inputs.options_to_values.at(*short_name));
+                    return conversion_t_()(*subcommand.inputs.options_to_values.at(*short_name));
                 }
                 catch (user_error& e) {
                     throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
@@ -115,7 +115,7 @@ namespace cppli::detail {
         }
     }
 
-    template<typename T, typename last, typename conversion_t>
+    template<typename T, typename last, typename conversion_t_>
     T process_required_argument_option(const subcommand_t& subcommand,
                                        const std::string& main_command_or_subcommand,
                                        const std::string& long_name, const std::optional<std::string>& short_name) {
@@ -127,7 +127,7 @@ namespace cppli::detail {
                                  "\" option \"" + long_name + "\" "
                                                                    "requires an argument, but one was not provided (expected an argument of type "
                                  +
-                                 static_cast<std::string>(conversion_t::type_string.make_lowercase_and_convert_underscores()) +
+                                 static_cast<std::string>(conversion_t_::type_string.make_lowercase_and_convert_underscores()) +
                                  "."
                                  "Note that this option is optional, so it is valid to omit it entirely, "
                                  "but the option's argument is required, so if the option is provided, it must come with an argument",
@@ -135,7 +135,7 @@ namespace cppli::detail {
             }
             else {
                 try {
-                    return conversion_t()(*subcommand.inputs.options_to_values.at(
+                    return conversion_t_()(*subcommand.inputs.options_to_values.at(
                             long_name)); // no need for has_value check here; returning an empty optional is valid
                 }
                 catch (user_error& e) {
@@ -153,14 +153,14 @@ namespace cppli::detail {
                                  "\" option \"" + *short_name + "\" (full name \"" +
                                  long_name + "\") "
                                                   "requires an argument, but one was not provided (expected an argument of type "
-                                 + conversion_t::type_string.string() + "."
+                                 + conversion_t_::type_string.string() + "."
                                                                         "Note that this option is optional, so it is valid to omit it entirely, "
                                                                         "but the option's argument is required, so if the option is provided, it must come with an argument",
                                  OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
             }
             else {
                 try {
-                    return conversion_t()(*subcommand.inputs.options_to_values.at(
+                    return conversion_t_()(*subcommand.inputs.options_to_values.at(
                             *short_name)); // no need for has_value check here; returning an empty optional is valid
                 }
                 catch (user_error& e) {
@@ -177,7 +177,7 @@ namespace cppli::detail {
         }
     }
 
-    template<typename T, typename last, typename conversion_t>
+    template<typename T, typename last, typename conversion_t_>
     T process_raw_type_optional_argument_option(const subcommand_t& subcommand,
                                                 const std::string& main_command_or_subcommand,
                                                 const std::string& long_name, const std::optional<std::string>& short_name) {
@@ -185,7 +185,7 @@ namespace cppli::detail {
         if (subcommand.inputs.options_to_values.contains(long_name)) {
             if (subcommand.inputs.options_to_values.at(long_name).has_value()) {
                 try {
-                    return conversion_t()(*subcommand.inputs.options_to_values.at(
+                    return conversion_t_()(*subcommand.inputs.options_to_values.at(
                             long_name)); // no need for has_value check here; returning an empty optional is valid
                 }
                 catch (user_error& e) {
@@ -202,7 +202,7 @@ namespace cppli::detail {
         else if (short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
             if (subcommand.inputs.options_to_values.at(*short_name).has_value()) {
                 try {
-                    return conversion_t()(*subcommand.inputs.options_to_values.at(*short_name));
+                    return conversion_t_()(*subcommand.inputs.options_to_values.at(*short_name));
                 }
                 catch (user_error& e) {
                     throw user_error(
@@ -271,31 +271,31 @@ namespace cppli::detail {
                    (short_name && subcommand.inputs.flags.contains(std::string{last::short_name}));
         }
         else {
-            using conversion_t = typename last::conversion_t;
+            using conversion_t_ = typename last::conversion_t;
 
             if constexpr(argument_info_t<last>::is_option) {
                 if constexpr(last::optional) { // implicitly required argument
                     if constexpr(last::argument_optional) { // I believe default_construct_when_empty is implicity true, so no need for && here
-                        return process_raw_type_optional_argument_option<T, last, conversion_t>(subcommand, main_command_or_subcommand,
+                        return process_raw_type_optional_argument_option<T, last, conversion_t_>(subcommand, main_command_or_subcommand,
                                                                                   long_name, short_name);
                     }
                     else {
-                        return process_required_argument_option<T, last, conversion_t>(subcommand, main_command_or_subcommand, 
+                        return process_required_argument_option<T, last, conversion_t_>(subcommand, main_command_or_subcommand, 
                                                                                        long_name, short_name);
                     }
                 }
                 else {
-                    return process_required_option<T, last, conversion_t>(subcommand,
+                    return process_required_option<T, last, conversion_t_>(subcommand,
                                                                           main_command_or_subcommand,
                                                                           long_name, short_name);
                 }
             }
             else if constexpr(argument_info_t<last>::is_positional) { // positional
-                return process_positional<T, last, conversion_t>(cumulative_positional_index, subcommand,
+                return process_positional<T, last, conversion_t_>(cumulative_positional_index, subcommand,
                                                                  main_command_or_subcommand, long_name);
             }
             else { // variadic
-                return process_variadic<T, last, conversion_t>(cumulative_positional_index, subcommand,
+                return process_variadic<T, last, conversion_t_>(cumulative_positional_index, subcommand,
                                                                main_command_or_subcommand, long_name);
             }
         }

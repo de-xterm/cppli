@@ -4,6 +4,9 @@
 namespace cppli::detail {
     void default_help_callback(const command_context_t& cppli_current_command,
 
+                               const variadic<std::string, conversion_t<std::string>, false, "subcommand name", "The name of the subcommand to print help for."
+                                                                                                                "If no subcommand is provided, then help is printed for the parent command">&, std::vector<std::string> subcommand_name,
+
                                const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
                                const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
                                const flag<"name-and-args", "print subcommand name and args">&,                           bool name_and_args,
@@ -66,6 +69,12 @@ namespace cppli::detail {
             std::cerr << "\nhide help and show help are mutually exclusive. Help will be shown\n";
         }
 
-        std::cout << get_documentation_string_callback(last_subcommand_, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
+        if(subcommand_name.size()) {
+            subcommand_name.insert(subcommand_name.begin(), "MAIN");
+            std::cout << get_documentation_string_callback(subcommand_name, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
+        }
+        else {
+            std::cout << get_documentation_string_callback(last_subcommand_, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
+        }
     }
 }

@@ -118,7 +118,7 @@ namespace cppli::detail {
                                 std::stringstream ss;
                                 ss << "For " << command_or_subcommand << " \"" << current_subcommand_name_string << "\", \"" << option_name << "\" is a flag, not an option, and therefore can't be assigned a value (like it was in \"" << arg_string << "\"). ";
 
-                                print_throw_or_do_nothing(FLAG_GIVEN_AN_ARGUMENT, ss.str(), "The value will be ignored and the flag will be set to true\n");
+                                print_throw_or_do_nothing(FLAG_GIVEN_AN_ARGUMENT, ss.str(), "The value will be ignored and the flag will be set to true\n\n");
 
                                 args.flags.emplace(option_name);
                             }
@@ -131,7 +131,7 @@ namespace cppli::detail {
                                     std::stringstream ss;
                                     ss << '\"' << current_subcommand_name_string << "\" is a namespace, so it cannot accept the input \"" << arg_string << "\" (the only inputs it can accept are --help, -h, and help)";
 
-                                    print_throw_or_do_nothing(ARGUMENT_GIVEN_TO_NAMESPACE, ss.str(), "The given input be ignored\n");
+                                    print_throw_or_do_nothing(ARGUMENT_GIVEN_TO_NAMESPACE, ss.str(), "The given input be ignored\n\n");
                                     invalid_input_to_namespace = true;
                                     continue;
                                 }
@@ -139,7 +139,7 @@ namespace cppli::detail {
                                     std::stringstream ss;
                                     ss << "Flag/option \"" << option_name << "\" (from \"" << arg_string << "\") was not recognized by " << command_or_subcommand << " \"" << current_subcommand_name_string << "\"\n";
 
-                                    print_throw_or_do_nothing(UNRECOGNIZED_FLAG, ss.str(), "It will be ignored\n");
+                                    print_throw_or_do_nothing(UNRECOGNIZED_FLAG, ss.str(), "It will be ignored\n\n");
                                 }
                             }
                         }
@@ -262,7 +262,7 @@ namespace cppli::detail {
                                 ss << "Character '" << char_string << "' in flag/option group \"" << arg_string << "\" "
                                       "was not a recognized flag or option for " << command_or_subcommand << " \"" << current_subcommand_name_string << "\".";
 
-                                print_throw_or_do_nothing(UNRECOGNIZED_FLAG, ss.str(), " It will be ignored\n");
+                                print_throw_or_do_nothing(UNRECOGNIZED_FLAG, ss.str(), " It will be ignored\n\n");
                             }
                         }
                     }
@@ -284,15 +284,16 @@ namespace cppli::detail {
                                                                         << arg_string[invalid_character_index-1] << "' is flag and therefore can't have an argument.\n";
                             }
                         }
-                        print_throw_or_do_nothing(INVALID_FLAG, invalid_character_in_flag_group_message.str(), "Invalid flag(s) will be ignored\n");
+                        print_throw_or_do_nothing(INVALID_FLAG, invalid_character_in_flag_group_message.str(), "Invalid flag(s) will be ignored\n\n");
                     }
+
                 }
                 else { // positional arg
-                    if(arg_string == "help") {
+                    /*if(arg_string == "help") { // TODO: delete this. It isn't necessary now that I've added actual help subcommands
                         std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                         return {{}, true};
                     }
-                    else if(in_namespace) {
+                    else */if(in_namespace) {
                         std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                         invalid_input_to_namespace = true;
                         continue;
@@ -342,7 +343,7 @@ namespace cppli::detail {
                         }
 
 
-                        print_throw_or_do_nothing(e, ss.str(), "This argument will be ignored\n");
+                        print_throw_or_do_nothing(e, ss.str(), "This argument will be ignored\n\n");
                     }
                 }
             }

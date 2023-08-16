@@ -139,8 +139,11 @@ namespace cppli::detail {
     }
 
 
-
+    // we don't have command_macros yet, so we have to write the callback signature manually
     void default_help_callback(const command_context_t& cppli_current_command,
+
+                               const variadic<std::string, conversion_t<std::string>, false, "subcommand name", "The name of the subcommand to print help for."
+                                                                                                                "If no subcommand is provided, then help is printed for the parent command">&, std::vector<std::string> subcommand_name,
 
                                const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
                                const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
@@ -199,11 +202,15 @@ namespace cppli::detail {
         }
 
         if(!is_help) {
-            subcommand_name_t temp = name;
-            temp.push_back("help");
+            subcommand_name_t temp;
+            for(const auto& command : name) {
+                temp.push_back(command);
 
-            if(!subcommand_name_to_func().contains(temp)) {
-                register_command<default_help_callback>(temp, "print help for this command", true);
+                subcommand_name_t temp_plus_help = temp;
+                temp_plus_help.push_back("help");
+                if(!subcommand_name_to_func().contains(temp)) {
+                    register_command<default_help_callback>(temp_plus_help, "print help for this command", true);
+                }
             }
         }
 

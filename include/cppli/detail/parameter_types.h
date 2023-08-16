@@ -196,7 +196,7 @@ namespace cppli {
 
             positional() = default;
         };
-
+                                                            // 99% sure this is just ignored // TODO: delete
         template<typename type_, typename conversion_t_, bool default_construct_when_empty_, string_literal name_, string_literal documentation_>
         class variadic {
         public:

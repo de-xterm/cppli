@@ -19,6 +19,7 @@ namespace cppli::detail {
         if(parse_ret.help_command_index && !parse_ret.printed_help) {
             // help command is special. Skip all other execution if it is encountered
             const auto& help_command = parse_ret.subcommands[*parse_ret.help_command_index];
+            last_subcommand_ = parse_ret.subcommands[parse_ret.subcommands.size()-2].name;
             (detail::subcommand_name_to_func()[help_command.name])(help_command, {true});
         }                                                                         // help is always leaf
         else if(!parse_ret.printed_help) {
