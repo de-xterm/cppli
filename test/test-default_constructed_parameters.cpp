@@ -22,7 +22,7 @@ struct type_with_empty_state_t {
 
     bool operator==(const type_with_empty_state_t&) const = default;
 
-    static constexpr cppli::detail::string_literal cppli_type_string = "integer";
+    static constexpr cppli::string_literal cppli_type_string = "integer";
 };
 
 static type_with_empty_state_t empty_option;

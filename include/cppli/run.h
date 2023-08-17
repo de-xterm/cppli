@@ -8,7 +8,7 @@ namespace cppli {
         void run_impl_(int argc, const char* const* const argv);
     }
 
-    template<detail::string_literal program_name, detail::string_literal description> // TODO: put run in its own file
+    template<string_literal program_name, string_literal description> // TODO: put run in its own file
     void run(int argc, const char* const* const argv) {
         static_assert(detail::all_lowercase_numeral_or_hyphen<program_name>(), "command names can only contain lowercase characters, numerals, and hyphens");
 

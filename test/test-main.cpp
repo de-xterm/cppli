@@ -14,7 +14,5 @@ int main(int argc, char** argv) {
         cppli::minor_error_behavior(static_cast<cppli::minor_error_type>(i)) = cppli::THROW; // set all minor errors to be fatal
     }
 
-    cppli::run<"program", "does thing">(argc, argv);
-
-    //return Catch::Session().run(argc, argv);
+    return Catch::Session().run(argc, argv);
 }

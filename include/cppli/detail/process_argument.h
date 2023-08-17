@@ -127,7 +127,7 @@ namespace cppli::detail {
                                  "\" option \"" + long_name + "\" "
                                                                    "requires an argument, but one was not provided (expected an argument of type "
                                  +
-                                 static_cast<std::string>(conversion_t_::type_string.make_lowercase_and_convert_underscores()) +
+                                 conversion_t_::type_string.make_lowercase_and_convert_underscores().string() +
                                  "."
                                  "Note that this option is optional, so it is valid to omit it entirely, "
                                  "but the option's argument is required, so if the option is provided, it must come with an argument",

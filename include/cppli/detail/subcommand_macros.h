@@ -3,61 +3,61 @@
 namespace cppli::detail {
 
     /// All the recursive expansion stuff is taken from https://www.scs.stanford.edu/~dm/blog/va-opt.html
+
+    // I'm intentionally using a weird case (cPPLI) so that code completion doesn't pick up internal macros and confuse the user
     struct evaluate_at_file_scope_dummy_t {
         template<typename T>
         evaluate_at_file_scope_dummy_t(T&&) noexcept {}
     };
 
-    #define cppli_internal_PARENS ()
+    #define cPPLI_internal_PARENS ()
 
-    #define cppli_internal_EXPAND(...) cppli_internal_EXPAND2(cppli_internal_EXPAND2(cppli_internal_EXPAND2(cppli_internal_EXPAND2(__VA_ARGS__))))
-    /*#define cppli_internal_EXPAND4(...) cppli_internal_EXPAND3(cppli_internal_EXPAND3(cppli_internal_EXPAND3(cppli_internal_EXPAND3(__VA_ARGS__))))
-    #define cppli_internal_EXPAND3(...) cppli_internal_EXPAND2(cppli_internal_EXPAND2(cppli_internal_EXPAND2(cppli_internal_EXPAND2(__VA_ARGS__))))*/
-    #define cppli_internal_EXPAND2(...) cppli_internal_EXPAND1(cppli_internal_EXPAND1(cppli_internal_EXPAND1(cppli_internal_EXPAND1(__VA_ARGS__))))
-    #define cppli_internal_EXPAND1(...) __VA_ARGS__
+    #define cPPLI_internal_EXPAND(...) cPPLI_internal_EXPAND2(cPPLI_internal_EXPAND2(cPPLI_internal_EXPAND2(cPPLI_internal_EXPAND2(__VA_ARGS__))))
+    /*#define cPPLI_internal_EXPAND4(...) cPPLI_internal_EXPAND3(cPPLI_internal_EXPAND3(cPPLI_internal_EXPAND3(cPPLI_internal_EXPAND3(__VA_ARGS__))))
+    #define cPPLI_internal_EXPAND3(...) cPPLI_internal_EXPAND2(cPPLI_internal_EXPAND2(cPPLI_internal_EXPAND2(cPPLI_internal_EXPAND2(__VA_ARGS__))))*/
+    #define cPPLI_internal_EXPAND2(...) cPPLI_internal_EXPAND1(cPPLI_internal_EXPAND1(cPPLI_internal_EXPAND1(cPPLI_internal_EXPAND1(__VA_ARGS__))))
+    #define cPPLI_internal_EXPAND1(...) __VA_ARGS__
 
-    #define cppli_internal_FOR_EACH(macro, ...)                                    \
-          __VA_OPT__(cppli_internal_EXPAND(cppli_internal_FOR_EACH_HELPER(macro, __VA_ARGS__)))
+    #define cPPLI_internal_FOR_EACH(macro, ...)                                    \
+          __VA_OPT__(cPPLI_internal_EXPAND(cPPLI_internal_FOR_EACH_HELPER(macro, __VA_ARGS__)))
 
-    #define cppli_internal_FOR_EACH_HELPER(macro, a1, ...)                                    \
+    #define cPPLI_internal_FOR_EACH_HELPER(macro, a1, ...)                                    \
           macro(a1)                                                                           \
-          __VA_OPT__(cppli_internal_FOR_EACH_AGAIN cppli_internal_PARENS (macro, __VA_ARGS__))
+          __VA_OPT__(cPPLI_internal_FOR_EACH_AGAIN cPPLI_internal_PARENS (macro, __VA_ARGS__))
 
-    #define cppli_internal_FOR_EACH_AGAIN() cppli_internal_FOR_EACH_HELPER
+    #define cPPLI_internal_FOR_EACH_AGAIN() cPPLI_internal_FOR_EACH_HELPER
 
 
-    #define cppli_internal_STRINGIFY(S) cppli_internal_STRINGIFY_impl(S)
-    #define cppli_internal_STRINGIFY_impl(S) #S
+    #define cPPLI_internal_STRINGIFY(S) cPPLI_internal_STRINGIFY_impl(S)
+    #define cPPLI_internal_STRINGIFY_impl(S) #S
 
-    #define cppli_internal_STRINGIFY_WITH_COMMA(S) cppli_internal_STRINGIFY(S),
+    #define cPPLI_internal_STRINGIFY_WITH_COMMA(S) cPPLI_internal_STRINGIFY(S),
 
-    #define ONE_ARG_CAT(arg1) arg1
+    #define cPPLI_internal_ONE_ARG_CAT(arg1) arg1
 
-    #define NOT_ONE_ARG_CAT(...) \
-        cppli_internal_EXPAND(cppli_internal_NOT_FINAL_CAT_HELPER(__VA_ARGS__))
+    #define cPPLI_internal_NOT_cPPLI_internal_ONE_ARG_CAT(...) \
+        cPPLI_internal_EXPAND(cPPLI_internal_NOT_FINAL_CAT_HELPER(__VA_ARGS__))
 
-    #define cppli_internal_CAT(arg1, ...)                                    \
-        __VA_OPT__(NOT_)##ONE_ARG_CAT(arg1 __VA_OPT__(, __VA_ARGS__))
+    #define cPPLI_internal_CAT(arg1, ...)                                    \
+        __VA_OPT__(cPPLI_internal_NOT_)##cPPLI_internal_ONE_ARG_CAT(arg1 __VA_OPT__(, __VA_ARGS__))
 
-    #define cppli_internal_NOT_FINAL_CAT_HELPER(a1, a2, ...)                         \
-          __VA_OPT__(NOT_)##FINAL_CAT_AGAIN cppli_internal_PARENS (a1##_##a2 __VA_OPT__(, __VA_ARGS__))
+    #define cPPLI_internal_NOT_FINAL_CAT_HELPER(a1, a2, ...)                         \
+          __VA_OPT__(cPPLI_internal_NOT_)##cPPLI_internal_FINAL_CAT_AGAIN cPPLI_internal_PARENS (a1##_##a2 __VA_OPT__(, __VA_ARGS__))
 
-    #define FINAL_CAT_HELPER(arg) arg
+    #define cPPLI_internal_FINAL_CAT_HELPER(arg) arg
 
-    #define FINAL_CAT_AGAIN() FINAL_CAT_HELPER
-    #define NOT_FINAL_CAT_AGAIN() cppli_internal_NOT_FINAL_CAT_HELPER
+    #define cPPLI_internal_FINAL_CAT_AGAIN() cPPLI_internal_FINAL_CAT_HELPER
+    #define cPPLI_internal_NOT_cPPLI_internal_FINAL_CAT_AGAIN() cPPLI_internal_NOT_FINAL_CAT_HELPER
 
     #ifdef __COUNTER__
-        #define cppli_internal_UNIQUE_NAME(NAME) cppli_internal_CAT(NAME, __COUNTER__) // use counter if it's available
+        #define cPPLI_internal_UNIQUE_NAME(NAME) cPPLI_internal_CAT(NAME, __COUNTER__) // use counter if it's available
     #else
-        #define cppli_internal_UNIQUE_NAME(NAME) cppli_internal_CAT(NAME, __LINE__)  // if not, line should suffice
+        #define cPPLI_internal_UNIQUE_NAME(NAME) cPPLI_internal_CAT(NAME, __LINE__)  // if not, line should suffice
     #endif
 
-    #define cppli_internal_EVALUATE_AT_FILE_SCOPE(EXPR)                        \
+    #define cPPLI_internal_EVALUATE_AT_FILE_SCOPE(EXPR)                        \
     namespace {                                                                \
         [[maybe_unused]]\
-        const ::cppli::detail::evaluate_at_file_scope_dummy_t cppli_internal_UNIQUE_NAME(cppli_DUMMY) = EXPR; /* NOLINT */      \
+        const ::cppli::detail::evaluate_at_file_scope_dummy_t cPPLI_internal_UNIQUE_NAME(cppli_DUMMY) = EXPR; /* NOLINT */      \
     }
-
-
 }

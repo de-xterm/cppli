@@ -13,7 +13,6 @@
 using namespace cppli::detail;
 
 namespace cppli {
-
     template<>
     struct conversion_t<std::vector<int>> {
         // parse comma separated list of ints
@@ -38,9 +37,24 @@ namespace cppli {
             return ret;
         }
 
-        static constexpr cppli::detail::string_literal type_string = "comma separated list of ints";
+        static constexpr cppli::string_literal type_string = "comma separated list of ints";
     };
 }
+
+struct deleted_special_member_functions {
+    std::string str;
+    deleted_special_member_functions(const std::string& str_) : str(str_) {}
+
+    deleted_special_member_functions() = delete;
+
+    deleted_special_member_functions(const deleted_special_member_functions&) = delete;
+    deleted_special_member_functions& operator=(const deleted_special_member_functions&) = delete;
+
+    deleted_special_member_functions(deleted_special_member_functions&&) = delete;
+    deleted_special_member_functions& operator=(deleted_special_member_functions&&) = delete;
+
+    static constexpr cppli::string_literal cppli_type_string = "string";
+};
 
 static std::vector<int> vec_positional;
 
@@ -83,7 +97,7 @@ struct semicolon_int_vec_conversion_t {
         return ret;
     }
 
-    static constexpr cppli::detail::string_literal type_string = "semicolon separated list of ints";
+    static constexpr cppli::string_literal type_string = "semicolon separated list of ints";
 };
 
 static std::vector<int> vec_option;
@@ -95,6 +109,15 @@ CPPLI_SUBCOMMAND(conversions2,
 
     vec_positional = vec;
     vec_option = vecopt;
+}
+
+static bool conversions3_called = false;
+CPPLI_SUBCOMMAND(conversions3,
+                 "subcommand for testing type with constructor that takes a std::string",
+                 CPPLI_OPTIONAL_POSITIONAL(deleted_special_member_functions, foo, "deleted special member functions class")) {
+    conversions3_called = true;
+    REQUIRE(foo);
+    REQUIRE(foo->str == "bar");
 }
 
 TEST_CASE("user defined conversion with manually specified conversion_t works") {
@@ -122,4 +145,11 @@ TEST_CASE("user defined conversion with manually specified conversion_t works") 
             REQUIRE(vec_option == std::vector<int>{});
         }
     }
+}
+
+TEST_CASE("class with constructor that takes std::string works") {
+    const char* argv[] = {"program", "conversions3", "bar"};
+    cppli::run<"program", "does stuff">(lengthof(argv), argv);
+
+    REQUIRE(conversions3_called);
 }

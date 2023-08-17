@@ -120,7 +120,6 @@ namespace cppli {
                 return has_value();
             }
 
-
             bool was_included() const {
                 return was_included_;
             }

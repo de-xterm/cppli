@@ -70,16 +70,14 @@ namespace cppli::detail {
         }
     #endif
 
-
     template<typename return_t, typename arg_t, typename...arg_ts>                      // don't actually care about func, just need to deduce args
-    void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, return_t(*func)(arg_t, arg_ts...) = nullptr) {
+    void generate_input_info_and_docs_impl(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, return_t(*func)(arg_t, arg_ts...) = nullptr) {
         using T = std::remove_cvref_t<arg_t>;
         using arg_info_t = argument_info_t<T>;
 
         if constexpr(!arg_info_t::is_raw_type) {
             using type = std::remove_cvref_t<arg_t>;
 
-            static_assert(no_repeated_short_names_v<arg_t, arg_ts...>, "multiple flags/options cannot share a short name");
             static_assert(no_repeated_long_names_v<arg_t, arg_ts...>,  "multiple flags/options cannot share a long name"); // I don't think this is necessary anymore
 
             if constexpr(arg_info_t::is_flag) {
@@ -134,10 +132,15 @@ namespace cppli::detail {
         }
     }
 
-    inline void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, void(*func)() = nullptr) {
+    inline void generate_input_info_and_docs_impl(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, void(*func)() = nullptr) {
         // do nothing
     }
 
+    template<typename return_t, typename arg_t, typename...arg_ts>                      // don't actually care about func, just need to deduce args
+    void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, return_t(*func)(arg_t, arg_ts...) = nullptr) {
+        static_assert(no_repeated_short_names_v<arg_t, arg_ts...>, "multiple parameters cannot have the same short name");
+        generate_input_info_and_docs_impl(info, documentation, func);
+    }
 
     // we don't have command_macros yet, so we have to write the callback signature manually
     void default_help_callback(const command_context_t& cppli_current_command,
