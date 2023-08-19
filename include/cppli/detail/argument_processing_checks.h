@@ -52,6 +52,8 @@ namespace cppli::detail {
 
     template<typename T, typename U, typename...Ts>
     constexpr bool pack_contains_short_name_func() {
+        //static_assert(!(argument_info_t<T>::has_short_name && argument_info_t<U>::has_short_name));
+
         if constexpr(argument_info_t<T>::has_short_name && argument_info_t<U>::has_short_name) {
             if constexpr(sizeof...(Ts) > 0) {
                 return (T::short_name == U::short_name) || pack_contains_short_name_func<T, Ts...>();

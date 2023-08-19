@@ -3,7 +3,7 @@
 # this is a simple script for expanding a file's includes in order to produce a single header library
 # it only considers includes made with quotes, not ones with angular brackets (so as not to expand standard includes)
 
-# usage: amalgamate.py (takes no args, all relative paths are hardcoded)
+# usage: amalgamate.py (takes no args, all paths are hardcoded)
 
 # This script is hardcoded to fit the specific needs of this library, and it probably won't work for other projects without some troubleshooting
 
@@ -25,11 +25,6 @@ def err(*args, **kwargs):
     exit(1)
 
 
-"""
-if(len(sys.argv) < 4):
-    err("incorrect number of args provided")
-"""
-
 input_header_path = "./cppli_single_header.h"
 output_header_path = "../single_header/cppli.h"
 include_dirs = ["../include/", "../src/"]
@@ -49,6 +44,7 @@ for dir in include_dirs:
             #include_filenames_to_full_paths[os.path.basename(subdir) + '/' + file] = os.path.join(subdir, file)
 
             print("Mapping \"" + filename + "\" to file with path \"" + os.path.join(subdir, file)+'\"')
+
 print("")
 
 
