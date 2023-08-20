@@ -1516,12 +1516,24 @@ namespace cppli::detail {
 
     template<typename T, typename U, typename...Ts>
     constexpr bool pack_contains_short_name_func() {
-        if constexpr(argument_info_t<T>::has_short_name && argument_info_t<U>::has_short_name) {
-            if constexpr(sizeof...(Ts) > 0) {
-                return (T::short_name == U::short_name) || pack_contains_short_name_func<T, Ts...>();
+        //static_assert(!(argument_info_t<T>::has_short_name && argument_info_t<U>::has_short_name));
+
+        if constexpr(argument_info_t<T>::has_short_name) {
+            if constexpr(argument_info_t<U>::has_short_name) {
+                if constexpr(sizeof...(Ts) > 0) {
+                    return (T::short_name == U::short_name) || pack_contains_short_name_func<T, Ts...>();
+                }
+                else {
+                    return (T::short_name == U::short_name);
+                }
             }
             else {
-                return (T::short_name == U::short_name);
+                if constexpr(sizeof...(Ts) > 0) {
+                    return pack_contains_short_name_func<T, Ts...>(); //
+                }
+                else {
+                    return false;
+                }
             }
         }
         else {
@@ -1548,12 +1560,24 @@ namespace cppli::detail {
 
     template<typename T, typename U, typename...Ts>
     constexpr bool pack_contains_long_name_func() {
-        if constexpr(argument_info_t<T>::has_long_name && argument_info_t<U>::has_long_name) {
-            if constexpr(sizeof...(Ts) > 0) {
-                return (T::name == U::name) || pack_contains_short_name_func<T, Ts...>();
+        //static_assert(!(argument_info_t<T>::has_long_name && argument_info_t<U>::has_long_name));
+
+        if constexpr(argument_info_t<T>::has_long_name) {
+            if constexpr(argument_info_t<U>::has_long_name) {
+                if constexpr(sizeof...(Ts) > 0) {
+                    return (T::name == U::name) || pack_contains_long_name_func<T, Ts...>();
+                }
+                else {
+                    return (T::name == U::name);
+                }
             }
             else {
-                return (T::name == U::name);
+                if constexpr(sizeof...(Ts) > 0) {
+                    return pack_contains_long_name_func<T, Ts...>(); //
+                }
+                else {
+                    return false;
+                }
             }
         }
         else {
