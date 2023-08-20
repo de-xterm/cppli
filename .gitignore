@@ -2,5 +2,3 @@ cmake-build-*/
 build/
 
 .idea
-
-single_header/cppli.h
