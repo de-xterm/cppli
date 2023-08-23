@@ -1516,12 +1516,24 @@ namespace cppli::detail {
 
     template<typename T, typename U, typename...Ts>
     constexpr bool pack_contains_short_name_func() {
-        if constexpr(argument_info_t<T>::has_short_name && argument_info_t<U>::has_short_name) {
-            if constexpr(sizeof...(Ts) > 0) {
-                return (T::short_name == U::short_name) || pack_contains_short_name_func<T, Ts...>();
+        //static_assert(!(argument_info_t<T>::has_short_name && argument_info_t<U>::has_short_name));
+
+        if constexpr(argument_info_t<T>::has_short_name) {
+            if constexpr(argument_info_t<U>::has_short_name) {
+                if constexpr(sizeof...(Ts) > 0) {
+                    return (T::short_name == U::short_name) || pack_contains_short_name_func<T, Ts...>();
+                }
+                else {
+                    return (T::short_name == U::short_name);
+                }
             }
             else {
-                return (T::short_name == U::short_name);
+                if constexpr(sizeof...(Ts) > 0) {
+                    return pack_contains_short_name_func<T, Ts...>(); //
+                }
+                else {
+                    return false;
+                }
             }
         }
         else {
@@ -1548,12 +1560,24 @@ namespace cppli::detail {
 
     template<typename T, typename U, typename...Ts>
     constexpr bool pack_contains_long_name_func() {
-        if constexpr(argument_info_t<T>::has_long_name && argument_info_t<U>::has_long_name) {
-            if constexpr(sizeof...(Ts) > 0) {
-                return (T::name == U::name) || pack_contains_short_name_func<T, Ts...>();
+        //static_assert(!(argument_info_t<T>::has_long_name && argument_info_t<U>::has_long_name));
+
+        if constexpr(argument_info_t<T>::has_long_name) {
+            if constexpr(argument_info_t<U>::has_long_name) {
+                if constexpr(sizeof...(Ts) > 0) {
+                    return (T::name == U::name) || pack_contains_long_name_func<T, Ts...>();
+                }
+                else {
+                    return (T::name == U::name);
+                }
             }
             else {
-                return (T::name == U::name);
+                if constexpr(sizeof...(Ts) > 0) {
+                    return pack_contains_long_name_func<T, Ts...>(); //
+                }
+                else {
+                    return false;
+                }
             }
         }
         else {
@@ -1783,7 +1807,7 @@ namespace cppli::detail {
 
                 subcommand_name_t temp_plus_help = temp;
                 temp_plus_help.push_back("help");
-                if(!subcommand_name_to_func().contains(temp)) {
+                if(!subcommand_name_to_func().contains(temp_plus_help)) {
                     register_command<default_help_callback>(temp_plus_help, "print help for this command", true);
                 }
             }
@@ -1809,15 +1833,15 @@ namespace cppli {
     //#define CPPLI_NAMESPACE(NAME, DESCRIPTION)
 
     #define CPPLI_MAIN_COMMAND(/*parameters*/...) \
-    extern "C" void cPPLI_internal_GENERATED_MAIN_COMMAND_CALLBACK (const command_context_t& __VA_OPT__(, __VA_ARGS__)); \
+    extern "C" void cPPLI_internal_GENERATED_MAIN_COMMAND_CALLBACK (const ::cppli::command_context_t& __VA_OPT__(, __VA_ARGS__)); \
     cPPLI_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_command<cPPLI_internal_GENERATED_MAIN_COMMAND_CALLBACK>({"MAIN"}, "")) \
-    extern "C" void cPPLI_internal_GENERATED_MAIN_COMMAND_CALLBACK (const cppli::command_context_t& cppli __VA_OPT__(, __VA_ARGS__))
+    extern "C" void cPPLI_internal_GENERATED_MAIN_COMMAND_CALLBACK (const ::cppli::command_context_t& cppli __VA_OPT__(, __VA_ARGS__))
 
     #define CPPLI_SUBCOMMAND(name, DESCRIPTION, /*parameters*/...) \
-    extern "C" void cPPLI_internal_CAT(cPPLI_internal_GENERATED_SUBCOMMAND_CALLBACK, name) (const cppli::command_context_t& __VA_OPT__(, __VA_ARGS__)); \
+    extern "C" void cPPLI_internal_CAT(cPPLI_internal_GENERATED_SUBCOMMAND_CALLBACK, name) (const ::cppli::command_context_t& __VA_OPT__(, __VA_ARGS__)); \
     static_assert(!::cppli::detail::contains_uppercase<cPPLI_internal_STRINGIFY(cPPLI_internal_CAT(name))>(), "subcommand names cannot contain uppercase characters"); \
     cPPLI_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_command<cPPLI_internal_CAT(cPPLI_internal_GENERATED_SUBCOMMAND_CALLBACK, name)>({cPPLI_internal_FOR_EACH(cPPLI_internal_STRINGIFY_WITH_COMMA, MAIN, name)}, DESCRIPTION)) \
-    extern "C" void cPPLI_internal_CAT(cPPLI_internal_GENERATED_SUBCOMMAND_CALLBACK, name) (const cppli::command_context_t& cppli __VA_OPT__(, __VA_ARGS__))
+    extern "C" void cPPLI_internal_CAT(cPPLI_internal_GENERATED_SUBCOMMAND_CALLBACK, name) (const ::cppli::command_context_t& cppli __VA_OPT__(, __VA_ARGS__))
 
     #define CPPLI_NAME(...) __VA_ARGS__
 
@@ -1827,17 +1851,17 @@ namespace cppli {
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<std::optional<TYPE>>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>, const std::optional<TYPE>& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<std::optional<TYPE>>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, CONVERSION_T, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>, const std::optional<TYPE>& NAME
+    const ::cppli::detail::option<TYPE, CONVERSION_T, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
 
     /// same as CPPLI_OPTION, but the raw TYPE is used (without std::optional)
     /// If the option is not provided, a default constructed object is passed to the callback instead of an empty optional
     /// The optional last argument is a single character short name
     #define CPPLI_OPTION_DEFAULT_CTOR(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<TYPE>, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>, const TYPE& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<TYPE>, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
 
     #define CPPLI_OPTION_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
     const ::cppli::detail::option<TYPE, CONVERSION_T, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
@@ -2172,7 +2196,7 @@ namespace cppli::detail {
                         }
                     }
                 }                                                           // so that string like "-" and " - " can be used as positionals without issue
-                else if((arg_string[0] == '-') && !(disambiguate_next_arg || disambiguate_until_subcommand || disambiguate_all)) { // short flag(s) and/or option (these are not so ez)
+                else if((arg_string[0] == '-') && (arg_string.size() > 1) && !(disambiguate_next_arg || disambiguate_until_subcommand || disambiguate_all)) { // short flag(s) and/or option (these are not so ez)
                     bool invalid_character_in_flag_group = false;
                     unsigned invalid_character_index;
                     std::stringstream invalid_character_in_flag_group_message;
@@ -2270,11 +2294,7 @@ namespace cppli::detail {
 
                 }
                 else { // positional arg
-                    /*if(arg_string == "help") { // TODO: delete this. It isn't necessary now that I've added actual help subcommands
-                        std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
-                        return {{}, true};
-                    }
-                    else */if(in_namespace) {
+                    if(in_namespace) {
                         std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                         invalid_input_to_namespace = true;
                         continue;
@@ -2951,7 +2971,7 @@ namespace cppli::detail {
         }
 
         if(hide_help && show_help) {
-            std::cerr << "\nhide help and show help are mutually exclusive. Help will be shown\n";
+            std::cerr << "\nboth hide help and show help were provided. Help will be shown\n";
         }
 
         if(subcommand_name.size()) {
@@ -3000,8 +3020,10 @@ namespace cppli::detail {
             const auto& commands_vec = parse_ret.subcommands;
 
             #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
-                for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
-                    (detail::subcommand_name_to_error_checking_func()[command.name])(command);
+            for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
+                    if(detail::subcommand_name_to_error_checking_func().contains(command.name)) {
+                        (detail::subcommand_name_to_error_checking_func()[command.name])(command);
+                    }
                 }
             #endif
 

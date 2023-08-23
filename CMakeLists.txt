@@ -39,3 +39,14 @@ endif()
 
 add_test(Test testexe)
 add_test(Test-singleheader testexe-singleheader)
+
+### EXECUTABLES FOR EXAMPLES ###
+
+add_executable(echo examples/0-echo.cpp)
+target_include_directories(echo PRIVATE single_header)
+
+add_executable(add examples/1-add.cpp)
+target_include_directories(add PRIVATE single_header)
+
+add_executable(filemanager examples/2-file_manager.cpp)
+target_include_directories(filemanager PRIVATE single_header)

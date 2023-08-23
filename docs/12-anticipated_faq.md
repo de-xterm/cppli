@@ -13,9 +13,10 @@ Because it reduces the amount of typing a user of the library has to do,
 and I can't think of any reason why it would be beneficial to allow a C++ variable name to be different from the name of the thing it represents 
 (why would anyone need to refer to the flag `force-reset` by anything other than `force_reset`?)
 
-**Why do you use global variables?**  
-Why not ;)
-  
+**Why doesn't `CPPLI_MAIN_COMMAND` take a description string?**  
+Because `CPPLI_MAIN_COMMAND` is optional, 
+if the description string for the program were provided in the 
+
 **Why are some global variables defined as functions that return a reference?**  
 To provide variable-like syntax while avoiding the [Static Initialization Order Fiasco](https://en.cppreference.com/w/cpp/language/siof).  
 I could have also used separate getters and setters, but they increase the amount of code without adding any value (in my opinion)

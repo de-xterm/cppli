@@ -212,7 +212,7 @@ namespace cppli::detail {
 
                 subcommand_name_t temp_plus_help = temp;
                 temp_plus_help.push_back("help");
-                if(!subcommand_name_to_func().contains(temp)) {
+                if(!subcommand_name_to_func().contains(temp_plus_help)) {
                     register_command<default_help_callback>(temp_plus_help, "print help for this command", true);
                 }
             }

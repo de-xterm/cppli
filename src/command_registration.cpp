@@ -66,7 +66,7 @@ namespace cppli::detail {
         }
 
         if(hide_help && show_help) {
-            std::cerr << "\nhide help and show help are mutually exclusive. Help will be shown\n";
+            std::cerr << "\nboth hide help and show help were provided. Help will be shown\n";
         }
 
         if(subcommand_name.size()) {

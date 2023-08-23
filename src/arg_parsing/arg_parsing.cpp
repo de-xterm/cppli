@@ -191,7 +191,7 @@ namespace cppli::detail {
                         }
                     }
                 }                                                           // so that string like "-" and " - " can be used as positionals without issue
-                else if((arg_string[0] == '-') && !(disambiguate_next_arg || disambiguate_until_subcommand || disambiguate_all)) { // short flag(s) and/or option (these are not so ez)
+                else if((arg_string[0] == '-') && (arg_string.size() > 1) && !(disambiguate_next_arg || disambiguate_until_subcommand || disambiguate_all)) { // short flag(s) and/or option (these are not so ez)
                     bool invalid_character_in_flag_group = false;
                     unsigned invalid_character_index;
                     std::stringstream invalid_character_in_flag_group_message;
@@ -289,11 +289,7 @@ namespace cppli::detail {
 
                 }
                 else { // positional arg
-                    /*if(arg_string == "help") { // TODO: delete this. It isn't necessary now that I've added actual help subcommands
-                        std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
-                        return {{}, true};
-                    }
-                    else */if(in_namespace) {
+                    if(in_namespace) {
                         std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                         invalid_input_to_namespace = true;
                         continue;
