@@ -13,9 +13,11 @@ Because it reduces the amount of typing a user of the library has to do,
 and I can't think of any reason why it would be beneficial to allow a C++ variable name to be different from the name of the thing it represents 
 (why would anyone need to refer to the flag `force-reset` by anything other than `force_reset`?)
 
-**Why doesn't `CPPLI_MAIN_COMMAND` take a description string?**  
+**Why doesn't `CPPLI_MAIN_COMMAND` take a name or description string (unlike `CPPLI_SUBCOMMAND`)?**  
 Because `CPPLI_MAIN_COMMAND` is optional, 
-if the description string for the program were provided in the 
+if the description string for the program were provided in `CPPLI_MAIN_COMMAND`,
+then programs where the main command is a namespace wouldn't have a name or description.
+Forcing the program name and description to be provided in `cppli::run` solves this issue.
 
 **Why are some global variables defined as functions that return a reference?**  
 To provide variable-like syntax while avoiding the [Static Initialization Order Fiasco](https://en.cppreference.com/w/cpp/language/siof).  
