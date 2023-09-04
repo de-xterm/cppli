@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <variant>
+#include <cstdint>
 
 #include "template_utils.h"
 
