@@ -2195,10 +2195,10 @@ namespace cppli::detail {
                             }
                         }
                     }
-                }                                                           // so that string like "-" and " - " can be used as positionals without issue
-                else if((arg_string[0] == '-') && (arg_string.size() > 1) && !(disambiguate_next_arg || disambiguate_until_subcommand || disambiguate_all)) { // short flag(s) and/or option (these are not so ez)
-                    bool invalid_character_in_flag_group = false;
-                    unsigned invalid_character_index;
+                }                                  // so that string like "-" and " - " can be used as positionals without issue
+                else if((arg_string[0] == '-') && (arg_string.size() > 1) && isletter(arg_string[2]) && !(disambiguate_next_arg || disambiguate_until_subcommand || disambiguate_all)) { // short flag(s) and/or option (these are not so ez)
+                    bool invalid_character_in_flag_group = false;            // don't consider this arg a flag group if it starts with an invalid char (not a letter)
+                    unsigned invalid_character_index;                        // allows the user to enter negative numbers as positional arguments with a positional separator
                     std::stringstream invalid_character_in_flag_group_message;
 
                     for(unsigned char_i = 1; char_i < arg_string.size(); ++char_i) {
