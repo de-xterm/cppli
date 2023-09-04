@@ -1,6 +1,6 @@
 # CPPLI
+![Build and test](https://github.com/de-xterm/cppli/actions/workflows/build-test-and-generate-single-header.yml/badge.svg)
 cppli is a C++20 library for building commandline applications
-
 ## How to use
 cppli is a callback based library.  
 Perhaps the most notable feature of the callback system is that it uses macros to reuse the C++ identifier of the callback parameter as a string
