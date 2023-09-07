@@ -10,11 +10,11 @@
 namespace cppli {
 
     template<typename T>
-    struct conversion_t {
+    struct string_conversion_t {
         T operator()(const std::string& str) const {
             static_assert(std::is_convertible_v<std::string, T> ||
                           std::is_constructible_v<T, std::string>,
-                          "if no conversion_t partial specialization is available, then std::string must be convertible to the desired type");
+                          "if no string_conversion_t partial specialization is available, then std::string must be convertible to the desired type");
             return T(str);
         }
 
@@ -22,14 +22,14 @@ namespace cppli {
     };
 
     template<typename T>
-    struct conversion_t<std::optional<T>> {
+    struct string_conversion_t<std::optional<T>> {
         std::optional<T> operator()(const std::optional<std::string>& s) const {
             if(s.has_value()) {
                 if constexpr(std::is_constructible_v<T, const std::string&>) {
                     return std::optional<T>(std::in_place, *s);
                 }
                 else {
-                    return std::optional<T>(conversion_t<T>()(*s));
+                    return std::optional<T>(string_conversion_t<T>()(*s));
                 }
             }
             else {
@@ -42,15 +42,15 @@ namespace cppli {
                 return std::optional<T>(std::in_place, s);
             }
             else {
-                return std::optional<T>(conversion_t<T>()(s));
+                return std::optional<T>(string_conversion_t<T>()(s));
             }
         }
 
-        static constexpr string_literal type_string = conversion_t<T>::type_string;
+        static constexpr string_literal type_string = string_conversion_t<T>::type_string;
     };
 
     template<>
-    struct conversion_t<int> {
+    struct string_conversion_t<int> {
         int operator()(const std::string& str) const {
             try {
                 return std::stoi(str);
@@ -67,7 +67,7 @@ namespace cppli {
     };
 
     template<>
-    struct conversion_t<unsigned> {
+    struct string_conversion_t<unsigned> {
         int operator()(const std::string& str) const {
             unsigned long ret;
             try {
@@ -90,7 +90,7 @@ namespace cppli {
     };
 
     template<>
-    struct conversion_t<char> {
+    struct string_conversion_t<char> {
         int operator()(const std::string& str) const {
             if(!str.size()) {
                 throw user_error("Could not form a character from the given string because it was empty", STRING_CONVERSION_ERROR);
@@ -103,7 +103,7 @@ namespace cppli {
     };
 
     template<>
-    struct conversion_t<float> {
+    struct string_conversion_t<float> {
         float operator()(const std::string& str) const {
             try {
                 return std::stof(str);
@@ -120,7 +120,7 @@ namespace cppli {
     };
 
     template<>
-    struct conversion_t<std::string> {
+    struct string_conversion_t<std::string> {
         const std::string& operator()(const std::string& str) const {
             return str;
         }

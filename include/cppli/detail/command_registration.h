@@ -146,24 +146,24 @@ namespace cppli::detail {
     // we don't have command_macros yet, so we have to write the callback signature manually
     void default_help_callback(const command_context_t& cppli_current_command,
 
-                               const variadic<std::string, conversion_t<std::string>, false, "subcommand name", "The name of the subcommand to print help for."
+                               const variadic<std::string, string_conversion_t<std::string>, false, "subcommand name", "The name of the subcommand to print help for."
                                                                                                                 "If no subcommand is provided, then help is printed for the parent command">&, std::vector<std::string> subcommand_name,
 
-                               const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
-                               const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
-                               const flag<"name-and-args", "print subcommand name and args">&,                           bool name_and_args,
+                               const flag<"name-only", "only print subcommand names">&, bool name_only,
+                               const flag<"name-and-description", "print subcommand name and description">&, bool name_and_description,
+                               const flag<"name-and-args", "print subcommand name and args">&, bool name_and_args,
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
-                               const flag<"verbose", "print subcommand name and description", 'v'>&,                     bool verbose,
-                               const flag<"hide-help", "don't show help when printing subcommands">&,                    bool hide_help,
-                               const flag<"show-help", "do show help when printing subcommands">&,                       bool show_help,
+                               const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
+                               const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
+                               const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
 
-                               const flag<"subcommands-name-only", "only print subcommand names">&,                                  bool subcommands_name_only,
-                               const flag<"subcommands-name-and-description", "print subcommand name and description">&,             bool subcommands_name_and_description,
-                               const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
+                               const flag<"subcommands-name-only", "only print subcommand names">&, bool subcommands_name_only,
+                               const flag<"subcommands-name-and-description", "print subcommand name and description">&, bool subcommands_name_and_description,
+                               const flag<"subcommands-name-and-args", "print subcommand name and args">&, bool subcommands_name_and_args,
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
-                               const flag<"subcommands-verbose", "print subcommand name and description">&,                          bool subcommands_verbose,
+                               const flag<"subcommands-verbose", "print subcommand name and description">&, bool subcommands_verbose,
 
-                               const option<unsigned, conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
+                               const option<unsigned, string_conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
 
     template<auto func>
     dummy_t register_command(const subcommand_name_t& name, const char* description, bool is_help = false) {

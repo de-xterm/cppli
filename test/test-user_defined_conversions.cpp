@@ -14,7 +14,7 @@ using namespace cppli::detail;
 
 namespace cppli {
     template<>
-    struct conversion_t<std::vector<int>> {
+    struct string_conversion_t<std::vector<int>> {
         // parse comma separated list of ints
         std::vector<int> operator()(const std::string& str) const {
             std::vector<int> ret;
@@ -65,7 +65,7 @@ CPPLI_SUBCOMMAND(conversions,
     vec_positional = vec;
 }
 
-TEST_CASE("user defined conversion with automatically determined conversion_t works") {
+TEST_CASE("user defined conversion with automatically determined string_conversion_t works") {
     const char* argv[] = {"program", "conversions", "16,32,64"};
     vec_positional = {};
 
@@ -120,7 +120,7 @@ CPPLI_SUBCOMMAND(conversions3,
     REQUIRE(foo->str == "bar");
 }
 
-TEST_CASE("user defined conversion with manually specified conversion_t works") {
+TEST_CASE("user defined conversion with manually specified string_conversion_t works") {
     const char* argv[] = {"program", "conversions2", "16;32;64"};
     vec_positional = {};
 

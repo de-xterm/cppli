@@ -1,5 +1,5 @@
 # Positional separators
-Sometimes you want to provide positional arguments that "looks like" a flag or an option.  
+Sometimes you want to provide positional arguments that "look like" flags or options.  
 An example is trying to use `mv` with a file named "-f"; 
 on my machine, trying to do`mv -f file` prints out `mv: missing destination file operand after 'f'`, 
 because `mv` think "-f" is referring to the flag `-f`.

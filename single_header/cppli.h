@@ -501,11 +501,11 @@ namespace cppli {
 namespace cppli {
 
     template<typename T>
-    struct conversion_t {
+    struct string_conversion_t {
         T operator()(const std::string& str) const {
             static_assert(std::is_convertible_v<std::string, T> ||
                           std::is_constructible_v<T, std::string>,
-                          "if no conversion_t partial specialization is available, then std::string must be convertible to the desired type");
+                          "if no string_conversion_t partial specialization is available, then std::string must be convertible to the desired type");
             return T(str);
         }
 
@@ -513,14 +513,14 @@ namespace cppli {
     };
 
     template<typename T>
-    struct conversion_t<std::optional<T>> {
+    struct string_conversion_t<std::optional<T>> {
         std::optional<T> operator()(const std::optional<std::string>& s) const {
             if(s.has_value()) {
                 if constexpr(std::is_constructible_v<T, const std::string&>) {
                     return std::optional<T>(std::in_place, *s);
                 }
                 else {
-                    return std::optional<T>(conversion_t<T>()(*s));
+                    return std::optional<T>(string_conversion_t<T>()(*s));
                 }
             }
             else {
@@ -533,15 +533,15 @@ namespace cppli {
                 return std::optional<T>(std::in_place, s);
             }
             else {
-                return std::optional<T>(conversion_t<T>()(s));
+                return std::optional<T>(string_conversion_t<T>()(s));
             }
         }
 
-        static constexpr string_literal type_string = conversion_t<T>::type_string;
+        static constexpr string_literal type_string = string_conversion_t<T>::type_string;
     };
 
     template<>
-    struct conversion_t<int> {
+    struct string_conversion_t<int> {
         int operator()(const std::string& str) const {
             try {
                 return std::stoi(str);
@@ -558,7 +558,7 @@ namespace cppli {
     };
 
     template<>
-    struct conversion_t<unsigned> {
+    struct string_conversion_t<unsigned> {
         int operator()(const std::string& str) const {
             unsigned long ret;
             try {
@@ -581,7 +581,7 @@ namespace cppli {
     };
 
     template<>
-    struct conversion_t<char> {
+    struct string_conversion_t<char> {
         int operator()(const std::string& str) const {
             if(!str.size()) {
                 throw user_error("Could not form a character from the given string because it was empty", STRING_CONVERSION_ERROR);
@@ -594,7 +594,7 @@ namespace cppli {
     };
 
     template<>
-    struct conversion_t<float> {
+    struct string_conversion_t<float> {
         float operator()(const std::string& str) const {
             try {
                 return std::stof(str);
@@ -611,7 +611,7 @@ namespace cppli {
     };
 
     template<>
-    struct conversion_t<std::string> {
+    struct string_conversion_t<std::string> {
         const std::string& operator()(const std::string& str) const {
             return str;
         }
@@ -1741,24 +1741,24 @@ namespace cppli::detail {
     // we don't have command_macros yet, so we have to write the callback signature manually
     void default_help_callback(const command_context_t& cppli_current_command,
 
-                               const variadic<std::string, conversion_t<std::string>, false, "subcommand name", "The name of the subcommand to print help for."
+                               const variadic<std::string, string_conversion_t<std::string>, false, "subcommand name", "The name of the subcommand to print help for."
                                                                                                                 "If no subcommand is provided, then help is printed for the parent command">&, std::vector<std::string> subcommand_name,
 
-                               const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
-                               const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
-                               const flag<"name-and-args", "print subcommand name and args">&,                           bool name_and_args,
+                               const flag<"name-only", "only print subcommand names">&, bool name_only,
+                               const flag<"name-and-description", "print subcommand name and description">&, bool name_and_description,
+                               const flag<"name-and-args", "print subcommand name and args">&, bool name_and_args,
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
-                               const flag<"verbose", "print subcommand name and description", 'v'>&,                     bool verbose,
-                               const flag<"hide-help", "don't show help when printing subcommands">&,                    bool hide_help,
-                               const flag<"show-help", "do show help when printing subcommands">&,                       bool show_help,
+                               const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
+                               const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
+                               const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
 
-                               const flag<"subcommands-name-only", "only print subcommand names">&,                                  bool subcommands_name_only,
-                               const flag<"subcommands-name-and-description", "print subcommand name and description">&,             bool subcommands_name_and_description,
-                               const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
+                               const flag<"subcommands-name-only", "only print subcommand names">&, bool subcommands_name_only,
+                               const flag<"subcommands-name-and-description", "print subcommand name and description">&, bool subcommands_name_and_description,
+                               const flag<"subcommands-name-and-args", "print subcommand name and args">&, bool subcommands_name_and_args,
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
-                               const flag<"subcommands-verbose", "print subcommand name and description">&,                          bool subcommands_verbose,
+                               const flag<"subcommands-verbose", "print subcommand name and description">&, bool subcommands_verbose,
 
-                               const option<unsigned, conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
+                               const option<unsigned, string_conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
 
     template<auto func>
     dummy_t register_command(const subcommand_name_t& name, const char* description, bool is_help = false) {
@@ -2909,7 +2909,7 @@ namespace cppli {
 namespace cppli::detail {
     void default_help_callback(const command_context_t& cppli_current_command,
 
-                               const variadic<std::string, conversion_t<std::string>, false, "subcommand name", "The name of the subcommand to print help for."
+                               const variadic<std::string, string_conversion_t<std::string>, false, "subcommand name", "The name of the subcommand to print help for."
                                                                                                                 "If no subcommand is provided, then help is printed for the parent command">&, std::vector<std::string> subcommand_name,
 
                                const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
@@ -2926,7 +2926,7 @@ namespace cppli::detail {
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
                                const flag<"subcommands-verbose", "print subcommand name and description">&,                          bool subcommands_verbose,
 
-                               const option<unsigned, conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
+                               const option<unsigned, string_conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
 
         extern subcommand_name_t last_subcommand_;
 

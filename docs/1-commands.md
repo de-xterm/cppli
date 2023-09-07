@@ -14,3 +14,5 @@ so long as they appear in different namespaces
 ## Namespaces
 Namespaces look like commands, but take no input (except for help) and have no corresponding callback.
 They are purely organizational constructs. 
+
+// TODO finish
