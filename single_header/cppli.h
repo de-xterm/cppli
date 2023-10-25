@@ -1852,7 +1852,7 @@ namespace cppli {
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<std::optional<TYPE>>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::string_conversion_t<std::optional<TYPE>>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
@@ -1862,7 +1862,7 @@ namespace cppli {
     /// If the option is not provided, a default constructed object is passed to the callback instead of an empty optional
     /// The optional last argument is a single character short name
     #define CPPLI_OPTION_DEFAULT_CTOR(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<TYPE>, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::string_conversion_t<TYPE>, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
 
     #define CPPLI_OPTION_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
     const ::cppli::detail::option<TYPE, CONVERSION_T, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
@@ -1870,7 +1870,7 @@ namespace cppli {
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTIONAL_ARGUMENT_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<std::optional<TYPE>>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::string_conversion_t<std::optional<TYPE>>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>& NAME
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTIONAL_ARGUMENT_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
@@ -1878,7 +1878,7 @@ namespace cppli {
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTIONAL_ARGUMENT_OPTION_DEFAULT_CTOR(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<std::optional<TYPE>>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::string_conversion_t<std::optional<TYPE>>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, true, true __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const std::optional<TYPE>& NAME
 
     /// the optional last argument is a single character short name
     #define CPPLI_OPTIONAL_ARGUMENT_OPTION_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
@@ -1888,7 +1888,7 @@ namespace cppli {
 
     /// the optional last argument is a single character short name
     #define CPPLI_REQUIRED_OPTION(TYPE, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
-    const ::cppli::detail::option<TYPE, ::cppli::conversion_t<TYPE>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, false, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
+    const ::cppli::detail::option<TYPE, ::cppli::string_conversion_t<TYPE>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION, ARGUMENT_TEXT, false, false __VA_OPT__(, cPPLI_internal_STRINGIFY(__VA_ARGS__)[0])>&, const TYPE& NAME
 
     /// the optional last argument is a single character short name
     #define CPPLI_REQUIRED_OPTION_CONVERSION(TYPE, CONVERSION_T, NAME, ARGUMENT_TEXT, DESCRIPTION, /*SHORT_NAME*/...) \
@@ -1896,27 +1896,27 @@ namespace cppli {
 
 
     #define CPPLI_POSITIONAL(TYPE, NAME, DESCRIPTION) \
-    const ::cppli::detail::positional<TYPE, ::cppli::conversion_t<TYPE>, false, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
+    const ::cppli::detail::positional<TYPE, ::cppli::string_conversion_t<TYPE>, false, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
 
     #define CPPLI_POSITIONAL_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
     const ::cppli::detail::positional<TYPE, CONVERSION_T, false, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
 
 
     #define CPPLI_OPTIONAL_POSITIONAL(TYPE, NAME, DESCRIPTION) \
-    const ::cppli::detail::positional<TYPE, ::cppli::conversion_t<std::optional<TYPE>>, false, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
+    const ::cppli::detail::positional<TYPE, ::cppli::string_conversion_t<std::optional<TYPE>>, false, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
 
     #define CPPLI_OPTIONAL_POSITIONAL_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
     const ::cppli::detail::positional<TYPE, CONVERSION_T, false, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::optional<TYPE>& NAME
 
     #define CPPLI_OPTIONAL_POSITIONAL_DEFAULT_CTOR(TYPE, NAME, DESCRIPTION) \
-    const ::cppli::detail::positional<TYPE, ::cppli::conversion_t<TYPE>, false, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
+    const ::cppli::detail::positional<TYPE, ::cppli::string_conversion_t<TYPE>, false, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
 
     #define CPPLI_OPTIONAL_POSITIONAL_CONVERSION_DEFAULT_CTOR(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
     const ::cppli::detail::positional<TYPE, CONVERSION_T, false, true, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const TYPE& NAME
 
 
     #define CPPLI_VARIADIC(TYPE, NAME, DESCRIPTION) \
-    const ::cppli::detail::variadic<TYPE, ::cppli::conversion_t<TYPE>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
+    const ::cppli::detail::variadic<TYPE, ::cppli::string_conversion_t<TYPE>, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
 
     #define CPPLI_VARIADIC_CONVERSION(TYPE, CONVERSION_T, NAME, DESCRIPTION) \
     const ::cppli::detail::variadic<TYPE, CONVERSION_T, false, cPPLI_internal_STRINGIFY(NAME), DESCRIPTION>&, const std::vector<TYPE>& NAME
@@ -2913,19 +2913,19 @@ namespace cppli::detail {
                                const variadic<std::string, string_conversion_t<std::string>, false, "subcommand name", "The name of the subcommand to print help for."
                                                                                                                 "If no subcommand is provided, then help is printed for the parent command">&, std::vector<std::string> subcommand_name,
 
-                               const flag<"name-only", "only print subcommand names">&,                                  bool name_only,
-                               const flag<"name-and-description", "print subcommand name and description">&,             bool name_and_description,
-                               const flag<"name-and-args", "print subcommand name and args">&,                           bool name_and_args,
+                               const flag<"name-only", "only print subcommand names">&, bool name_only,
+                               const flag<"name-and-description", "print subcommand name and description">&, bool name_and_description,
+                               const flag<"name-and-args", "print subcommand name and args">&, bool name_and_args,
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
-                               const flag<"verbose", "print subcommand name and description", 'v'>&,                     bool verbose,
-                               const flag<"hide-help", "don't show help when printing subcommands">&,                    bool hide_help,
-                               const flag<"show-help", "do show help when printing subcommands">&,                       bool show_help,
+                               const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
+                               const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
+                               const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
 
-                               const flag<"subcommands-name-only", "only print subcommand names">&,                                  bool subcommands_name_only,
-                               const flag<"subcommands-name-and-description", "print subcommand name and description">&,             bool subcommands_name_and_description,
-                               const flag<"subcommands-name-and-args", "print subcommand name and args">&,                           bool subcommands_name_and_args,
+                               const flag<"subcommands-name-only", "only print subcommand names">&, bool subcommands_name_only,
+                               const flag<"subcommands-name-and-description", "print subcommand name and description">&, bool subcommands_name_and_description,
+                               const flag<"subcommands-name-and-args", "print subcommand name and args">&, bool subcommands_name_and_args,
                                const flag<"subcommands-name-description-and-args", "print subcommand name, description, and args">&, bool subcommands_name_description_and_args,
-                               const flag<"subcommands-verbose", "print subcommand name and description">&,                          bool subcommands_verbose,
+                               const flag<"subcommands-verbose", "print subcommand name and description">&, bool subcommands_verbose,
 
                                const option<unsigned, string_conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
 
