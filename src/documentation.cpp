@@ -80,8 +80,6 @@ namespace cppli {
 
             const documentation_verbosity& verbosity = ((current_recursion_level == 0) ? top_level_verbosity : subcommand_verbosity);
 
-            #define FOUR_SPACES "    "
-            #define EIGHT_SPACES "        "
 
             using namespace detail;
             const auto& docs = subcommand_name_to_docs()[name];
