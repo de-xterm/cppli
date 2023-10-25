@@ -9,10 +9,10 @@ include(CTest)
 file(GLOB_RECURSE LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 add_library(cppli ${LIBRARY_SOURCES})
-target_include_directories(cppli PRIVATE ${PROJECT_SOURCE_DIR}/include/cppli/detail/)
+target_include_directories(cppli PRIVATE ${PROJECT_SOURCE_DIR}/include/cppli/detail/ ${PROJECT_SOURCE_DIR}/lib/ori)
 
 add_library(cppli-full-error-check ${LIBRARY_SOURCES})
-target_include_directories(cppli-full-error-check PRIVATE ${PROJECT_SOURCE_DIR}/include/cppli/detail/)
+target_include_directories(cppli-full-error-check PRIVATE ${PROJECT_SOURCE_DIR}/include/cppli/detail/ ${PROJECT_SOURCE_DIR}/lib/ori)
 target_compile_definitions(cppli-full-error-check PRIVATE CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN)
 
 file(GLOB_RECURSE TEST_SOURCES ${PROJECT_SOURCE_DIR}/test/*.cpp)
