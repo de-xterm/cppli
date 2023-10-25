@@ -2130,7 +2130,7 @@ namespace cppli::detail {
                             }
                             else {
                                 if(option_name == "help") {
-                                    std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                                    print_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                                     return {{}, true};
                                 }
                                 else if(in_namespace) {
@@ -2182,7 +2182,7 @@ namespace cppli::detail {
                             }
                             else {
                                 if(option_or_flag_name == "help") {
-                                    std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                                    print_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                                     return {{}, true};
                                 }
                                 else if(in_namespace) {
@@ -2241,7 +2241,7 @@ namespace cppli::detail {
                             args.flags.emplace(char_string);
                         }
                         else if(char_string == "h") {
-                            std::cout << get_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
+                            print_documentation_string_callback(subcommand_name, default_top_level_help_verbosity, default_subcommand_help_verbosity, default_help_recursion_level, default_hide_help_status);
                             return {{}, true};
                         }
                         else if(in_namespace) {
@@ -2360,7 +2360,7 @@ namespace cppli::detail {
                 std::cout << '\"' << to_string(commands.back().name)
                           << "\" is a namespace, so using it without further subcommands doesn't do anything. Here is its help page: \n";
                 //}
-                std::cout << get_documentation_string_callback(commands.back().name, default_top_level_help_verbosity, default_subcommand_help_verbosity,
+                print_documentation_string_callback(commands.back().name, default_top_level_help_verbosity, default_subcommand_help_verbosity,
                                                                  default_help_recursion_level, default_hide_help_status);
                 return {{}, true};
             }
@@ -2977,10 +2977,10 @@ namespace cppli::detail {
 
         if(subcommand_name.size()) {
             subcommand_name.insert(subcommand_name.begin(), "MAIN");
-            std::cout << get_documentation_string_callback(subcommand_name, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
+            print_documentation_string_callback(subcommand_name, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
         }
         else {
-            std::cout << get_documentation_string_callback(last_subcommand_, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
+            print_documentation_string_callback(last_subcommand_, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
         }
     }
 }

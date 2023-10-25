@@ -84,15 +84,15 @@ namespace cppli {
         bool operator<(const subcommand_documentation_t& rhs) const;
     };
 
-    using get_documentation_string_t = std::string(*)(const subcommand_name_t&,
-                                                      const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
-                                                      unsigned recursion, bool hide_help);
+    using print_documentation_string_t = void(*)(const subcommand_name_t&,
+                                                 const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
+                                                 unsigned recursion, bool hide_help);
 
-    std::string default_get_documentation_string_callback(const subcommand_name_t&,
-                                                          const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
-                                                          unsigned recursion, bool hide_help);
+    void default_print_documentation_string_callback(const subcommand_name_t&,
+                                                            const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
+                                                            unsigned recursion, bool hide_help);
 
-    extern get_documentation_string_t get_documentation_string_callback;
+    extern print_documentation_string_t print_documentation_string_callback;
 
 
     /// returns documentation for the main command

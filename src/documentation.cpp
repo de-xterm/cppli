@@ -1,4 +1,7 @@
 
+#define ORI_IMPL
+#include "ori.h"
+
 #include "documentation.h"
 
 namespace cppli {
@@ -68,7 +71,7 @@ namespace cppli {
                         description;
         };
 
-        std::string get_documentation_string_impl(const subcommand_name_t& name,
+        void print_documentation_string_impl(const subcommand_name_t& name,
                                                   const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                   unsigned max_recursion_level,
                                                   unsigned current_recursion_level,
@@ -84,11 +87,13 @@ namespace cppli {
             const auto& docs = subcommand_name_to_docs()[name];
 
             std::string indent = std::string(current_recursion_level*8, ' ');
-            std::string ret = indent;
+            //std::string ret = indent;
+
+            ori::change_increment(4);
 
             if(main_command_override_name_and_description.has_value()) {
-                ret += "Options or arguments surrounded by square brackets are optional, ones surrounded by angular brackets are required.\n"
-                       "Arguments of the form [arg:type...] are variadic (as indicated by the \"...\") and can receive any number of arguments (including 0)\n\n";
+                ori::print("Options or arguments surrounded by square brackets are optional, ones surrounded by angular brackets are required.\n"
+                           "Arguments of the form [arg:type...] are variadic (as indicated by the \"...\") and can receive any number of arguments (including 0)\n\n");
             }
 
 
@@ -101,30 +106,33 @@ namespace cppli {
 
             if(docs.is_namespace) {
                 if(main_command_override_name_and_description.has_value()) {
-                    ret += "(Main Namespace) ";
+                    ori::print("(Main Namespace) ");
                 }
                 else {
-                    ret += "(Namespace) ";
+                    ori::print("(Namespace) ");
                 }
-                ret += docs.name;
+                ori::print(docs.name);
                 if(docs.description.size()) {
-                    ret += "\n";
-                    ret += indent;
-                    ret += FOUR_SPACES "Description:\n";
-                    ret += indent;
-                    ret += EIGHT_SPACES;
-                    ret += docs.description; // was  ret == docs.description;
+                    ori::print('\n');
+                    ori::change_increment(4);
+                    //ret += indent;
+                    ori::print("Description:\n");
+                    //ret += indent;
+                    ori::change_increment(4);
+                    //ret += EIGHT_SPACES;
+                    ori::print(docs.description); // was  ret == docs.description;
+                    ori::change_increment(-8);
                 }
-                ret += '\n';
+                ori::print('\n');
             }
             else {
                 if(main_command_override_name_and_description.has_value()) {
-                    ret += "(Main Command) ";
+                    ori::print("(Main Command) ");
                 }
                 else {
-                    ret += "(Subcommand) ";
+                    ori::print("(Subcommand) ");
                 }
-                ret += docs.name;
+                ori::print(docs.name);
 
                 std::vector<arg_name_and_docs_t> positional_doc_strings;
                 std::vector<arg_name_and_docs_t> flag_doc_strings;
@@ -132,12 +140,12 @@ namespace cppli {
 
                 std::string variadic_str;
                 if (verbosity >= NAME_AND_ARGS) {
-                    ret += ' ';
+                    ori::print(' ');
 
                     for (const auto& e: docs.positionals) {
                         std::string temp = add_appropriate_brackets(e.name + ":" + e.type, e.optional);
-                        ret += temp;
-                        ret += ' ';
+                        ori::print(temp);
+                        ori::print(' ');
 
                         positional_doc_strings.emplace_back(std::move(temp), e.documentation);
                     }
@@ -149,8 +157,8 @@ namespace cppli {
                         variadic_str += docs.variadic->type;
                         variadic_str += "...]";
 
-                        ret += variadic_str;
-                        ret += ' ';
+                        ori::print(variadic_str);
+                        ori::print(' ');
                     }
 
                     for (const auto& e: docs.flags) {
@@ -161,8 +169,8 @@ namespace cppli {
                             temp += e.short_name;
                         }
                         temp += "]";
-                        ret += temp;
-                        ret += ' ';
+                        ori::print(temp);
+                        ori::print(' ');
 
                         flag_doc_strings.emplace_back(std::move(temp), e.documentation);
                     }
@@ -179,109 +187,130 @@ namespace cppli {
 
                         option_doc_strings.emplace_back(add_appropriate_brackets(temp, e.is_optional), e.documentation);
 
-                        ret += option_doc_strings.back().name;
-                        ret += ' ';
+                        ori::print(option_doc_strings.back().name);
+                        ori::print(' ');
                     }
                 }
 
-                ret += '\n';
+                ori::print('\n');
 
                 if ((verbosity == NAME_AND_DESCRIPTION) || (verbosity > NAME_AND_ARGS)) {
-                    ret += indent;
-                    ret += FOUR_SPACES "Description:\n";
-                    ret += indent;
-                    ret += EIGHT_SPACES;
+                    //ret += indent;
+                    ori::change_increment(4);
+                    ori::print("Description\n");
+                    //ret += FOUR_SPACES "Description:\n";
+                    //ret += indent;
+                    //ret += EIGHT_SPACES;
+                    ori::change_increment(4);
                     if(main_command_override_name_and_description.has_value()) {
-                        ret += main_command_override_name_and_description->description;
+                        ori::print( main_command_override_name_and_description->description);
                     }
                     else {
-                        ret += docs.description;
+                        ori::print(docs.description);
                     }
-                    ret += '\n';
+                    ori::print('\n');
+                    ori::change_increment(-8);
                 }
 
                 if (verbosity == NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS) {
                     if(positional_doc_strings.size()) {
-                        ret += indent;
-                        ret += FOUR_SPACES "Positionals:\n";
+                        //ret += indent;
+
+                        //ret += FOUR_SPACES "Positionals:\n";
+                        ori::change_increment(4);
+                        ori::print("Positionals:\n");
 
                         for (const auto& e: positional_doc_strings) {
-                            ret += indent;
-                            ret += EIGHT_SPACES;
-                            ret += e.name;
-                            ret += ": ";
-                            ret += e.docs;
-                            ret += '\n';
+                            ori::print(indent);
+                            //ret += EIGHT_SPACES;
+                            ori::change_increment(4);
+                            ori::print(e.name);
+                            ori::print(": ");
+                            ori::print(e.docs);
+                            ori::print('\n');
                         }
+
+                        ori::change_increment(-8);
                     }
 
                     if(docs.variadic) {
-                        ret += indent;
-                        ret += FOUR_SPACES "Variadic:\n";
-                        ret += EIGHT_SPACES;
-                        ret += variadic_str;
-                        ret += ": ";
-                        ret += docs.variadic->documentation;
-                        ret += '\n';
+                        //ret += indent;
+                        //ret += FOUR_SPACES "Variadic:\n";
+                        ori::change_increment(4);
+                        ori::print("Variadic\n");
+                        ori::change_increment(4);
+                        //ret += EIGHT_SPACES;
+                        ori::print(variadic_str);
+                        ori::print(": ");
+                        ori::print(docs.variadic->documentation);
+                        ori::print('\n');
+
+                        ori::change_increment(-8);
                     }
 
                     if(flag_doc_strings.size()) {
-                        ret += indent;
-                        ret += FOUR_SPACES "Flags:\n";
+                        //ret += FOUR_SPACES "Flags:\n";
+                        ori::change_increment(4);
+                        ori::print("Flags\n");
 
-                        for (const auto& e: flag_doc_strings) {
-                            ret += indent;
-                            ret += EIGHT_SPACES;
-                            ret += e.name;
-                            ret += ": ";
-                            ret += e.docs;
-                            ret += '\n';
+                        for(const auto& e: flag_doc_strings) {
+                            //ret += EIGHT_SPACES;
+                            ori::change_increment(4);
+                            ori::print(e.name);
+                            ori::print(": ");
+                            ori::print(e.docs);
+                            ori::print('\n');
                         }
+                        ori::change_increment(-8);
                     }
 
                     if(option_doc_strings.size()) {
-                        ret += indent;
-                        ret += FOUR_SPACES "Options:\n";
+                        //ret += FOUR_SPACES "Options:\n";
+                        ori::change_increment(4);
+                        ori::print("Options\n");
 
+                        ori::change_increment(4);
                         for (const auto& e: option_doc_strings) {
-                            ret += indent;
-                            ret += EIGHT_SPACES;
-                            ret += e.name;
-                            ret += ": ";
-                            ret += e.docs;
-                            ret += '\n';
+                            //ret += EIGHT_SPACES;
+                            ori::print(e.name);
+                            ori::print(": ");
+                            ori::print(e.docs);
+                            ori::print('\n');
                         }
+
+                        ori::change_increment(-8);
                     }
                 }
             }
 
             if(current_recursion_level+1 <= max_recursion_level) {
                 if((docs.subcommands.size() > 1) || !hide_help || ((docs.subcommands.size() > 0) && (!docs.subcommands.contains("help")))) {
-                    ret += indent;
-                    ret += FOUR_SPACES "Subcommands:\n";
-
+                    //ret += FOUR_SPACES "Subcommands:\n";
+                    ori::change_increment(4);
                     std::vector subcommand_name = name;
                     subcommand_name.resize(subcommand_name.size()+1);
                     for(const auto& e : docs.subcommands) {
                         subcommand_name.back() = e;
                         if((!hide_help) || (subcommand_name.back() != "help")) {
-                            ret += get_documentation_string_impl(subcommand_name, top_level_verbosity, subcommand_verbosity, max_recursion_level, current_recursion_level + 1, hide_help);
+                            print_documentation_string_impl(subcommand_name, top_level_verbosity, subcommand_verbosity, max_recursion_level, current_recursion_level + 1, hide_help);
 
                             if((subcommand_verbosity != NAME_ONLY) &&
                                (subcommand_verbosity != NAME_AND_ARGS) &&
                                (&e != &*(--docs.subcommands.end()))) {
-                                    ret += indent;
-                                    ret += '\n';
+                                    //ret += indent;
+                                    ori::print('\n');
                             }
                         }
                     }
+
+                    ori::change_increment(-4);
                 }
             }
 
-            #undef FOUR_SPACES
-            #undef EIGHT_SPACES
+            /*#undef FOUR_SPACES
+            #undef EIGHT_SPACES*/
 
-            return ret;
+            ori::change_increment(-4);
         }
     }
 
@@ -289,20 +318,20 @@ namespace cppli {
         return detail::subcommand_name_to_docs().at(name);
     }
 
-    std::string default_get_documentation_string_callback(const subcommand_name_t& name,
+    void default_print_documentation_string_callback(const subcommand_name_t& name,
                                                           const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                           unsigned max_recursion_level,
                                                           bool hide_help) {
         if((name == subcommand_name_t{"MAIN"}) ||
            (name == subcommand_name_t{})) {
-            return detail::get_documentation_string_impl({"MAIN"}, top_level_verbosity, subcommand_verbosity, max_recursion_level, 0, hide_help, detail::name_and_description_t{detail::program_name(), detail::program_description()});
+            return detail::print_documentation_string_impl({"MAIN"}, top_level_verbosity, subcommand_verbosity, max_recursion_level, 0, hide_help, detail::name_and_description_t{detail::program_name(), detail::program_description()});
         }
         else {
-            return detail::get_documentation_string_impl(name, top_level_verbosity, subcommand_verbosity, max_recursion_level, 0, hide_help);
+            return detail::print_documentation_string_impl(name, top_level_verbosity, subcommand_verbosity, max_recursion_level, 0, hide_help);
         }
     }
 
-    constinit get_documentation_string_t get_documentation_string_callback = default_get_documentation_string_callback;
+    constinit print_documentation_string_t print_documentation_string_callback = default_print_documentation_string_callback;
 
     /*std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help) {
         return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, detail::name_and_description_t{detail::program_name(), detail::program_description()});

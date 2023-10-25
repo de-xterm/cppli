@@ -71,10 +71,10 @@ namespace cppli::detail {
 
         if(subcommand_name.size()) {
             subcommand_name.insert(subcommand_name.begin(), "MAIN");
-            std::cout << get_documentation_string_callback(subcommand_name, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
+            print_documentation_string_callback(subcommand_name, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
         }
         else {
-            std::cout << get_documentation_string_callback(last_subcommand_, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
+            print_documentation_string_callback(last_subcommand_, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
         }
     }
 }
