@@ -87,7 +87,7 @@ namespace cppli {
             std::string indent = std::string(current_recursion_level*8, ' ');
             //std::string ret = indent;
 
-            ori::change_increment(4);
+            ori::change_indent(4);
 
             if(main_command_override_name_and_description.has_value()) {
                 ori::print("Options or arguments surrounded by square brackets are optional, ones surrounded by angular brackets are required.\n"
@@ -103,34 +103,38 @@ namespace cppli {
             };
 
             if(docs.is_namespace) {
+                std::string name_line;
                 if(main_command_override_name_and_description.has_value()) {
-                    ori::print("(Main Namespace) ");
+                    name_line = "(Main Namespace) ";
                 }
                 else {
-                    ori::print("(Namespace) ");
+                    name_line = "(Namespace) ";
                 }
-                ori::print(docs.name);
+                name_line += docs.name;
+                ori::print(name_line);
                 if(docs.description.size()) {
-                    ori::print('\n');
-                    ori::change_increment(4);
+                    //ori::print('\n');
+                    ori::change_indent(4);
                     //ret += indent;
-                    ori::print("Description:\n");
+                    ori::print("Description:");
                     //ret += indent;
-                    ori::change_increment(4);
+                    ori::change_indent(4);
                     //ret += EIGHT_SPACES;
                     ori::print(docs.description); // was  ret == docs.description;
-                    ori::change_increment(-8);
+                    ori::change_indent(-8);
                 }
                 ori::print('\n');
             }
             else {
+                std::string name_line;
                 if(main_command_override_name_and_description.has_value()) {
-                    ori::print("(Main Command) ");
+                    name_line = "(Main Command) ";
                 }
                 else {
-                    ori::print("(Subcommand) ");
+                    name_line = "(Subcommand) ";
                 }
-                ori::print(docs.name);
+                name_line += docs.name;
+                ori::print(name_line);
 
                 std::vector<arg_name_and_docs_t> positional_doc_strings;
                 std::vector<arg_name_and_docs_t> flag_doc_strings;
@@ -194,20 +198,20 @@ namespace cppli {
 
                 if ((verbosity == NAME_AND_DESCRIPTION) || (verbosity > NAME_AND_ARGS)) {
                     //ret += indent;
-                    ori::change_increment(4);
-                    ori::print("Description\n");
+                    ori::change_indent(4);
+                    ori::print("Description:\n");
                     //ret += FOUR_SPACES "Description:\n";
                     //ret += indent;
                     //ret += EIGHT_SPACES;
-                    ori::change_increment(4);
+                    ori::change_indent(4);
                     if(main_command_override_name_and_description.has_value()) {
-                        ori::print( main_command_override_name_and_description->description);
+                        ori::print(main_command_override_name_and_description->description);
                     }
                     else {
                         ori::print(docs.description);
                     }
-                    ori::print('\n');
-                    ori::change_increment(-8);
+                    ori::print("\n\n");
+                    ori::change_indent(-8);
                 }
 
                 if (verbosity == NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS) {
@@ -215,59 +219,60 @@ namespace cppli {
                         //ret += indent;
 
                         //ret += FOUR_SPACES "Positionals:\n";
-                        ori::change_increment(4);
+                        ori::change_indent(4);
                         ori::print("Positionals:\n");
 
+                        ori::change_indent(4);
                         for (const auto& e: positional_doc_strings) {
-                            ori::print(indent);
                             //ret += EIGHT_SPACES;
-                            ori::change_increment(4);
                             ori::print(e.name);
                             ori::print(": ");
                             ori::print(e.docs);
                             ori::print('\n');
                         }
 
-                        ori::change_increment(-8);
+                        ori::println();
+                        ori::change_indent(-8);
                     }
 
                     if(docs.variadic) {
                         //ret += indent;
                         //ret += FOUR_SPACES "Variadic:\n";
-                        ori::change_increment(4);
+                        ori::change_indent(4);
                         ori::print("Variadic\n");
-                        ori::change_increment(4);
+                        ori::change_indent(4);
                         //ret += EIGHT_SPACES;
                         ori::print(variadic_str);
                         ori::print(": ");
                         ori::print(docs.variadic->documentation);
-                        ori::print('\n');
+                        ori::print("\n\n");
 
-                        ori::change_increment(-8);
+                        ori::change_indent(-8);
                     }
 
                     if(flag_doc_strings.size()) {
                         //ret += FOUR_SPACES "Flags:\n";
-                        ori::change_increment(4);
+                        ori::change_indent(4);
                         ori::print("Flags\n");
 
+                        ori::change_indent(4);
                         for(const auto& e: flag_doc_strings) {
                             //ret += EIGHT_SPACES;
-                            ori::change_increment(4);
                             ori::print(e.name);
                             ori::print(": ");
                             ori::print(e.docs);
                             ori::print('\n');
                         }
-                        ori::change_increment(-8);
+                        ori::println();
+                        ori::change_indent(-8);
                     }
 
                     if(option_doc_strings.size()) {
                         //ret += FOUR_SPACES "Options:\n";
-                        ori::change_increment(4);
+                        ori::change_indent(4);
                         ori::print("Options\n");
 
-                        ori::change_increment(4);
+                        ori::change_indent(4);
                         for (const auto& e: option_doc_strings) {
                             //ret += EIGHT_SPACES;
                             ori::print(e.name);
@@ -276,7 +281,9 @@ namespace cppli {
                             ori::print('\n');
                         }
 
-                        ori::change_increment(-8);
+                        ori::change_indent(-8);
+
+                        ori::println();
                     }
                 }
             }
@@ -284,7 +291,8 @@ namespace cppli {
             if(current_recursion_level+1 <= max_recursion_level) {
                 if((docs.subcommands.size() > 1) || !hide_help || ((docs.subcommands.size() > 0) && (!docs.subcommands.contains("help")))) {
                     //ret += FOUR_SPACES "Subcommands:\n";
-                    ori::change_increment(4);
+                    ori::change_indent(4);
+                    ori::println("Subcommands:");
                     std::vector subcommand_name = name;
                     subcommand_name.resize(subcommand_name.size()+1);
                     for(const auto& e : docs.subcommands) {
@@ -296,19 +304,19 @@ namespace cppli {
                                (subcommand_verbosity != NAME_AND_ARGS) &&
                                (&e != &*(--docs.subcommands.end()))) {
                                     //ret += indent;
-                                    ori::print('\n');
+                                    //ori::print('\n');
                             }
                         }
                     }
 
-                    ori::change_increment(-4);
+                    ori::change_indent(-4);
                 }
             }
 
             /*#undef FOUR_SPACES
             #undef EIGHT_SPACES*/
 
-            ori::change_increment(-4);
+            ori::change_indent(-4);
         }
     }
 
