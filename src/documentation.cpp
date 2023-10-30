@@ -1,4 +1,6 @@
 
+#include <format>
+
 #define ORI_IMPL
 #include "ori.h"
 
@@ -126,41 +128,39 @@ namespace cppli {
                 ori::print('\n');
             }
             else {
-                std::string name_line;
+                std::string name_and_usage_line;
                 if(main_command_override_name_and_description.has_value()) {
-                    name_line = "(Main Command) ";
+                    name_and_usage_line = "(Main Command) ";
                 }
                 else {
-                    name_line = "(Subcommand) ";
+                    name_and_usage_line = "(Subcommand) ";
                 }
-                name_line += docs.name;
-                ori::print(name_line);
+                name_and_usage_line += docs.name;
+                //ori::print(name_and_usage_line);
 
                 std::vector<arg_name_and_docs_t> positional_doc_strings;
                 std::vector<arg_name_and_docs_t> flag_doc_strings;
                 std::vector<arg_name_and_docs_t> option_doc_strings;
 
                 std::string variadic_str;
-                if (verbosity >= NAME_AND_ARGS) {
-                    ori::print(' ');
+                if(verbosity == NAME_ONLY) {
+                    ori::print(name_and_usage_line);
+                }
+                else if (verbosity >= NAME_AND_ARGS) {
+                    name_and_usage_line += ' ';
 
                     for (const auto& e: docs.positionals) {
                         std::string temp = add_appropriate_brackets(e.name + ":" + e.type, e.optional);
-                        ori::print(temp);
-                        ori::print(' ');
+                        name_and_usage_line += temp;
+                        name_and_usage_line += ' ';
 
                         positional_doc_strings.emplace_back(std::move(temp), e.documentation);
                     }
 
                     if(docs.variadic) {
-                        variadic_str += "[";
-                        variadic_str += docs.variadic->name;
-                        variadic_str += ":";
-                        variadic_str += docs.variadic->type;
-                        variadic_str += "...]";
-
-                        ori::print(variadic_str);
-                        ori::print(' ');
+                        variadic_str = std::format("[{}:{}...]", docs.variadic->name, docs.variadic->type);
+                        name_and_usage_line += variadic_str;
+                        name_and_usage_line += ' ';
                     }
 
                     for (const auto& e: docs.flags) {
@@ -171,8 +171,8 @@ namespace cppli {
                             temp += e.short_name;
                         }
                         temp += "]";
-                        ori::print(temp);
-                        ori::print(' ');
+                        name_and_usage_line += temp;
+                        name_and_usage_line += ' ';
 
                         flag_doc_strings.emplace_back(std::move(temp), e.documentation);
                     }
@@ -189,12 +189,12 @@ namespace cppli {
 
                         option_doc_strings.emplace_back(add_appropriate_brackets(temp, e.is_optional), e.documentation);
 
-                        ori::print(option_doc_strings.back().name);
-                        ori::print(' ');
+                        name_and_usage_line += option_doc_strings.back().name;
+                        name_and_usage_line += ' ';
                     }
                 }
 
-                ori::print('\n');
+                ori::println(name_and_usage_line);
 
                 if ((verbosity == NAME_AND_DESCRIPTION) || (verbosity > NAME_AND_ARGS)) {
                     //ret += indent;
@@ -225,10 +225,7 @@ namespace cppli {
                         ori::change_indent(4);
                         for (const auto& e: positional_doc_strings) {
                             //ret += EIGHT_SPACES;
-                            ori::print(e.name);
-                            ori::print(": ");
-                            ori::print(e.docs);
-                            ori::print('\n');
+                            ori::println(std::format("{}: {}", e.name, e.docs));
                         }
 
                         ori::println();
@@ -242,10 +239,11 @@ namespace cppli {
                         ori::print("Variadic\n");
                         ori::change_indent(4);
                         //ret += EIGHT_SPACES;
-                        ori::print(variadic_str);
+                        ori::print(std::format("{}: {}\n\n", variadic_str, docs.variadic->documentation));
+                        /*ori::print(variadic_str);
                         ori::print(": ");
                         ori::print(docs.variadic->documentation);
-                        ori::print("\n\n");
+                        ori::print("\n\n");*/
 
                         ori::change_indent(-8);
                     }
@@ -253,15 +251,12 @@ namespace cppli {
                     if(flag_doc_strings.size()) {
                         //ret += FOUR_SPACES "Flags:\n";
                         ori::change_indent(4);
-                        ori::print("Flags\n");
+                        ori::print("Flags:\n");
 
                         ori::change_indent(4);
                         for(const auto& e: flag_doc_strings) {
                             //ret += EIGHT_SPACES;
-                            ori::print(e.name);
-                            ori::print(": ");
-                            ori::print(e.docs);
-                            ori::print('\n');
+                            ori::println(std::format("{}: {}", e.name, e.docs));
                         }
                         ori::println();
                         ori::change_indent(-8);
@@ -270,15 +265,12 @@ namespace cppli {
                     if(option_doc_strings.size()) {
                         //ret += FOUR_SPACES "Options:\n";
                         ori::change_indent(4);
-                        ori::print("Options\n");
+                        ori::print("Options:\n");
 
                         ori::change_indent(4);
-                        for (const auto& e: option_doc_strings) {
+                        for(const auto& e: option_doc_strings) {
                             //ret += EIGHT_SPACES;
-                            ori::print(e.name);
-                            ori::print(": ");
-                            ori::print(e.docs);
-                            ori::print('\n');
+                            ori::println(std::format("{}: {}", e.name, e.docs));
                         }
 
                         ori::change_indent(-8);
