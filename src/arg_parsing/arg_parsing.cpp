@@ -2,6 +2,7 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <format>
 
 #include "arg_parsing.h"
 #include "documentation.h"
@@ -185,7 +186,7 @@ namespace cppli::detail {
                                     continue;
                                 }
                                 else {
-                                    std::cerr << command_or_subcommand << " \"" << current_subcommand_name_string << "\" does not accept a flag or option \"" << arg_string << "\". It will be ignored\n";
+                                    print_throw_or_do_nothing(INVALID_FLAG, std::format(R"({} "{}" does not accept a flag or option "{}")", command_or_subcommand, current_subcommand_name_string, arg_string), " It will be ignored\n\n");
                                 }
                             }
                         }
@@ -268,7 +269,7 @@ namespace cppli::detail {
                     }
 
                     if(invalid_character_in_flag_group) {
-                        if(invalid_character_index > 1) { // 1 instead of 0 because of the leading '-'
+                        if((invalid_character_index > 1) && subcommand_takes_flag(subcommand_name, {arg_string[invalid_character_index-1]})) { // 1 instead of 0 because of the leading '-'
                             if(arg_string[invalid_character_index] == '=') {
                                 std::stringstream ss;
                                 ss << "Character '" << arg_string[invalid_character_index-1] << "' in flag/option group \"" << arg_string << "\" is a flag, and therefore can't accept an argument.\n";

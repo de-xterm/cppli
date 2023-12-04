@@ -4,6 +4,9 @@
 #define ORI_IMPL
 #include "ori.h"
 
+#define IRO_IMPL
+#include "iro.h"
+
 #include "documentation.h"
 
 namespace cppli {
@@ -107,18 +110,18 @@ namespace cppli {
             if(docs.is_namespace) {
                 std::string name_line;
                 if(main_command_override_name_and_description.has_value()) {
-                    name_line = "(Main Namespace) ";
+                    name_line = iro::effect_string(iro::bold|iro::underlined, "(Main Namespace) ").unsafe_string(std::cout);
                 }
                 else {
-                    name_line = "(Namespace) ";
+                    name_line = iro::effect_string(iro::bold|iro::underlined, "(Namespace) ").unsafe_string(std::cout);
                 }
-                name_line += docs.name;
+                name_line += iro::effect_string(iro::bold|iro::underlined, docs.name).unsafe_string(std::cout);
                 ori::print(name_line);
                 if(docs.description.size()) {
                     //ori::print('\n');
                     ori::change_indent(4);
                     //ret += indent;
-                    ori::print("Description:");
+                    ori::print(iro::effect_string(iro::bold, "Description:"));
                     //ret += indent;
                     ori::change_indent(4);
                     //ret += EIGHT_SPACES;
@@ -130,12 +133,12 @@ namespace cppli {
             else {
                 std::string name_and_usage_line;
                 if(main_command_override_name_and_description.has_value()) {
-                    name_and_usage_line = "(Main Command) ";
+                    name_and_usage_line = iro::effect_string(iro::bold|iro::underlined, "(Main Command) ").unsafe_string(std::cout);
                 }
                 else {
-                    name_and_usage_line = "(Subcommand) ";
+                    name_and_usage_line = iro::effect_string(iro::bold|iro::underlined, "(Subcommand) ").unsafe_string(std::cout);
                 }
-                name_and_usage_line += docs.name;
+                name_and_usage_line += iro::effect_string(iro::bold|iro::underlined, docs.name).unsafe_string(std::cout);
                 //ori::print(name_and_usage_line);
 
                 std::vector<arg_name_and_docs_t> positional_doc_strings;
@@ -199,7 +202,7 @@ namespace cppli {
                 if ((verbosity == NAME_AND_DESCRIPTION) || (verbosity > NAME_AND_ARGS)) {
                     //ret += indent;
                     ori::change_indent(4);
-                    ori::print("Description:\n");
+                    ori::println(iro::effect_string(iro::bold, "Description:"));
                     //ret += FOUR_SPACES "Description:\n";
                     //ret += indent;
                     //ret += EIGHT_SPACES;
@@ -220,7 +223,7 @@ namespace cppli {
 
                         //ret += FOUR_SPACES "Positionals:\n";
                         ori::change_indent(4);
-                        ori::print("Positionals:\n");
+                        ori::println(iro::effect_string(iro::bold, "Positionals:"));
 
                         ori::change_indent(4);
                         for (const auto& e: positional_doc_strings) {
@@ -236,7 +239,7 @@ namespace cppli {
                         //ret += indent;
                         //ret += FOUR_SPACES "Variadic:\n";
                         ori::change_indent(4);
-                        ori::print("Variadic\n");
+                        ori::println(iro::effect_string(iro::bold, "Variadic"));
                         ori::change_indent(4);
                         //ret += EIGHT_SPACES;
                         ori::print(std::format("{}: {}\n\n", variadic_str, docs.variadic->documentation));
@@ -251,7 +254,7 @@ namespace cppli {
                     if(flag_doc_strings.size()) {
                         //ret += FOUR_SPACES "Flags:\n";
                         ori::change_indent(4);
-                        ori::print("Flags:\n");
+                        ori::println(iro::effect_string(iro::bold, "Flags:"));
 
                         ori::change_indent(4);
                         for(const auto& e: flag_doc_strings) {
@@ -265,7 +268,7 @@ namespace cppli {
                     if(option_doc_strings.size()) {
                         //ret += FOUR_SPACES "Options:\n";
                         ori::change_indent(4);
-                        ori::print("Options:\n");
+                        ori::println(iro::effect_string(iro::bold, "Options:"));
 
                         ori::change_indent(4);
                         for(const auto& e: option_doc_strings) {
@@ -284,7 +287,7 @@ namespace cppli {
                 if((docs.subcommands.size() > 1) || !hide_help || ((docs.subcommands.size() > 0) && (!docs.subcommands.contains("help")))) {
                     //ret += FOUR_SPACES "Subcommands:\n";
                     ori::change_indent(4);
-                    ori::println("Subcommands:");
+                    ori::println(iro::effect_string(iro::bold, "Subcommands:"));
                     std::vector subcommand_name = name;
                     subcommand_name.resize(subcommand_name.size()+1);
                     for(const auto& e : docs.subcommands) {

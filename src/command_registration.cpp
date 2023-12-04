@@ -1,3 +1,6 @@
+#include <format>
+
+#include "iro.h"
 
 #include "command_registration.h"
 
@@ -71,6 +74,10 @@ namespace cppli::detail {
 
         if(subcommand_name.size()) {
             subcommand_name.insert(subcommand_name.begin(), "MAIN");
+            if(!subcommand_name_to_docs().contains(subcommand_name)) {
+                std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underline, "Error:") << std::format(R"( "{}" does not refer to a valid command)" "\n", to_string(subcommand_name, " "));
+                return;
+            }
             print_documentation_string_callback(subcommand_name, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
         }
         else {

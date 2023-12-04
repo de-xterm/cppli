@@ -1,6 +1,8 @@
 
 #include <iostream>
 
+#include "iro.h"
+
 #include "configuration.h"
 #include "user_error.h"
 
@@ -12,8 +14,8 @@ namespace cppli {
             if(minor_error_behavior(error_type) == THROW) {
                 throw user_error(print_if_error_or_mesasge, error_type);
             }
-            else {
-                std::cerr << print_if_error_or_mesasge << print_only_if_message;
+            else if(minor_error_behavior(error_type) == MESSAGE) {
+                std::cerr << iro::bright_yellow << iro::effect_string(iro::bold|iro::underlined, "Warning:") << ' ' << print_if_error_or_mesasge << print_only_if_message;
             }
         }
     }

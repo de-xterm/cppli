@@ -49,6 +49,8 @@ namespace cppli {
         const error_variant_t& error_type() const;
     };
 
+    /// same as what(), but the printed string has pretty effects and includes an "Error: " prefix
+    std::ostream& operator<<(std::ostream& os, const user_error& err);
 
     namespace detail {
         template<typename T, typename...variant_ts>

@@ -1,4 +1,8 @@
 
+#include <iostream>
+
+#include "iro.h"
+
 #include "user_error.h"
 
 namespace cppli {
@@ -8,5 +12,9 @@ namespace cppli {
 
     const user_error::error_variant_t& user_error::error_type() const {
         return error_variant_;
+    }
+
+    std::ostream& operator<<(std::ostream& os, const user_error& err) {
+        return std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << ' ' << err.what();
     }
 }

@@ -4,3 +4,6 @@
 [submodule "lib/ori"]
 	path = lib/ori
 	url = https://github.com/original-picture/ori
+[submodule "lib/iro"]
+	path = lib/iro
+	url = https://github.com/original-picture/iro
