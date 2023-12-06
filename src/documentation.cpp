@@ -110,10 +110,11 @@ namespace cppli {
             if(docs.is_namespace) {
                 std::string name_line;
                 if(main_command_override_name_and_description.has_value()) {
-                    name_line = iro::effect_string(iro::bold|iro::underlined, "(Main Namespace) ").unsafe_string(std::cout);
+                    name_line = (iro::effect_string(iro::bold|iro::underlined, "(Main Namespace)") + ' ').unsafe_string(std::cout);
+                    name_line += ' ';
                 }
                 else {
-                    name_line = iro::effect_string(iro::bold|iro::underlined, "(Namespace) ").unsafe_string(std::cout);
+                    name_line = (iro::effect_string(iro::bold|iro::underlined, "(Namespace)") + ' ')   .unsafe_string(std::cout);
                 }
                 name_line += iro::effect_string(iro::bold|iro::underlined, docs.name).unsafe_string(std::cout);
                 ori::print(name_line);
@@ -133,10 +134,11 @@ namespace cppli {
             else {
                 std::string name_and_usage_line;
                 if(main_command_override_name_and_description.has_value()) {
-                    name_and_usage_line = iro::effect_string(iro::bold|iro::underlined, "(Main Command) ").unsafe_string(std::cout);
+                    name_and_usage_line = (iro::effect_string(iro::bold|iro::underlined, "(Main Command)") + ' ').unsafe_string(std::cout);
+                    name_and_usage_line += ' ';
                 }
                 else {
-                    name_and_usage_line = iro::effect_string(iro::bold|iro::underlined, "(Subcommand) ").unsafe_string(std::cout);
+                    name_and_usage_line = (iro::effect_string(iro::bold|iro::underlined, "(Subcommand)") + ' ').unsafe_string(std::cout);
                 }
                 name_and_usage_line += iro::effect_string(iro::bold|iro::underlined, docs.name).unsafe_string(std::cout);
                 //ori::print(name_and_usage_line);
