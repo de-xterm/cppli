@@ -48,15 +48,15 @@ namespace cppli {
                                                                                                                                              documentation(documentation) {}
 
 
-    subcommand_documentation_t::subcommand_documentation_t(const std::string& name, const char* description) : name(name), description(description), is_namespace(false) {}
+    command_documentation_t::command_documentation_t(const std::string& name, const char* description) : name(name), description(description), is_namespace(false) {}
 
-    bool subcommand_documentation_t::operator<(const subcommand_documentation_t& rhs) const {
+    bool command_documentation_t::operator<(const command_documentation_t& rhs) const {
         return (name.back() < rhs.name.back());
     }
 
     namespace detail {
-        std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs() {
-            static std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t> subcommand_name_to_docs_;
+        std::unordered_map<command_name_t, command_documentation_t, command_name_hash_t>& subcommand_name_to_docs() {
+            static std::unordered_map<command_name_t, command_documentation_t, command_name_hash_t> subcommand_name_to_docs_;
 
             return subcommand_name_to_docs_;
         }
@@ -76,7 +76,7 @@ namespace cppli {
                         description;
         };
 
-        void print_documentation_string_impl(const subcommand_name_t& name,
+        void print_documentation_string_impl(const command_name_t& name,
                                                   const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                   unsigned max_recursion_level,
                                                   unsigned current_recursion_level,
@@ -317,16 +317,16 @@ namespace cppli {
         }
     }
 
-    const subcommand_documentation_t& get_command_docs_from_name(const subcommand_name_t& name) {
+    const command_documentation_t& get_command_docs_from_name(const command_name_t& name) {
         return detail::subcommand_name_to_docs().at(name);
     }
 
-    void default_print_documentation_string_callback(const subcommand_name_t& name,
+    void default_print_documentation_string_callback(const command_name_t& name,
                                                           const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                           unsigned max_recursion_level,
                                                           bool hide_help) {
-        if((name == subcommand_name_t{"MAIN"}) ||
-           (name == subcommand_name_t{})) {
+        if((name == command_name_t{"MAIN"}) ||
+           (name == command_name_t{})) {
             return detail::print_documentation_string_impl({"MAIN"}, top_level_verbosity, subcommand_verbosity, max_recursion_level, 0, hide_help, detail::name_and_description_t{detail::program_name(), detail::program_description()});
         }
         else {

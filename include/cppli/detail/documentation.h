@@ -65,7 +65,7 @@ namespace cppli {
         variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation);
     };
 
-    struct subcommand_documentation_t {
+    struct command_documentation_t {
         std::string name; // this is what we're sorting by
         std::string description;
 
@@ -78,17 +78,17 @@ namespace cppli {
 
         bool is_namespace = true;
 
-        subcommand_documentation_t() = default;
-        subcommand_documentation_t(const std::string& name, const char* description);
+        command_documentation_t() = default;
+        command_documentation_t(const std::string& name, const char* description);
 
-        bool operator<(const subcommand_documentation_t& rhs) const;
+        bool operator<(const command_documentation_t& rhs) const;
     };
 
-    using print_documentation_string_t = void(*)(const subcommand_name_t&,
+    using print_documentation_string_t = void(*)(const command_name_t&,
                                                  const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                  unsigned recursion, bool hide_help);
 
-    void default_print_documentation_string_callback(const subcommand_name_t&,
+    void default_print_documentation_string_callback(const command_name_t&,
                                                             const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                             unsigned recursion, bool hide_help);
 
@@ -99,8 +99,8 @@ namespace cppli {
     //std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help);
 
     namespace detail {
-        std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
+        std::unordered_map<command_name_t, command_documentation_t, command_name_hash_t>& subcommand_name_to_docs();
 
-        const subcommand_documentation_t& get_command_docs_from_name(const subcommand_name_t& name);
+        const command_documentation_t& get_command_docs_from_name(const command_name_t& name);
     }
 }

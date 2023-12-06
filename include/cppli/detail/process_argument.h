@@ -4,7 +4,7 @@
 
 namespace cppli::detail {
     template<typename T, typename last, typename conversion_t_>
-    T process_positional(unsigned cumulative_positional_index, const subcommand_t& subcommand,
+    T process_positional(unsigned cumulative_positional_index, const command_t& subcommand,
                          const std::string& main_command_or_subcommand, const std::string& long_name) {
         --cumulative_positional_index; // because we've already skipped over the actual parameter for the positional, cumulative_positional_index will be too big
 
@@ -47,7 +47,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last, typename conversion_t_>
-    T process_variadic(unsigned cumulative_positional_index, const subcommand_t& subcommand,
+    T process_variadic(unsigned cumulative_positional_index, const command_t& subcommand,
                        const std::string& main_command_or_subcommand, const std::string& long_name) {
         T ret; // T is a vector
         for (unsigned i = cumulative_positional_index;
@@ -66,7 +66,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last, typename conversion_t_>
-    T process_required_option(const subcommand_t& subcommand,
+    T process_required_option(const command_t& subcommand,
                                        const std::string& main_command_or_subcommand,
                                        const std::string& long_name, const std::optional<std::string>& short_name) {
         
@@ -116,7 +116,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last, typename conversion_t_>
-    T process_required_argument_option(const subcommand_t& subcommand,
+    T process_required_argument_option(const command_t& subcommand,
                                        const std::string& main_command_or_subcommand,
                                        const std::string& long_name, const std::optional<std::string>& short_name) {
 
@@ -178,7 +178,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last, typename conversion_t_>
-    T process_raw_type_optional_argument_option(const subcommand_t& subcommand,
+    T process_raw_type_optional_argument_option(const command_t& subcommand,
                                                 const std::string& main_command_or_subcommand,
                                                 const std::string& long_name, const std::optional<std::string>& short_name) {
 
@@ -222,7 +222,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last>
-    T process_optional_argument_option(const subcommand_t& subcommand,
+    T process_optional_argument_option(const command_t& subcommand,
                                                 const std::string& main_command_or_subcommand,
                                                 const std::string& long_name, const std::optional<std::string>& short_name) {
 
@@ -255,7 +255,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last>
-    T process_raw_type(unsigned cumulative_positional_index, const subcommand_t& subcommand,
+    T process_raw_type(unsigned cumulative_positional_index, const command_t& subcommand,
                                        const std::string& main_command_or_subcommand) {
 
         std::string long_name = last::name.string();
@@ -302,7 +302,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last>
-    T process_wrapper(const subcommand_t& subcommand,
+    T process_wrapper(const command_t& subcommand,
                       const std::string& main_command_or_subcommand) {
 
 
@@ -331,12 +331,12 @@ namespace cppli::detail {
 
     template<typename T, typename last>
     /*add_const_ref_if_string_t<T>::*/T
-    process_argument(unsigned cumulative_positional_index, const subcommand_t& subcommand) {
+    process_argument(unsigned cumulative_positional_index, const command_t& subcommand) {
         using arg_info_t = argument_info_t<T>; // no need for remove_cvref, we do that before calling process_argument
 
         std::string main_command_or_subcommand;
 
-        if(subcommand.name == subcommand_name_t{"MAIN"}) {
+        if(subcommand.name == command_name_t{"MAIN"}) {
             main_command_or_subcommand = "main command";
         }
         else {

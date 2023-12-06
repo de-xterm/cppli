@@ -10,26 +10,26 @@ namespace cppli::detail {
 
     // construct on first use idiom
     // more info here: https://isocpp.org/wiki/faq/ctors#construct-on-first-use-v2
-    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>& subcommand_name_to_inputs_info() {
-        static std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t> subcommand_name_to_inputs_info_;
+    std::unordered_map<command_name_t, command_inputs_info_t, command_name_hash_t>& subcommand_name_to_inputs_info() {
+        static std::unordered_map<command_name_t, command_inputs_info_t, command_name_hash_t> subcommand_name_to_inputs_info_;
 
         return subcommand_name_to_inputs_info_;
     }
 
-    std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>& subcommand_name_to_func() {
-        static std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t> subcommand_name_to_func_;
+    std::unordered_map<command_name_t, subcommand_func_t, command_name_hash_t>& subcommand_name_to_func() {
+        static std::unordered_map<command_name_t, subcommand_func_t, command_name_hash_t> subcommand_name_to_func_;
 
         return subcommand_name_to_func_;
     }
 
-    std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t, subcommand_name_hash_t>& subcommand_name_to_error_checking_func() {
-        static std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t , subcommand_name_hash_t> subcommand_name_to_error_checking_func_;
+    std::unordered_map<command_name_t, command_error_checking_func_t, command_name_hash_t>& subcommand_name_to_error_checking_func() {
+        static std::unordered_map<command_name_t, command_error_checking_func_t , command_name_hash_t> subcommand_name_to_error_checking_func_;
 
         return subcommand_name_to_error_checking_func_;
     }
 
 
-    bool is_valid_subcommand(subcommand_name_t& parent_command_names, const std::string& arg) {
+    bool is_valid_subcommand(command_name_t& parent_command_names, const std::string& arg) {
         if(parent_command_names.size()) {
             auto temp = parent_command_names;
             temp.push_back(arg);
@@ -45,26 +45,26 @@ namespace cppli::detail {
         return false;
     }
 
-    bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name) {
+    bool subcommand_takes_flag(const command_name_t& subcommand, const std::string& flag_name) {
         return
             subcommand_name_to_inputs_info().contains(subcommand) &&
             subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
     }
 
-    bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name) {
+    bool subcommand_takes_option(const command_name_t& subcommand, const std::string& option_name) {
         return
             subcommand_name_to_inputs_info().contains(subcommand) &&
             subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
     }
 
-    bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name) {
+    bool subcommand_option_argument_is_optional(const command_name_t& subcommand, const std::string& option_name) {
         if(subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name)) {
             return subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.at(option_name);
         }
         return false;
     }
 
-    void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option) {
+    void error_if_flag_or_option_already_included(const command_t& subcommand, const std::string& flag_or_option) {
         const auto& inputs_info = subcommand_name_to_inputs_info().at(subcommand.name);
         std::optional<std::reference_wrapper<const std::string>> short_name;
         if(inputs_info.flag_or_option_long_name_to_short_name.contains(flag_or_option)) {
@@ -77,7 +77,7 @@ namespace cppli::detail {
             if(subcommand.inputs.flags.contains(flag_or_option) ||
                (short_name && subcommand.inputs.flags.contains(*short_name))) {
 
-                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                ss << (subcommand.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " flag --" << flag_or_option << " included multiple times";
 
                 if(short_name && subcommand.inputs.flags.contains(*short_name)) {
@@ -91,7 +91,7 @@ namespace cppli::detail {
             if(subcommand.inputs.options_to_values.contains(flag_or_option) ||
                     (short_name && subcommand.inputs.options_to_values.contains(*short_name))) {
 
-                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                ss << (subcommand.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " option --" << flag_or_option << " included multiple times";
 
                 if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
@@ -103,7 +103,7 @@ namespace cppli::detail {
         }
     }
 
-    void error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& short_flag_or_option) {
+    void error_if_short_flag_or_option_already_included(const command_t& subcommand, const std::string& short_flag_or_option) {
         const auto& inputs_info = subcommand_name_to_inputs_info().at(subcommand.name);
         const std::string& long_name = inputs_info.flag_or_option_short_name_to_long_name.at(short_flag_or_option[0]);
 
@@ -113,7 +113,7 @@ namespace cppli::detail {
             if(subcommand.inputs.flags.contains(short_flag_or_option) ||
                subcommand.inputs.flags.contains(long_name)) {
 
-                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                ss << (subcommand.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " flag --" << short_flag_or_option << " included multiple times";
 
                 if(subcommand.inputs.flags.contains(long_name)) {
@@ -127,7 +127,7 @@ namespace cppli::detail {
             if(subcommand.inputs.options_to_values.contains(short_flag_or_option) ||
                subcommand.inputs.options_to_values.contains(long_name)) {
 
-                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                ss << (subcommand.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " option --" << short_flag_or_option << " included multiple times";
 
                 if(subcommand.inputs.options_to_values.contains(long_name)) {
@@ -140,7 +140,7 @@ namespace cppli::detail {
     }
 
 
-    bool is_namespace(const subcommand_name_t& subcommand) {
+    bool is_namespace(const command_name_t& subcommand) {
         return subcommand_name_to_docs().at(subcommand).is_namespace;
     }
 
@@ -164,7 +164,7 @@ namespace cppli::detail {
         program_description_ = std::move(description);
     }
 
-    std::string to_string(const subcommand_name_t& name, const char* delimiter) {
+    std::string to_string(const command_name_t& name, const char* delimiter) {
         std::string ret;
 
         if(name.size()) {
@@ -189,7 +189,7 @@ namespace cppli::detail {
         return ret;
     }
 
-    std::size_t detail::subcommand_name_hash_t::operator()(const subcommand_name_t& name) const noexcept  {
+    std::size_t detail::command_name_hash_t::operator()(const command_name_t& name) const noexcept  {
         std::size_t hash = 0;
         for(const auto& e : name) {
             cppli::detail::hash_combine(hash, e);
@@ -198,7 +198,7 @@ namespace cppli::detail {
         return hash;
     }
 
-    bool subcommand_inputs_t::is_empty() const {
+    bool command_inputs_t::is_empty() const {
         return ((flags.size() == 0) &&
                 (options_to_values.size() == 0) &&
                 (positional_args.size() == 0));

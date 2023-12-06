@@ -4,11 +4,11 @@
 #include "command_registration.h"
 
 namespace cppli::detail {
-    extern subcommand_name_t last_subcommand_;
+    extern command_name_t last_subcommand_;
 
     void run_impl_(int argc, const char* const* const argv) {
         {
-            subcommand_name_t main_help = {"MAIN", "help"};
+            command_name_t main_help = {"MAIN", "help"};
             if(!subcommand_name_to_func().contains(main_help)) {
                 register_command<default_help_callback>(main_help, "print help for this command", true);
             }

@@ -892,14 +892,14 @@ namespace cppli {
 //end of "detail/parameter_types.h" include
 
 namespace cppli {
-    using subcommand_name_t = std::vector<std::string>;
+    using command_name_t = std::vector<std::string>;
 
     struct command_context_t {
         bool  current_command_is_leaf;
     };
 
     namespace detail {
-        struct subcommand_inputs_t {
+        struct command_inputs_t {
             std::vector<std::string> positional_args;
             std::unordered_map<std::string, std::optional<std::string>> options_to_values;
             std::unordered_set<std::string> flags;
@@ -908,7 +908,7 @@ namespace cppli {
         };
 
 
-        std::string to_string(const subcommand_name_t& name, const char* delimiter = "::");
+        std::string to_string(const command_name_t& name, const char* delimiter = "::");
 
 
         /// this is just boost::hash_combine, but I don't want to drag boost into this library just for one function
@@ -917,19 +917,19 @@ namespace cppli {
             return (seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2));
         }
 
-        struct subcommand_name_hash_t {
-            std::size_t operator()(const subcommand_name_t& name) const noexcept;
+        struct command_name_hash_t {
+            std::size_t operator()(const command_name_t& name) const noexcept;
         };
 
-        struct subcommand_t {
-            subcommand_name_t name;
-            subcommand_inputs_t inputs;
+        struct command_t {
+            command_name_t name;
+            command_inputs_t inputs;
         };
 
-        using subcommand_func_t = void (*)(const subcommand_t&, const command_context_t& command_context);
-        using subcommand_error_checking_func_t = void (*)(const subcommand_t&);
+        using subcommand_func_t = void (*)(const command_t&, const command_context_t& command_context);
+        using command_error_checking_func_t = void (*)(const command_t&);
 
-        struct subcommand_inputs_info_t {
+        struct command_inputs_info_t {
             std::unordered_set<std::string> flags;
             std::unordered_map<std::string, bool> option_argument_is_optional;
 
@@ -937,33 +937,33 @@ namespace cppli {
             std::unordered_map<char, std::string> flag_or_option_short_name_to_long_name;
         };
 
-        std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>&
+        std::unordered_map<command_name_t, command_inputs_info_t, command_name_hash_t>&
         subcommand_name_to_inputs_info();
 
-        std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>& subcommand_name_to_func();
+        std::unordered_map<command_name_t, subcommand_func_t, command_name_hash_t>& subcommand_name_to_func();
 
-        std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t , subcommand_name_hash_t>&
+        std::unordered_map<command_name_t, command_error_checking_func_t , command_name_hash_t>&
         subcommand_name_to_error_checking_func();
 
 
         /// if arg appended to parent_command_names forms a valid subcommand,
         /// pushes back arg to parent_command_names and returns true.
         /// Otherwise, just returns false
-        bool is_valid_subcommand(subcommand_name_t& parent_command_names, const std::string& arg);
+        bool is_valid_subcommand(command_name_t& parent_command_names, const std::string& arg);
 
-        bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name);
+        bool subcommand_takes_flag(const command_name_t& subcommand, const std::string& flag_name);
 
-        bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name);
+        bool subcommand_takes_option(const command_name_t& subcommand, const std::string& option_name);
 
-        bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name);
+        bool subcommand_option_argument_is_optional(const command_name_t& subcommand, const std::string& option_name);
 
         /// string shouldn't included the leading '-' or "--"
-        void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
+        void error_if_flag_or_option_already_included(const command_t& subcommand, const std::string& flag_or_option);
 
         void
-        error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
+        error_if_short_flag_or_option_already_included(const command_t& subcommand, const std::string& flag_or_option);
 
-        bool is_namespace(const subcommand_name_t& subcommand);
+        bool is_namespace(const command_name_t& subcommand);
 
         void set_program_name_and_description(std::string&& name,
                                               std::string&& description); // todo: these should probably be in documentation.h/cpp
@@ -1043,7 +1043,7 @@ namespace cppli {
         variadic_documentation_t(const std::string& type, const std::string& name, const std::string& documentation);
     };
 
-    struct subcommand_documentation_t {
+    struct command_documentation_t {
         std::string name; // this is what we're sorting by
         std::string description;
 
@@ -1056,17 +1056,17 @@ namespace cppli {
 
         bool is_namespace = true;
 
-        subcommand_documentation_t() = default;
-        subcommand_documentation_t(const std::string& name, const char* description);
+        command_documentation_t() = default;
+        command_documentation_t(const std::string& name, const char* description);
 
-        bool operator<(const subcommand_documentation_t& rhs) const;
+        bool operator<(const command_documentation_t& rhs) const;
     };
 
-    using get_documentation_string_t = std::string(*)(const subcommand_name_t&,
+    using get_documentation_string_t = std::string(*)(const command_name_t&,
                                                       const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                       unsigned recursion, bool hide_help);
 
-    std::string default_get_documentation_string_callback(const subcommand_name_t&,
+    std::string default_get_documentation_string_callback(const command_name_t&,
                                                           const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                           unsigned recursion, bool hide_help);
 
@@ -1077,9 +1077,9 @@ namespace cppli {
     //std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help);
 
     namespace detail {
-        std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs();
+        std::unordered_map<command_name_t, command_documentation_t, command_name_hash_t>& subcommand_name_to_docs();
 
-        const subcommand_documentation_t& get_command_docs_from_name(const subcommand_name_t& name);
+        const command_documentation_t& get_command_docs_from_name(const command_name_t& name);
     }
 }
 //end of "detail/documentation.h" include
@@ -1112,7 +1112,7 @@ namespace cppli {
 
 namespace cppli::detail {
     template<typename T, typename last, typename conversion_t_>
-    T process_positional(unsigned cumulative_positional_index, const subcommand_t& subcommand,
+    T process_positional(unsigned cumulative_positional_index, const command_t& subcommand,
                          const std::string& main_command_or_subcommand, const std::string& long_name) {
         --cumulative_positional_index; // because we've already skipped over the actual parameter for the positional, cumulative_positional_index will be too big
 
@@ -1155,7 +1155,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last, typename conversion_t_>
-    T process_variadic(unsigned cumulative_positional_index, const subcommand_t& subcommand,
+    T process_variadic(unsigned cumulative_positional_index, const command_t& subcommand,
                        const std::string& main_command_or_subcommand, const std::string& long_name) {
         T ret; // T is a vector
         for (unsigned i = cumulative_positional_index;
@@ -1174,7 +1174,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last, typename conversion_t_>
-    T process_required_option(const subcommand_t& subcommand,
+    T process_required_option(const command_t& subcommand,
                                        const std::string& main_command_or_subcommand,
                                        const std::string& long_name, const std::optional<std::string>& short_name) {
         
@@ -1224,7 +1224,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last, typename conversion_t_>
-    T process_required_argument_option(const subcommand_t& subcommand,
+    T process_required_argument_option(const command_t& subcommand,
                                        const std::string& main_command_or_subcommand,
                                        const std::string& long_name, const std::optional<std::string>& short_name) {
 
@@ -1286,7 +1286,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last, typename conversion_t_>
-    T process_raw_type_optional_argument_option(const subcommand_t& subcommand,
+    T process_raw_type_optional_argument_option(const command_t& subcommand,
                                                 const std::string& main_command_or_subcommand,
                                                 const std::string& long_name, const std::optional<std::string>& short_name) {
 
@@ -1330,7 +1330,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last>
-    T process_optional_argument_option(const subcommand_t& subcommand,
+    T process_optional_argument_option(const command_t& subcommand,
                                                 const std::string& main_command_or_subcommand,
                                                 const std::string& long_name, const std::optional<std::string>& short_name) {
 
@@ -1363,7 +1363,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last>
-    T process_raw_type(unsigned cumulative_positional_index, const subcommand_t& subcommand,
+    T process_raw_type(unsigned cumulative_positional_index, const command_t& subcommand,
                                        const std::string& main_command_or_subcommand) {
 
         std::string long_name = last::name.string();
@@ -1410,7 +1410,7 @@ namespace cppli::detail {
     }
 
     template<typename T, typename last>
-    T process_wrapper(const subcommand_t& subcommand,
+    T process_wrapper(const command_t& subcommand,
                       const std::string& main_command_or_subcommand) {
 
 
@@ -1439,12 +1439,12 @@ namespace cppli::detail {
 
     template<typename T, typename last>
     /*add_const_ref_if_string_t<T>::*/T
-    process_argument(unsigned cumulative_positional_index, const subcommand_t& subcommand) {
+    process_argument(unsigned cumulative_positional_index, const command_t& subcommand) {
         using arg_info_t = argument_info_t<T>; // no need for remove_cvref, we do that before calling process_argument
 
         std::string main_command_or_subcommand;
 
-        if(subcommand.name == subcommand_name_t{"MAIN"}) {
+        if(subcommand.name == command_name_t{"MAIN"}) {
             main_command_or_subcommand = "main command";
         }
         else {
@@ -1610,12 +1610,12 @@ namespace cppli::detail {
 
     template<typename return_t, typename...arg_ts, std::size_t...indices, auto func>
     struct call_func_wrapper_impl_t<return_t(*)(const command_context_t&, arg_ts...), func, std::integer_sequence<std::size_t, indices...>> {
-        static void call_func(const subcommand_t& subcommand, const command_context_t& command_context) {
+        static void call_func(const command_t& subcommand, const command_context_t& command_context) {
             func(command_context, process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand)...);
         }
 
         #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
-            static void check_for_errors(const subcommand_t& subcommand) {
+            static void check_for_errors(const command_t& subcommand) {
                 // fold over comma operator
                 (process_argument<std::remove_cvref_t<get_type_from_index_in_pack<indices, arg_ts...>>, std::remove_cvref_t<get_type_from_index_in_pack<(indices)-1, arg_ts...>>>(count_positionals_before_index_v<indices, arg_ts...>, subcommand), ...);
             }
@@ -1629,7 +1629,7 @@ namespace cppli::detail {
     struct call_func_wrapper_t<return_t(*)(const command_context_t&, arg_ts...), func> { // we need all these ugly partial specializations so that we can deduce arg_ts and indices
         static_assert(!invalid_optional_positionals_found<false, arg_ts...>(), "Required positionals cannot follow optional positionals");
 
-        static void call_func(const subcommand_t& subcommand, const command_context_t& command_context) {
+        static void call_func(const command_t& subcommand, const command_context_t& command_context) {
             constexpr auto variadic_count = count_variadics<std::remove_cvref_t<arg_ts>...>();
             static_assert(variadic_count < 2, "A command can only have 0 or 1 variadics (two or more were found)");
 
@@ -1637,7 +1637,7 @@ namespace cppli::detail {
         }
 
         #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
-            static void check_for_errors(const subcommand_t& subcommand) {
+            static void check_for_errors(const command_t& subcommand) {
                 call_func_wrapper_impl_t<decltype(func), func, std::make_index_sequence<sizeof...(arg_ts)>>::check_for_errors(subcommand);
             }
         #endif
@@ -1645,29 +1645,29 @@ namespace cppli::detail {
 
     template<auto func>
     struct call_func_wrapper_t<void(*)(const command_context_t&), func> { // we need all this ugly partial specializations so that we can deduce arg_ts and indices
-        static void call_func(const subcommand_t& subcommand, const command_context_t& command_context) {
+        static void call_func(const command_t& subcommand, const command_context_t& command_context) {
             func(command_context);
         }
 
-        static void check_for_errors(const subcommand_t& subcommand) {
+        static void check_for_errors(const command_t& subcommand) {
             // do nothing
         }
     };
 
     template<auto func>
-    void call_func(const subcommand_t& command, const command_context_t& command_context) {
+    void call_func(const command_t& command, const command_context_t& command_context) {
         call_func_wrapper_t<decltype(func), func>::call_func(command, command_context);
     }
 
     #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
         template<auto func>
-        void check_for_errors(const subcommand_t& command) {
+        void check_for_errors(const command_t& command) {
             call_func_wrapper_t<decltype(func), func>::check_for_errors(command);
         }
     #endif
 
     template<typename return_t, typename arg_t, typename...arg_ts>                      // don't actually care about func, just need to deduce args
-    void generate_input_info_and_docs_impl(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, return_t(*func)(const command_context_t&, arg_t, arg_ts...) = nullptr) {
+    void generate_input_info_and_docs_impl(command_inputs_info_t& info, command_documentation_t& documentation, return_t(*func)(const command_context_t&, arg_t, arg_ts...) = nullptr) {
         using T = std::remove_cvref_t<arg_t>;
         using arg_info_t = argument_info_t<T>;
 
@@ -1729,13 +1729,13 @@ namespace cppli::detail {
     }
 
     template<typename return_t, typename arg_t, typename...arg_ts>                      // don't actually care about func, just need to deduce args
-    void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, return_t(*func)(const command_context_t&, arg_t, arg_ts...) = nullptr) {
+    void generate_input_info_and_docs(command_inputs_info_t& info, command_documentation_t& documentation, return_t(*func)(const command_context_t&, arg_t, arg_ts...) = nullptr) {
         static_assert(no_repeated_short_names_v<arg_t, arg_ts...>, "multiple parameters cannot have the same short name");
         generate_input_info_and_docs_impl(info, documentation, func);
     }
 
     template<typename return_t>                 // don't actually care about func, just need to deduce args
-    void generate_input_info_and_docs(subcommand_inputs_info_t& info, subcommand_documentation_t& documentation, return_t(*func)(const command_context_t&) = nullptr) {
+    void generate_input_info_and_docs(command_inputs_info_t& info, command_documentation_t& documentation, return_t(*func)(const command_context_t&) = nullptr) {
         // do nothing
     }
 
@@ -1762,11 +1762,11 @@ namespace cppli::detail {
                                const option<unsigned, string_conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion);
 
     template<auto func>
-    dummy_t register_command(const subcommand_name_t& name, const char* description, bool is_help = false) {
-        subcommand_inputs_info_t   info;
-        subcommand_documentation_t docs(name.back(), description);
+    dummy_t register_command(const command_name_t& name, const char* description, bool is_help = false) {
+        command_inputs_info_t   info;
+        command_documentation_t docs(name.back(), description);
 
-        subcommand_name_t cumulative_name;
+        command_name_t cumulative_name;
         for(unsigned i = 0; i < name.size()-1; ++i) {
             cumulative_name.push_back(name[i]);
             if(!subcommand_name_to_docs().contains(cumulative_name)) {
@@ -1787,7 +1787,7 @@ namespace cppli::detail {
         #endif
         subcommand_name_to_inputs_info().insert_or_assign(name, std::move(info));
 
-        if(name == subcommand_name_t{"MAIN"}) {
+        if(name == command_name_t{"MAIN"}) {
             subcommand_name_to_docs()[name].flags       = std::move(docs.flags);
             subcommand_name_to_docs()[name].options     = std::move(docs.options);
             subcommand_name_to_docs()[name].positionals = std::move(docs.positionals);
@@ -1802,11 +1802,11 @@ namespace cppli::detail {
         }
 
         if(!is_help) {
-            subcommand_name_t temp;
+            command_name_t temp;
             for(const auto& command : name) {
                 temp.push_back(command);
 
-                subcommand_name_t temp_plus_help = temp;
+                command_name_t temp_plus_help = temp;
                 temp_plus_help.push_back("help");
                 if(!subcommand_name_to_func().contains(temp_plus_help)) {
                     register_command<default_help_callback>(temp_plus_help, "print help for this command", true);
@@ -2004,7 +2004,7 @@ namespace cppli {
 
 namespace cppli::detail {
     struct parse_ret_t {
-        std::vector<subcommand_t> subcommands;
+        std::vector<command_t> subcommands;
         bool printed_help = false;
         std::optional<unsigned> help_command_index;
     };
@@ -2049,10 +2049,10 @@ namespace cppli::detail {
         }*/
 
         // skip the program name
-        subcommand_name_t subcommand_name = {"MAIN"};
+        command_name_t subcommand_name = {"MAIN"};
 
-        //subcommand_inputs_t args;
-        std::vector<subcommand_t> commands{{subcommand_name}};
+        //command_inputs_t args;
+        std::vector<command_t> commands{{subcommand_name}};
 
         bool disambiguate_next_arg = false;
         bool disambiguate_until_subcommand = false;
@@ -2094,7 +2094,7 @@ namespace cppli::detail {
                 commands.push_back({subcommand_name});
             }
             else {
-                subcommand_inputs_t& args = commands.back().inputs;
+                command_inputs_t& args = commands.back().inputs;
                 /*if(in_namespace) { // I forgot why this doesn't work
                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                     continue;
@@ -2315,7 +2315,7 @@ namespace cppli::detail {
 
                         std::stringstream ss;
                         ss << "Unexpected positional argument \"" << arg_string
-                           << "\" given to " << (command.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(command.name) << '\n';/* <<
+                           << "\" given to " << (command.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(command.name) << '\n';/* <<
                            "\" (expected " << expected_positionals_count << ", got " << actual_positionals_count << ").\n";*/
 
                         ss << "It's also possible that \"" << arg_string
@@ -2414,15 +2414,15 @@ namespace cppli {
                                                                                                                                              documentation(documentation) {}
 
 
-    subcommand_documentation_t::subcommand_documentation_t(const std::string& name, const char* description) : name(name), description(description), is_namespace(false) {}
+    command_documentation_t::command_documentation_t(const std::string& name, const char* description) : name(name), description(description), is_namespace(false) {}
 
-    bool subcommand_documentation_t::operator<(const subcommand_documentation_t& rhs) const {
+    bool command_documentation_t::operator<(const command_documentation_t& rhs) const {
         return (name.back() < rhs.name.back());
     }
 
     namespace detail {
-        std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t>& subcommand_name_to_docs() {
-            static std::unordered_map<subcommand_name_t, subcommand_documentation_t, subcommand_name_hash_t> subcommand_name_to_docs_;
+        std::unordered_map<command_name_t, command_documentation_t, command_name_hash_t>& subcommand_name_to_docs() {
+            static std::unordered_map<command_name_t, command_documentation_t, command_name_hash_t> subcommand_name_to_docs_;
 
             return subcommand_name_to_docs_;
         }
@@ -2442,7 +2442,7 @@ namespace cppli {
                         description;
         };
 
-        std::string get_documentation_string_impl(const subcommand_name_t& name,
+        std::string get_documentation_string_impl(const command_name_t& name,
                                                   const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                   unsigned max_recursion_level,
                                                   unsigned current_recursion_level,
@@ -2659,16 +2659,16 @@ namespace cppli {
         }
     }
 
-    const subcommand_documentation_t& get_command_docs_from_name(const subcommand_name_t& name) {
+    const command_documentation_t& get_command_docs_from_name(const command_name_t& name) {
         return detail::subcommand_name_to_docs().at(name);
     }
 
-    std::string default_get_documentation_string_callback(const subcommand_name_t& name,
+    std::string default_get_documentation_string_callback(const command_name_t& name,
                                                           const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                           unsigned max_recursion_level,
                                                           bool hide_help) {
-        if((name == subcommand_name_t{"MAIN"}) ||
-           (name == subcommand_name_t{})) {
+        if((name == command_name_t{"MAIN"}) ||
+           (name == command_name_t{})) {
             return detail::get_documentation_string_impl({"MAIN"}, top_level_verbosity, subcommand_verbosity, max_recursion_level, 0, hide_help, detail::name_and_description_t{detail::program_name(), detail::program_description()});
         }
         else {
@@ -2694,26 +2694,26 @@ namespace cppli::detail {
 
     // construct on first use idiom
     // more info here: https://isocpp.org/wiki/faq/ctors#construct-on-first-use-v2
-    std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>& subcommand_name_to_inputs_info() {
-        static std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t> subcommand_name_to_inputs_info_;
+    std::unordered_map<command_name_t, command_inputs_info_t, command_name_hash_t>& subcommand_name_to_inputs_info() {
+        static std::unordered_map<command_name_t, command_inputs_info_t, command_name_hash_t> subcommand_name_to_inputs_info_;
 
         return subcommand_name_to_inputs_info_;
     }
 
-    std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>& subcommand_name_to_func() {
-        static std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t> subcommand_name_to_func_;
+    std::unordered_map<command_name_t, subcommand_func_t, command_name_hash_t>& subcommand_name_to_func() {
+        static std::unordered_map<command_name_t, subcommand_func_t, command_name_hash_t> subcommand_name_to_func_;
 
         return subcommand_name_to_func_;
     }
 
-    std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t, subcommand_name_hash_t>& subcommand_name_to_error_checking_func() {
-        static std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t , subcommand_name_hash_t> subcommand_name_to_error_checking_func_;
+    std::unordered_map<command_name_t, command_error_checking_func_t, command_name_hash_t>& subcommand_name_to_error_checking_func() {
+        static std::unordered_map<command_name_t, command_error_checking_func_t , command_name_hash_t> subcommand_name_to_error_checking_func_;
 
         return subcommand_name_to_error_checking_func_;
     }
 
 
-    bool is_valid_subcommand(subcommand_name_t& parent_command_names, const std::string& arg) {
+    bool is_valid_subcommand(command_name_t& parent_command_names, const std::string& arg) {
         if(parent_command_names.size()) {
             auto temp = parent_command_names;
             temp.push_back(arg);
@@ -2729,26 +2729,26 @@ namespace cppli::detail {
         return false;
     }
 
-    bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name) {
+    bool subcommand_takes_flag(const command_name_t& subcommand, const std::string& flag_name) {
         return
             subcommand_name_to_inputs_info().contains(subcommand) &&
             subcommand_name_to_inputs_info().at(subcommand).flags.contains(flag_name);
     }
 
-    bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name) {
+    bool subcommand_takes_option(const command_name_t& subcommand, const std::string& option_name) {
         return
             subcommand_name_to_inputs_info().contains(subcommand) &&
             subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name);
     }
 
-    bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name) {
+    bool subcommand_option_argument_is_optional(const command_name_t& subcommand, const std::string& option_name) {
         if(subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.contains(option_name)) {
             return subcommand_name_to_inputs_info().at(subcommand).option_argument_is_optional.at(option_name);
         }
         return false;
     }
 
-    void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option) {
+    void error_if_flag_or_option_already_included(const command_t& subcommand, const std::string& flag_or_option) {
         const auto& inputs_info = subcommand_name_to_inputs_info().at(subcommand.name);
         std::optional<std::reference_wrapper<const std::string>> short_name;
         if(inputs_info.flag_or_option_long_name_to_short_name.contains(flag_or_option)) {
@@ -2761,7 +2761,7 @@ namespace cppli::detail {
             if(subcommand.inputs.flags.contains(flag_or_option) ||
                (short_name && subcommand.inputs.flags.contains(*short_name))) {
 
-                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                ss << (subcommand.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " flag --" << flag_or_option << " included multiple times";
 
                 if(short_name && subcommand.inputs.flags.contains(*short_name)) {
@@ -2775,7 +2775,7 @@ namespace cppli::detail {
             if(subcommand.inputs.options_to_values.contains(flag_or_option) ||
                     (short_name && subcommand.inputs.options_to_values.contains(*short_name))) {
 
-                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                ss << (subcommand.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " option --" << flag_or_option << " included multiple times";
 
                 if(short_name && subcommand.inputs.options_to_values.contains(*short_name)) {
@@ -2787,7 +2787,7 @@ namespace cppli::detail {
         }
     }
 
-    void error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& short_flag_or_option) {
+    void error_if_short_flag_or_option_already_included(const command_t& subcommand, const std::string& short_flag_or_option) {
         const auto& inputs_info = subcommand_name_to_inputs_info().at(subcommand.name);
         const std::string& long_name = inputs_info.flag_or_option_short_name_to_long_name.at(short_flag_or_option[0]);
 
@@ -2797,7 +2797,7 @@ namespace cppli::detail {
             if(subcommand.inputs.flags.contains(short_flag_or_option) ||
                subcommand.inputs.flags.contains(long_name)) {
 
-                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                ss << (subcommand.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " flag --" << short_flag_or_option << " included multiple times";
 
                 if(subcommand.inputs.flags.contains(long_name)) {
@@ -2811,7 +2811,7 @@ namespace cppli::detail {
             if(subcommand.inputs.options_to_values.contains(short_flag_or_option) ||
                subcommand.inputs.options_to_values.contains(long_name)) {
 
-                ss << (subcommand.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
+                ss << (subcommand.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
                    << " option --" << short_flag_or_option << " included multiple times";
 
                 if(subcommand.inputs.options_to_values.contains(long_name)) {
@@ -2824,7 +2824,7 @@ namespace cppli::detail {
     }
 
 
-    bool is_namespace(const subcommand_name_t& subcommand) {
+    bool is_namespace(const command_name_t& subcommand) {
         return subcommand_name_to_docs().at(subcommand).is_namespace;
     }
 
@@ -2848,7 +2848,7 @@ namespace cppli::detail {
         program_description_ = std::move(description);
     }
 
-    std::string to_string(const subcommand_name_t& name, const char* delimiter) {
+    std::string to_string(const command_name_t& name, const char* delimiter) {
         std::string ret;
 
         if(name.size()) {
@@ -2873,7 +2873,7 @@ namespace cppli::detail {
         return ret;
     }
 
-    std::size_t detail::subcommand_name_hash_t::operator()(const subcommand_name_t& name) const noexcept  {
+    std::size_t detail::command_name_hash_t::operator()(const command_name_t& name) const noexcept  {
         std::size_t hash = 0;
         for(const auto& e : name) {
             cppli::detail::hash_combine(hash, e);
@@ -2882,7 +2882,7 @@ namespace cppli::detail {
         return hash;
     }
 
-    bool subcommand_inputs_t::is_empty() const {
+    bool command_inputs_t::is_empty() const {
         return ((flags.size() == 0) &&
                 (options_to_values.size() == 0) &&
                 (positional_args.size() == 0));
@@ -2929,7 +2929,7 @@ namespace cppli::detail {
 
                                const option<unsigned, string_conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
 
-        extern subcommand_name_t last_subcommand_;
+        extern command_name_t last_subcommand_;
 
         documentation_verbosity top_level_verbosity;
         if(verbose) {
@@ -2991,7 +2991,7 @@ namespace cppli::detail {
 
 
 namespace cppli::detail {
-    subcommand_name_t last_subcommand_;
+    command_name_t last_subcommand_;
 }
 //end of "command_macros.cpp" include
 
@@ -2999,11 +2999,11 @@ namespace cppli::detail {
 
 
 namespace cppli::detail {
-    extern subcommand_name_t last_subcommand_;
+    extern command_name_t last_subcommand_;
 
     void run_impl_(int argc, const char* const* const argv) {
         {
-            subcommand_name_t main_help = {"MAIN", "help"};
+            command_name_t main_help = {"MAIN", "help"};
             if(!subcommand_name_to_func().contains(main_help)) {
                 register_command<default_help_callback>(main_help, "print help for this command", true);
             }

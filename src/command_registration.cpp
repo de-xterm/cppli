@@ -26,7 +26,7 @@ namespace cppli::detail {
 
                                const option<unsigned, string_conversion_t<unsigned>, false, "recursion", "how many levels of nested subcommands to print. 0 prints none", "unsigned integer", true, false, 'r'>&, const std::optional<unsigned>& recursion) {
 
-        extern subcommand_name_t last_subcommand_;
+        extern command_name_t last_subcommand_;
 
         documentation_verbosity top_level_verbosity;
         if(verbose) {

@@ -44,10 +44,10 @@ namespace cppli::detail {
         }*/
 
         // skip the program name
-        subcommand_name_t subcommand_name = {"MAIN"};
+        command_name_t subcommand_name = {"MAIN"};
 
-        //subcommand_inputs_t args;
-        std::vector<subcommand_t> commands{{subcommand_name}};
+        //command_inputs_t args;
+        std::vector<command_t> commands{{subcommand_name}};
 
         bool disambiguate_next_arg = false;
         bool disambiguate_until_subcommand = false;
@@ -89,7 +89,7 @@ namespace cppli::detail {
                 commands.push_back({subcommand_name});
             }
             else {
-                subcommand_inputs_t& args = commands.back().inputs;
+                command_inputs_t& args = commands.back().inputs;
                 /*if(in_namespace) { // I forgot why this doesn't work
                     std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                     continue;
@@ -310,7 +310,7 @@ namespace cppli::detail {
 
                         std::stringstream ss;
                         ss << "Unexpected positional argument \"" << arg_string
-                           << "\" given to " << (command.name == subcommand_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(command.name) << '\n';/* <<
+                           << "\" given to " << (command.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(command.name) << '\n';/* <<
                            "\" (expected " << expected_positionals_count << ", got " << actual_positionals_count << ").\n";*/
 
                         ss << "It's also possible that \"" << arg_string

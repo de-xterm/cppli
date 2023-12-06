@@ -12,14 +12,14 @@
 #include "parameter_types.h"
 
 namespace cppli {
-    using subcommand_name_t = std::vector<std::string>;
+    using command_name_t = std::vector<std::string>;
 
     struct command_context_t {
         bool  current_command_is_leaf;
     };
 
     namespace detail {
-        struct subcommand_inputs_t {
+        struct command_inputs_t {
             std::vector<std::string> positional_args;
             std::unordered_map<std::string, std::optional<std::string>> options_to_values;
             std::unordered_set<std::string> flags;
@@ -28,7 +28,7 @@ namespace cppli {
         };
 
 
-        std::string to_string(const subcommand_name_t& name, const char* delimiter = "::");
+        std::string to_string(const command_name_t& name, const char* delimiter = "::");
 
 
         /// this is just boost::hash_combine, but I don't want to drag boost into this library just for one function
@@ -37,19 +37,19 @@ namespace cppli {
             return (seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2));
         }
 
-        struct subcommand_name_hash_t {
-            std::size_t operator()(const subcommand_name_t& name) const noexcept;
+        struct command_name_hash_t {
+            std::size_t operator()(const command_name_t& name) const noexcept;
         };
 
-        struct subcommand_t {
-            subcommand_name_t name;
-            subcommand_inputs_t inputs;
+        struct command_t {
+            command_name_t name;
+            command_inputs_t inputs;
         };
 
-        using subcommand_func_t = void (*)(const subcommand_t&, const command_context_t& command_context);
-        using subcommand_error_checking_func_t = void (*)(const subcommand_t&);
+        using subcommand_func_t = void (*)(const command_t&, const command_context_t& command_context);
+        using command_error_checking_func_t = void (*)(const command_t&);
 
-        struct subcommand_inputs_info_t {
+        struct command_inputs_info_t {
             std::unordered_set<std::string> flags;
             std::unordered_map<std::string, bool> option_argument_is_optional;
 
@@ -57,33 +57,33 @@ namespace cppli {
             std::unordered_map<char, std::string> flag_or_option_short_name_to_long_name;
         };
 
-        std::unordered_map<subcommand_name_t, subcommand_inputs_info_t, subcommand_name_hash_t>&
+        std::unordered_map<command_name_t, command_inputs_info_t, command_name_hash_t>&
         subcommand_name_to_inputs_info();
 
-        std::unordered_map<subcommand_name_t, subcommand_func_t, subcommand_name_hash_t>& subcommand_name_to_func();
+        std::unordered_map<command_name_t, subcommand_func_t, command_name_hash_t>& subcommand_name_to_func();
 
-        std::unordered_map<subcommand_name_t, subcommand_error_checking_func_t , subcommand_name_hash_t>&
+        std::unordered_map<command_name_t, command_error_checking_func_t , command_name_hash_t>&
         subcommand_name_to_error_checking_func();
 
 
         /// if arg appended to parent_command_names forms a valid subcommand,
         /// pushes back arg to parent_command_names and returns true.
         /// Otherwise, just returns false
-        bool is_valid_subcommand(subcommand_name_t& parent_command_names, const std::string& arg);
+        bool is_valid_subcommand(command_name_t& parent_command_names, const std::string& arg);
 
-        bool subcommand_takes_flag(const subcommand_name_t& subcommand, const std::string& flag_name);
+        bool subcommand_takes_flag(const command_name_t& subcommand, const std::string& flag_name);
 
-        bool subcommand_takes_option(const subcommand_name_t& subcommand, const std::string& option_name);
+        bool subcommand_takes_option(const command_name_t& subcommand, const std::string& option_name);
 
-        bool subcommand_option_argument_is_optional(const subcommand_name_t& subcommand, const std::string& option_name);
+        bool subcommand_option_argument_is_optional(const command_name_t& subcommand, const std::string& option_name);
 
-        /// string shouldn't included the leading '-' or "--"
-        void error_if_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
+        /// string shouldn't include the leading '-' or "--"
+        void error_if_flag_or_option_already_included(const command_t& subcommand, const std::string& flag_or_option);
 
         void
-        error_if_short_flag_or_option_already_included(const subcommand_t& subcommand, const std::string& flag_or_option);
+        error_if_short_flag_or_option_already_included(const command_t& subcommand, const std::string& flag_or_option);
 
-        bool is_namespace(const subcommand_name_t& subcommand);
+        bool is_namespace(const command_name_t& subcommand);
 
         void set_program_name_and_description(std::string&& name,
                                               std::string&& description); // todo: these should probably be in documentation.h/cpp
