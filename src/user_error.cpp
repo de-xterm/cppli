@@ -15,6 +15,6 @@ namespace cppli {
     }
 
     std::ostream& operator<<(std::ostream& os, const user_error& err) {
-        return std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << ' ' << err.what();
+        return os << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << ' ' << err.what();
     }
 }

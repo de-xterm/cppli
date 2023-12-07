@@ -114,11 +114,13 @@ namespace cppli::detail {
                subcommand.inputs.flags.contains(long_name)) {
 
                 ss << (subcommand.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
-                   << " flag --" << short_flag_or_option << " included multiple times";
+                   << " flag -" << short_flag_or_option << " included multiple times";
 
                 if(subcommand.inputs.flags.contains(long_name)) {
-                    ss << "(previously included with long name \"" << long_name << '\"';
+                    ss << " (previously included with long name \"" << long_name << '\"';
                 }
+
+                ss << '\n';
                 print_throw_or_do_nothing(FLAG_INCLUDED_MULTIPLE_TIMES, ss.str());
             }
 
@@ -128,7 +130,7 @@ namespace cppli::detail {
                subcommand.inputs.options_to_values.contains(long_name)) {
 
                 ss << (subcommand.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(subcommand.name)
-                   << " option --" << short_flag_or_option << " included multiple times";
+                   << " option -" << short_flag_or_option << " included multiple times";
 
                 if(subcommand.inputs.options_to_values.contains(long_name)) {
                     ss << "(previously included with long name \"" << long_name << '\"';

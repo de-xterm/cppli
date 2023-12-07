@@ -4,6 +4,8 @@
 #include <variant>
 #include <cstdint>
 
+#include "iro.h"
+
 #include "template_utils.h"
 
 namespace cppli {

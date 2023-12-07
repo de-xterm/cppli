@@ -7,6 +7,7 @@
 #include "arg_parsing.h"
 #include "documentation.h"
 #include "configuration.h"
+#include "iro.h"
 
 namespace cppli::detail {
     bool contains_letters(const std::string& str) {
@@ -31,11 +32,11 @@ namespace cppli::detail {
     parse_ret_t parse(int argc, const char* const* const argv) {
 
         if(argc == 0) {
-            std::cerr << "Error: argc == 0. This is very terrible and unrecoverable\n";
+            std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argc == 0. This is very terrible and unrecoverable\n";
             std::exit(-1);
         }
         if(!argv[0]) {
-            std::cerr << "Error: argv[0] was null. This is very terrible and unrecoverable\n";
+            std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argv[0] was null. This is very terrible and unrecoverable\n";
             std::exit(-1);
         }
 
@@ -147,6 +148,19 @@ namespace cppli::detail {
                         else {
                             std::string option_or_flag_name = arg_string.substr(2, arg_string.size()-1);
 
+                            {
+                                bool all_letter_or_hyphen = true;
+                                for(char c : option_or_flag_name) {
+                                    all_letter_or_hyphen &= (isletter(c) || (c == '-'));
+                                }
+
+                                if(!all_letter_or_hyphen) {
+                                    // TODO: rename INVALID_FLAG to be more general (because technically we don't konw if it's a flag or an option)
+                                    print_throw_or_do_nothing(INVALID_FLAG, std::format("Flag or option \"{}\" contains characters other than letters and hyphens, and therefore cannot form a valid flag/option", option_or_flag_name), ". It will be ignored\n\n");
+                                    continue;
+                                }
+                            }
+
                             //error_if_flag_or_option_already_included(commands.back(), option_or_flag_name);
 
                             if(subcommand_takes_option(subcommand_name, option_or_flag_name)) {
@@ -181,7 +195,7 @@ namespace cppli::detail {
                                     return {{}, true};
                                 }
                                 else if(in_namespace) {
-                                    std::cerr << '\"' << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
+                                    std::cerr << iro::bright_yellow << iro::effect_string(iro::bold|iro::underlined, "Warning:") <<  " \"" << current_subcommand_name_string << "\" is a namespace, so the only inputs it can accept are --help, -h, or help. The given input \"" << arg_string << "\" will therefore be ignored\n";
                                     invalid_input_to_namespace = true;
                                     continue;
                                 }
