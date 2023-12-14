@@ -17,15 +17,15 @@ namespace cppli {
     //#define CPPLI_NAMESPACE(NAME, DESCRIPTION)
 
     #define CPPLI_MAIN_COMMAND(/*parameters*/...) \
-    extern "C" void cPPLI_internal_GENERATED_MAIN_COMMAND_CALLBACK (const ::cppli::command_context_t& __VA_OPT__(, __VA_ARGS__)); \
+    /*extern "C"*/ void cPPLI_internal_GENERATED_MAIN_COMMAND_CALLBACK (const ::cppli::command_context_t& __VA_OPT__(, __VA_ARGS__)); \
     cPPLI_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_command<cPPLI_internal_GENERATED_MAIN_COMMAND_CALLBACK>({"MAIN"}, "")) \
-    extern "C" void cPPLI_internal_GENERATED_MAIN_COMMAND_CALLBACK (const ::cppli::command_context_t& cppli __VA_OPT__(, __VA_ARGS__))
+    /*extern "C"*/ void cPPLI_internal_GENERATED_MAIN_COMMAND_CALLBACK (const ::cppli::command_context_t& cppli __VA_OPT__(, __VA_ARGS__))
 
     #define CPPLI_SUBCOMMAND(name, DESCRIPTION, /*parameters*/...) \
-    extern "C" void cPPLI_internal_CAT(cPPLI_internal_GENERATED_SUBCOMMAND_CALLBACK, name) (const ::cppli::command_context_t& __VA_OPT__(, __VA_ARGS__)); \
+    /*extern "C"*/ void cPPLI_internal_CAT(cPPLI_internal_GENERATED_SUBCOMMAND_CALLBACK, name) (const ::cppli::command_context_t& __VA_OPT__(, __VA_ARGS__)); \
     static_assert(!::cppli::detail::contains_uppercase<cPPLI_internal_STRINGIFY(cPPLI_internal_CAT(name))>(), "subcommand names cannot contain uppercase characters"); \
     cPPLI_internal_EVALUATE_AT_FILE_SCOPE(::cppli::detail::register_command<cPPLI_internal_CAT(cPPLI_internal_GENERATED_SUBCOMMAND_CALLBACK, name)>({cPPLI_internal_FOR_EACH(cPPLI_internal_STRINGIFY_WITH_COMMA, MAIN, name)}, DESCRIPTION)) \
-    extern "C" void cPPLI_internal_CAT(cPPLI_internal_GENERATED_SUBCOMMAND_CALLBACK, name) (const ::cppli::command_context_t& cppli __VA_OPT__(, __VA_ARGS__))
+    /*extern "C"*/ void cPPLI_internal_CAT(cPPLI_internal_GENERATED_SUBCOMMAND_CALLBACK, name) (const ::cppli::command_context_t& cppli __VA_OPT__(, __VA_ARGS__))
 
     #define CPPLI_NAME(...) __VA_ARGS__
 

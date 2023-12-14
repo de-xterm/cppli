@@ -27,6 +27,18 @@ namespace cppli::detail {
             return '\"' + arg + '\"';
         }
     }
+    
+    bool all_lowercase_numeral_or_hyphen_and_first_char_letter(const std::string& str) {
+        bool all_valid = true;
+
+        for(char c : str) {
+            all_valid &= (islowercase(c) ||
+                          is_numeral(c)  ||
+                         (c == '-'));
+        }
+
+        return all_valid && str.size() && islowercase(str[0]);
+    }
 
     // TODO: break each major if in the loop into a function, and put each function in its own file
     parse_ret_t parse(int argc, const char* const* const argv) {
@@ -327,9 +339,12 @@ namespace cppli::detail {
                            << "\" given to " << (command.name == command_name_t{"MAIN"} ? "main command" : "subcommand") << ' ' << to_string(command.name) << '\n';/* <<
                            "\" (expected " << expected_positionals_count << ", got " << actual_positionals_count << ").\n";*/
 
-                        ss << "It's also possible that \"" << arg_string
-                           << "\" was supposed to be a subcommand, but was not recognized. "
-                              "You can run\n" << to_string(command.name, " ") << " help\nto view the available subcommands for this command\n";
+                        if(all_lowercase_numeral_or_hyphen_and_first_char_letter(arg_string)) {
+                            ss << "It's also possible that \"" << arg_string
+                               << "\" was supposed to be a subcommand, but was not recognized. "
+                                  "You can run\n" << to_string(command.name, " ")
+                               << " help\nto view the available subcommands for this command\n";
+                        }
 
                         minor_error_type e;
                         if(optional_argument_option_with_no_value_provided_arg_index_to_option_string.contains(arg_i-1)) {

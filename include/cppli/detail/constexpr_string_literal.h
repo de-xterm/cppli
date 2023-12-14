@@ -2,6 +2,11 @@
 
 #include <algorithm>
 
+#if defined(WIN32) || defined(_WIN32)
+    #undef min // windows moment
+    #undef max
+#endif
+
 namespace cppli {
     namespace detail {
         constexpr char underscore_to_hyphen(char c) {
