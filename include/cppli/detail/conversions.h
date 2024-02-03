@@ -3,12 +3,14 @@
 #include <string>
 #include <stdexcept>
 #include <limits>
+#include <filesystem>
 
 #include "constexpr_string_literal.h"
 #include "user_error.h"
 
 namespace cppli {
 
+    // TODO: I think I could move partial specialization operator() implementations into a .cpp file to speed up compile times
     template<typename T>
     struct string_conversion_t {
         T operator()(const std::string& str) const {
@@ -123,6 +125,15 @@ namespace cppli {
     struct string_conversion_t<std::string> {
         const std::string& operator()(const std::string& str) const {
             return str;
+        }
+
+        static constexpr string_literal type_string = "string";
+    };
+
+    template<>
+    struct string_conversion_t<std::filesystem::path> {
+        std::filesystem::path operator()(const std::string& str) const {
+            return {str};
         }
 
         static constexpr string_literal type_string = "string";

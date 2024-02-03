@@ -9,6 +9,9 @@
 
 #include "documentation.h"
 
+// TODO: switch long name short name order, like this [-v/--verbose]
+//                                                    [-h/--help]
+//                                                    [-f/--force]
 namespace cppli {
     constinit documentation_verbosity default_top_level_help_verbosity = NAME_DESCRIPTION_AND_ARGS_WITH_ARG_DESCRIPTIONS;
     constinit documentation_verbosity default_subcommand_help_verbosity = NAME_AND_DESCRIPTION;
@@ -111,10 +114,9 @@ namespace cppli {
                 std::string name_line;
                 if(main_command_override_name_and_description.has_value()) {
                     name_line = (iro::effect_string(iro::bold|iro::underlined, "(Main Namespace)") + ' ').unsafe_string(std::cout);
-                    name_line += ' ';
                 }
                 else {
-                    name_line = (iro::effect_string(iro::bold|iro::underlined, "(Namespace)") + ' ')   .unsafe_string(std::cout);
+                    name_line = (iro::effect_string(iro::bold|iro::underlined, "(Namespace)") + ' ').unsafe_string(std::cout);
                 }
                 name_line += iro::effect_string(iro::bold|iro::underlined, docs.name).unsafe_string(std::cout);
                 ori::print(name_line);
@@ -122,7 +124,7 @@ namespace cppli {
                     //ori::print('\n');
                     ori::change_indent(4);
                     //ret += indent;
-                    ori::print(iro::effect_string(iro::bold, "Description:"));
+                    ori::print(iro::effect_string(iro::bold, " Description:"));
                     //ret += indent;
                     ori::change_indent(4);
                     //ret += EIGHT_SPACES;

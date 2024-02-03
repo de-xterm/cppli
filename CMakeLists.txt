@@ -26,8 +26,8 @@ target_include_directories(testexe-singleheader PRIVATE test single_header lib/C
 target_compile_definitions(testexe-singleheader PRIVATE CPPLI_SINGLE_HEADER CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN)
 
 add_subdirectory(lib/Catch2)
-target_link_libraries(testexe PRIVATE Catch2 cppli-full-error-check)
-target_link_libraries(testexe-singleheader PRIVATE Catch2)
+target_link_libraries(testexe PRIVATE Catch2::Catch2 cppli-full-error-check)
+target_link_libraries(testexe-singleheader PRIVATE Catch2::Catch2)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(testexe PRIVATE /Zc:preprocessor)
