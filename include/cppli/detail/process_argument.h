@@ -71,7 +71,7 @@ namespace cppli::detail {
                                        const std::string& long_name, const std::optional<std::string>& short_name) {
         
         if (!subcommand.inputs.options_to_values.contains(long_name) &&
-            (short_name && !subcommand.inputs.options_to_values.contains(*short_name))) {
+            (!short_name || !subcommand.inputs.options_to_values.contains(*short_name))) {
 
             throw user_error(main_command_or_subcommand + " \"" + to_string(subcommand.name) +
                              "\" was not provided with required option \"" + long_name + '"',
