@@ -153,7 +153,7 @@ namespace cppli::detail {
                                const flag<"name-and-description", "print subcommand name and description">&, bool name_and_description,
                                const flag<"name-and-args", "print subcommand name and args">&, bool name_and_args,
                                const flag<"name-description-and-args", "print subcommand name, description, and args">&, bool name_description_and_args,
-                               const flag<"verbose", "print subcommand name and description", 'v'>&, bool verbose,
+                               const flag<"verbose", "print current command name and description", 'v'>&, bool verbose,
                                const flag<"hide-help", "don't show help when printing subcommands">&, bool hide_help,
                                const flag<"show-help", "do show help when printing subcommands">&, bool show_help,
 

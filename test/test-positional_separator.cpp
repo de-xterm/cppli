@@ -72,6 +72,7 @@ TEST_CASE("--1 separator works") {
         var_variadic = {};
 
         const char* argv[] = {"program", "posseparatortest", "--1", "subcommand"};
+        subcommand_called = false;
         cppli::run<"program", "does stuff">(lengthof(argv), argv);
 
         REQUIRE(var_variadic == std::vector<std::string>{"subcommand"});
