@@ -336,7 +336,17 @@ namespace cppli {
         }
     }
 
-    constinit print_documentation_string_t print_documentation_string_callback = default_print_documentation_string_callback;
+    namespace detail {
+        static constinit print_documentation_string_t print_documentation_string_callback_ = default_print_documentation_string_callback;
+    }
+
+    void set_print_documentation_string_callback(print_documentation_string_t callback) {
+        detail::print_documentation_string_callback_ = callback;
+    }
+    print_documentation_string_t get_print_documentation_string_callback() {
+        return detail::print_documentation_string_callback_;
+    }
+
 
     /*std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help) {
         return detail::get_documentation_string_impl({"MAIN"}, verbosity, max_recursion_level, 0, detail::name_and_description_t{detail::program_name(), detail::program_description()});

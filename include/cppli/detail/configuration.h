@@ -18,5 +18,8 @@ namespace cppli {
                                        const std::string& only_if_message = "");
     }
 
-    error_behavior& minor_error_behavior(minor_error_type error_type);
+   // error_behavior& minor_error_behavior(minor_error_type error_type);
+
+    void           set_minor_error_behavior(minor_error_type type, error_behavior behavior);
+    error_behavior get_minor_error_behavior(minor_error_type type);
 }

@@ -78,10 +78,10 @@ namespace cppli::detail {
                 std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underline, "Error:") << std::format(R"( "{}" does not refer to a valid command)" "\n", to_string(subcommand_name, " "));
                 return;
             }
-            print_documentation_string_callback(subcommand_name, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
+            get_print_documentation_string_callback()(subcommand_name, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
         }
         else {
-            print_documentation_string_callback(last_subcommand_, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
+            get_print_documentation_string_callback()(last_subcommand_, top_level_verbosity, subcommand_verbosity, recursion.value_or(default_help_recursion_level), (default_hide_help_status || hide_help) && !show_help);
         }
     }
 }

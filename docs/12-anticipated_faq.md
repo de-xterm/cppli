@@ -4,9 +4,10 @@
 **Why can't flags and options contain uppercase letters, underscores, or other symbols?**  
 I don't think it's nice to make the user touch the shift key
   
-**Why do all strings have to be compile time contants?**  
+**Why do all strings have to be compile time constants?**  
 Because an application that doesn't depend on external files (e.g., for documentation) will be more robust than one that does.  
 Also it made a lot of stuff easier to implement :P
+Note that this implementation is still compatible with internationalization and localization. If you get your documentation translated, you can simply rewrite
 
 **Why are C++ identifiers reused as the name for things (commands, flags, options, etc.) on the commandline?**  
 Because it reduces the amount of typing a user of the library has to do, 

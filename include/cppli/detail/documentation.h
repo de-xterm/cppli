@@ -92,7 +92,10 @@ namespace cppli {
                                                             const documentation_verbosity& top_level_verbosity, const documentation_verbosity& subcommand_verbosity,
                                                             unsigned recursion, bool hide_help);
 
-    extern print_documentation_string_t print_documentation_string_callback;
+    void                         set_print_documentation_string_callback(print_documentation_string_t callback);
+    print_documentation_string_t get_print_documentation_string_callback();
+
+    //extern print_documentation_string_t print_documentation_string_callback;
 
 
     /// returns documentation for the main command
