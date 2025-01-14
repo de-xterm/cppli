@@ -40,17 +40,10 @@ namespace cppli::detail {
         return all_valid && str.size() && islowercase(str[0]);
     }
 
-    // TODO: break each major if in the loop into a function, and put each function in its own file
-    parse_ret_t parse(int argc, const char* const* const argv) {
+        // TODO: break each major if in the loop into a function, and put each function in its own file
+    parse_ret_t parse(const std::vector<std::string>& arg_vec) {
 
-        if(argc == 0) {
-            std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argc == 0. This is very terrible and unrecoverable\n";
-            std::exit(-1);
-        }
-        if(!argv[0]) {
-            std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argv[0] was null. This is very terrible and unrecoverable\n";
-            std::exit(-1);
-        }
+
 
         /*if(program_name() != argv[0]) { // TODO: switch to enable/disable this warning. I'm commenting it out for now because it's annoying
             std::cerr << "The name used to invoke the program (\"" << argv[0] << "\") was not the same as the program's documented name (\"" << program_name() << "\")\n";
@@ -70,7 +63,7 @@ namespace cppli::detail {
                                                     // possibly the longest variable name I've ever written
         std::unordered_map<unsigned, std::string> optional_argument_option_with_no_value_provided_arg_index_to_option_string; // indices in argv of optional argument optionals that weren't provided an argument
                                                                                                                               // used to make better error messages
-        std::string first_command_name = argv[0];
+        std::string first_command_name = arg_vec[0];
 
         bool in_namespace = is_namespace({"MAIN"});
 
@@ -82,8 +75,8 @@ namespace cppli::detail {
 
         parse_ret_t ret;
 
-        for(unsigned arg_i = 1; arg_i < argc; ++arg_i) {
-            std::string arg_string = argv[arg_i];
+        for(unsigned arg_i = 1; arg_i < arg_vec.size(); ++arg_i) {
+            std::string arg_string = arg_vec[arg_i];
 
             if(is_valid_subcommand(subcommand_name, arg_string) && !(disambiguate_next_arg || disambiguate_all)) {
                 if(arg_string == "help") {
@@ -183,8 +176,8 @@ namespace cppli::detail {
                                     optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, arg_string);
                                 }
                                 else {
-                                    if(arg_i+1 < argc) {
-                                        args.options_to_values.emplace(option_or_flag_name, std::string(argv[arg_i+1]));
+                                    if(arg_i+1 < arg_vec.size()) {
+                                        args.options_to_values.emplace(option_or_flag_name, arg_vec[arg_i+1]);
                                         ++arg_i; // we just ate the next arg, so don't process it again
                                     }
                                     else {
@@ -238,8 +231,8 @@ namespace cppli::detail {
                                     optional_argument_option_with_no_value_provided_arg_index_to_option_string.emplace(arg_i, "-" + char_string);
                                 }
                                 else {
-                                    if(arg_i+1 < argc) {
-                                        args.options_to_values.emplace(char_string, std::string(argv[arg_i+1]));
+                                    if(arg_i+1 < arg_vec.size()) {
+                                        args.options_to_values.emplace(char_string, arg_vec[arg_i+1]);
                                         ++arg_i; // we just ate the next arg, so don't process it again
                                     }
                                     else {
@@ -355,7 +348,7 @@ namespace cppli::detail {
                                   "However, an optional argument option can't be given an argument using the space separated syntax.\n"
                                   "The argument must use the '=' syntax (" << erroneous_option_string << '=' << arg_string << ')';
 
-                            if(std::string(argv[arg_i-1]).substr(0,2) != "--") {
+                            if(arg_vec[arg_i-1].substr(0,2) != "--") {
                                 ss << " or, for (potentially grouped) short options, the connected syntax ("
                                    << erroneous_option_string << arg_string << ")";
                             }
@@ -392,5 +385,26 @@ namespace cppli::detail {
 
         ret.subcommands = std::move(commands);
         return ret;
+    }
+
+    std::vector<std::string> argv_to_arg_vec(int argc, const char* const* argv) {
+        if(argc == 0) {
+            std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argc == 0. This is very terrible and unrecoverable\n";
+            std::exit(-1);
+        }
+        if(!argv[0]) {
+            std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argv[0] was null. This is very terrible and unrecoverable\n";
+            std::exit(-1);
+        }
+
+        std::vector<std::string> arg_vec(argc);
+        for(unsigned i = 0; i < argc; ++i) {
+            arg_vec[i] = argv[i];
+        }
+        return arg_vec;
+    }
+
+    parse_ret_t parse(int argc, const char* const* argv) {
+        return parse(argv_to_arg_vec(argc, argv));
     }
 }

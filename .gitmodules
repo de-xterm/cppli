@@ -7,3 +7,6 @@
 [submodule "lib/iro"]
 	path = lib/iro
 	url = https://github.com/original-picture/iro
+[submodule "lib/utfcpp"]
+	path = lib/utfcpp
+	url = https://github.com/nemtrif/utfcpp
