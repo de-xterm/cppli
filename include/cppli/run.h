@@ -20,3 +20,11 @@ namespace cppli {
         detail::run_impl_(argc, argv);
     }
 }
+
+#ifdef _WIN32
+    #define CPPLI_MAIN_FUNCTION \
+            int int wmain(int argc, wchar_t *argv[]) { \
+                                                       \
+                                                       \
+            }
+#endif

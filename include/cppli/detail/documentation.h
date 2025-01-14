@@ -95,12 +95,6 @@ namespace cppli {
     void                         set_print_documentation_string_callback(print_documentation_string_t callback);
     print_documentation_string_t get_print_documentation_string_callback();
 
-    //extern print_documentation_string_t print_documentation_string_callback;
-
-
-    /// returns documentation for the main command
-    //std::string default_get_documentation_string_callback(documentation_verbosity verbosity, unsigned max_recursion_level, bool hide_help);
-
     namespace detail {
         std::unordered_map<command_name_t, command_documentation_t, command_name_hash_t>& subcommand_name_to_docs();
 
