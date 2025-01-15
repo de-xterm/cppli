@@ -73,7 +73,7 @@ namespace cppli {
     #ifdef _WIN32
         std::vector<std::string> wmain_utf16_argv_to_utf8(int argc, wchar_t** argv) {
             static_assert(sizeof(wchar_t) == sizeof(char16_t), "paranoia size check. This assert should never fail");
-            static_assert(sizeof(wchar_t) * CHAR_BIT == 16, "paranoia size check. This assert should never fail");
+            static_assert(sizeof(wchar_t) * CHAR_BIT == 16,    "paranoia size check. This assert should never fail");
 
             std::vector<std::string> ret;
             ret.resize(argc);

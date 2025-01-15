@@ -20,7 +20,7 @@ then programs where the main command is a namespace wouldn't have a name or desc
 Forcing the program name and description to be provided in `cppli::run` solves this issue.
 
 **Why use a single exception class with an `error_type()` member instead of using separate exception classes in a hierarchy?**  
-Originally, I only included `error_type()` for testing purposes. After I added it, I figured there was no reason not to add it to the public API.  
+Originally, I only included `error_type()` for testing purposes. After I added it, I figured there was no reason to not expose it in the public API.  
 During testing, I didn't actually need to catch exceptions of some types and let other types propagate; 
 I just needed to make sure that an exception was thrown and that it had the correct error type
 
@@ -29,5 +29,6 @@ The only C++20 feature that I really _needed_ was `__VA_OPT__`, but I also use `
 
 **Does cppli support unicode**  
 yes!  
-all `char*`s and `std::string`s in the codebase are UTF-8. On windows, `CPPLI_MAIN_FUNCTION` calls `wmain` and the UTF-16 strings in `argv` are automatically converted to UTF-8. If you're supplying your own `main`, use `wmain` on windows and convert
-Note it's still your responsibility to ensure that you use stdin and stdout in a unicode-friendly way
+all `char*`s and `std::string`s in the codebase are UTF-8. On windows, `CPPLI_MAIN_FUNCTION` calls `wmain` and the UTF-16 strings in `argv` are automatically converted to UTF-8. 
+If you're supplying your own `main`, use `wmain` on windows and use [`wmain_utf16_argv_to_utf8`](../include/cppli/run.h) to convert the UTF-16 argv provided by `wmain` to UTF-8 
+Note that it's still your responsibility to ensure that you use stdin and stdout in a unicode-friendly way

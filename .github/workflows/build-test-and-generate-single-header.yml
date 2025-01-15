@@ -22,7 +22,7 @@ jobs:
     
     - name: Amalgamate files into single header
       run: |
-          cd tools
+          cd single-header-amalgamation
           chmod +x ./amalgamate.py
           ./amalgamate.py 
     

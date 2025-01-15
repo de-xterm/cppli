@@ -35,15 +35,36 @@ namespace cppli {
     }
 
     #ifdef _WIN32
-        std::vector<std::string> wmain_utf16_argv_to_utf8(int argc, wchar_t **argv);
+        std::vector<std::string> wmain_utf16_argv_to_utf8(int argc, wchar_t** argv);
     #endif
 }
 
 
 #ifdef _WIN32
-    #define CPPLI_MAIN_FUNCTION \
-            int int wmain(int argc, wchar_t *argv[]) { \
-                                                       \
-                                                       \
-            }
+    #define CPPLI_MAIN_FUNCTION(PROGRAM_NAME, PROGRAM_DESCRIPTION)                                                                      \
+        int int wmain(int argc, wchar_t *argv[]) {                                                                                      \
+            try {                                                                                                                       \
+                run<PROGRAM_NAME, PROGRAM_DESCRIPTION>(wmain_utf16_argv_to_utf8(argc, argv));                                           \
+            }                                                                                                                           \
+            catch(cppli::user_error& e) {                                                                                               \
+                std::cerr << e.what() << '\n';                                                                                          \
+                return -1;                                                                                                              \
+            }                                                                                                                           \
+            /*TODO: I really need to add support for return codes and have run() return one. Using std::exit() for everything is lame*/ \
+            return 0;                                                                                                                   \
+        }
+#else
+    #define CPPLI_MAIN_FUNCTION(PROGRAM_NAME, PROGRAM_DESCRIPTION)                                                                      \
+        int int wmain(int argc, wchar_t *argv[]) {                                                                                      \
+            try {                                                                                                                       \
+                run<PROGRAM_NAME, PROGRAM_DESCRIPTION>(argc, argv);                                                                     \
+            }                                                                                                                           \
+            catch(cppli::user_error& e) {                                                                                               \
+                std::cerr << e.what() << '\n';                                                                                          \
+                return -1;                                                                                                              \
+            }                                                                                                                           \
+            /*TODO: I really need to add support for return codes and have run() return one. Using std::exit() for everything is lame*/ \
+            return 0;                                                                                                                   \
+        }
 #endif
+
