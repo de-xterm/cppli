@@ -3,7 +3,6 @@
 #include "detail/documentation.h"
 
 namespace cppli {
-
     namespace detail {
         void run_impl_(const std::vector<std::string>& arg_vec);
         void run_impl_(int argc, const char* const* argv);
@@ -35,35 +34,25 @@ namespace cppli {
 
     #ifdef _WIN32
         std::vector<std::string> wmain_utf16_argv_to_utf8(int argc, wchar_t** argv);
+
+        #define cPPLI_internal_CONVERT_UTF16_IF_WINDOWS(ARGC, ARGV) cppli::wmain_utf16_argv_to_utf8(ARGC, ARGV)
+        #define cPPLI_internal_MAIN_FUNCTION_HEADER int wmain(int argc, wchar_t *argv[])
+    #else
+        #define cPPLI_internal_CONVERT_UTF16_IF_WINDOWS(ARGC, ARGV) ARGC, ARGV
+        #define cPPLI_internal_MAIN_FUNCTION_HEADER(ARGC, ARGV) int main(int argc, char** argv)
     #endif
 }
 
-
-#ifdef _WIN32
-    #define CPPLI_DEFINE_MAIN_FUNCTION(PROGRAM_NAME, PROGRAM_DESCRIPTION)                                                                      \
-        int wmain(int argc, wchar_t *argv[]) {                                                                                          \
-            try {                                                                                                                       \
-                cppli::run<PROGRAM_NAME, PROGRAM_DESCRIPTION>(cppli::wmain_utf16_argv_to_utf8(argc, argv));                             \
-            }                                                                                                                           \
-            catch(cppli::user_error& e) {                                                                                               \
-                std::cerr << e.what() << '\n';                                                                                          \
-                return -1;                                                                                                              \
-            }                                                                                                                           \
-            /*TODO: I really need to add support for return codes and have run() return one. Using std::exit() for everything is lame*/ \
-            return 0;                                                                                                                   \
-        } enum{} // force semicolon
-#else
-    #define CPPLI_DEFINE_MAIN_FUNCTION(PROGRAM_NAME, PROGRAM_DESCRIPTION)                                                                      \
-        int int wmain(int argc, wchar_t *argv[]) {                                                                                      \
-            try {                                                                                                                       \
-                run<PROGRAM_NAME, PROGRAM_DESCRIPTION>(argc, argv);                                                                     \
-            }                                                                                                                           \
-            catch(cppli::user_error& e) {                                                                                               \
-                std::cerr << e.what() << '\n';                                                                                          \
-                return -1;                                                                                                              \
-            }                                                                                                                           \
-            /*TODO: I really need to add support for return codes and have run() return one. Using std::exit() for everything is lame*/ \
-            return 0;                                                                                                                   \
-        }
-#endif
+#define CPPLI_DEFINE_MAIN_FUNCTION(PROGRAM_NAME, PROGRAM_DESCRIPTION)                                                               \
+    cPPLI_internal_MAIN_FUNCTION_HEADER {                                                                                           \
+        try {                                                                                                                       \
+            cppli::run<PROGRAM_NAME, PROGRAM_DESCRIPTION>(cPPLI_internal_CONVERT_UTF16_IF_WINDOWS(argc, argv));                     \
+        }                                                                                                                           \
+        catch(cppli::user_error& e) {                                                                                               \
+            std::cerr << e.what() << '\n';                                                                                          \
+            return -1;                                                                                                              \
+        }                                                                                                                           \
+        /*TODO: I really need to add support for return codes and have run() return one. Using std::exit() for everything is lame*/ \
+        return 0;                                                                                                                   \
+    } enum{} // force semicolon
 

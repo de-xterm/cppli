@@ -31,13 +31,13 @@ namespace cppli {
             else if (!parse_ret.printed_help) {
                 const auto& commands_vec = parse_ret.subcommands;
 
-#ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
-                for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
-                    if(detail::subcommand_name_to_error_checking_func().contains(command.name)) {
-                        (detail::subcommand_name_to_error_checking_func()[command.name])(command);
+                #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+                    for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
+                        if(detail::subcommand_name_to_error_checking_func().contains(command.name)) {
+                            (detail::subcommand_name_to_error_checking_func()[command.name])(command);
+                        }
                     }
-                }
-#endif
+                #endif
 
 
                 bool runnable_command_found = false;
@@ -52,8 +52,7 @@ namespace cppli {
                     detail::last_subcommand_ = commands_vec[i - 1].name;
                     if ((detail::subcommand_name_to_func().contains(commands_vec[i].name))) {
                         runnable_command_found = true;
-                        (detail::subcommand_name_to_func()[commands_vec[i].name])(commands_vec[i],
-                                                                                  {(i == commands_vec.size() - 1)});
+                        (detail::subcommand_name_to_func()[commands_vec[i].name])(commands_vec[i], {(i == commands_vec.size() - 1)});
                     }
                 }
 
@@ -62,13 +61,12 @@ namespace cppli {
                     // TODO: print help here?
                 }
             }
-
         }
 
         void run_impl_(int argc, const char* const* argv) {
             run_impl_(argv_to_arg_vec(argc, argv));
         }
-
+    }
 
     #ifdef _WIN32
         std::vector<std::string> wmain_utf16_argv_to_utf8(int argc, wchar_t** argv) {
@@ -79,7 +77,7 @@ namespace cppli {
             ret.resize(argc);
             for (unsigned i = 0; i < argc; ++i) {
                 /// two memcpy calls to convert utf16 to utf8 IN ADDITION to using functions from a utility library. Absolute state of C++
-                /// if there is a better way to do this, please let me know (if std::start_lifetime_as ever gets implemented, it could be used to reduce copies)
+                /// if there is a better way to do this, please let me know (if std::start_lifetime_as ever gets implemented, it could be used to reduce the number of copies)
                 auto wstr = std::wstring_view(argv[i]);
 
                 std::u16string u16string;
@@ -94,6 +92,5 @@ namespace cppli {
             return ret; //nrvo
         }
     #endif
-    }
 }
 
