@@ -15,14 +15,7 @@ CPPLI_MAIN_COMMAND( // define a callback that will be called when the program is
                    ) { // body of the callback function
 
     std::cout << input << '\n'; // the actual functionality goes here
+    // unfortunately, this example does not support unicode on windows (though unicode printing is possible in general with a bit of boilerplate
 }
 
-int main(int argc, char** argv) {
-    try { // catch any exceptions thrown during parsing
-                    // program name
-        cppli::run<"echo", "write the given argument to stdout">(argc, argv);
-    }                      // program description
-    catch(cppli::user_error& e) {
-        std::cerr << e.what() << '\n';
-    }
-}
+CPPLI_DEFINE_MAIN_FUNCTION("echo", "write the provided argument to stdout");
