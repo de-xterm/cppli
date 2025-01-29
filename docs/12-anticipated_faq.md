@@ -29,6 +29,6 @@ The only C++20 feature that I really _needed_ was `__VA_OPT__`, but I also use `
 
 **Does cppli support unicode**  
 yes!  
-all `char*`s and `std::string`s in the codebase are UTF-8. On windows, `CPPLI_MAIN_FUNCTION` calls `wmain` and the UTF-16 strings in `argv` are automatically converted to UTF-8. 
+all `char*`s and `std::string`s in the codebase are UTF-8. On windows, `CPPLI_DEFINE_MAIN_FUNCTION` calls `wmain` and the UTF-16 strings in `argv` are automatically converted to UTF-8. 
 If you're supplying your own `main`, use `wmain` on windows and use [`wmain_utf16_argv_to_utf8`](../include/cppli/run.h) to convert the UTF-16 argv provided by `wmain` to UTF-8 
 Note that it's still your responsibility to ensure that you use stdin and stdout in a unicode-friendly way
