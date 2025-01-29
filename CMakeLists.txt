@@ -37,16 +37,16 @@ target_link_libraries(testexe-singleheader PRIVATE Catch2::Catch2)
 add_test(Test testexe)
 add_test(Test-singleheader testexe-singleheader)
 
-### EXECUTABLES FOR EXAMPLES ###
+### EXECUTABLES FOR EXAMPLES ### TODO: move to a different CMakeLists.txt
 
 add_executable(echo examples/0-echo.cpp)
-target_include_directories(echo PRIVATE single_header)
+target_include_directories(echo PRIVATE single-header)
 
 add_executable(add examples/1-add.cpp)
-target_include_directories(add PRIVATE single_header)
+target_include_directories(add PRIVATE single-header)
 
 add_executable(filemanager examples/2-file_manager.cpp)
-target_include_directories(filemanager PRIVATE single_header)
+target_include_directories(filemanager PRIVATE single-header)
 
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")

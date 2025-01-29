@@ -26,8 +26,8 @@ def err(*args, **kwargs):
     exit(1)
 
 
-input_header_path  = "./cppli_single_header.h"
-output_header_path = "../single_header/cppli.h"
+input_header_path  = "./cppli_single_header_source.h"
+output_header_path = "../single-header/cppli.h"
 public_include_dirs       = ["../include/cppli", "../src/"]
 private_include_dirs       = ["../include/cppli/detail", "../lib/iro", "../lib/ori", "../lib/utfcpp/source"]
 

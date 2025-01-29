@@ -5,7 +5,7 @@
 //included from file "../include/cppli\command_macros.h"
 
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail/subcommand_macros.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail/subcommand_macros.h"
 
 namespace cppli::detail {
 
@@ -70,10 +70,10 @@ namespace cppli::detail {
 }
 //end of "detail/subcommand_macros.h" include
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail/command_registration.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail/command_registration.h"
 
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail\subcommand.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail\subcommand.h"
 
 #include <vector>
 #include <unordered_set>
@@ -85,7 +85,7 @@ namespace cppli::detail {
 #include <iostream>
 
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail\parameter_types.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail\parameter_types.h"
 
 #include <cstdint>
 #include <unordered_map>
@@ -94,7 +94,7 @@ namespace cppli::detail {
 #include <stdexcept>
 
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail\constexpr_string_literal.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail\constexpr_string_literal.h"
 
 #include <algorithm>
 
@@ -365,7 +365,7 @@ namespace cppli {
 }
 //end of "constexpr_string_literal.h" include
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail\conversions.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail\conversions.h"
 
 #include <string>
 #include <stdexcept>
@@ -373,7 +373,7 @@ namespace cppli {
 #include <filesystem>
 
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail\user_error.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail\user_error.h"
 
 #include <stdexcept>
 #include <variant>
@@ -381,7 +381,7 @@ namespace cppli {
 
 
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail\template_utils.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail\template_utils.h"
 
 #include <type_traits>
 
@@ -996,7 +996,7 @@ namespace cppli {
 }
 //end of "subcommand.h" include
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail\documentation.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail\documentation.h"
 
 #include <string>
 
@@ -1100,7 +1100,7 @@ namespace cppli {
 }
 //end of "documentation.h" include
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail\configuration.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail\configuration.h"
 
 #include <string>
 #include <unordered_map>
@@ -1126,7 +1126,7 @@ namespace cppli {
 }
 //end of "configuration.h" include
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail\process_argument.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail\process_argument.h"
 
 
 namespace cppli::detail {
@@ -1482,7 +1482,7 @@ namespace cppli::detail {
 
 //end of "process_argument.h" include
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\include\cppli\detail\argument_processing_checks.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\include\cppli\detail\argument_processing_checks.h"
 
 namespace cppli::detail {
     template<std::size_t current_index, std::size_t max_index, typename arg_t, typename...arg_ts>
@@ -1957,13 +1957,11 @@ namespace cppli {
 
 
 namespace cppli {
-
     namespace detail {
         void run_impl_(const std::vector<std::string>& arg_vec);
         void run_impl_(int argc, const char* const* argv);
 
         template<string_literal program_name, string_literal description> // TODO: put run in its own file
-
         void set_program_name_and_description_() {
             static_assert(detail::all_lowercase_numeral_or_hyphen<program_name>(), "command names can only contain lowercase characters, numerals, and hyphens");
 
@@ -1974,14 +1972,14 @@ namespace cppli {
         }
     }
 
-    template<string_literal program_name, string_literal description> // TODO: put run in its own file
+    template<string_literal program_name, string_literal description>
     void run(const std::vector<std::string>& arg_vec) {
-        set_program_name_and_description_<program_name, description>();
+        detail::set_program_name_and_description_<program_name, description>();
 
         detail::run_impl_(arg_vec);
     }
 
-    template<string_literal program_name, string_literal description> // TODO: put run in its own file
+    template<string_literal program_name, string_literal description>
     void run(int argc, const char* const* argv) {
         set_program_name_and_description_<program_name, description>();
 
@@ -1989,45 +1987,35 @@ namespace cppli {
     }
 
     #ifdef _WIN32
-        std::vector<std::string> wmain_utf16_argv_to_utf8(int argc, wchar_t **argv);
+        std::vector<std::string> wmain_utf16_argv_to_utf8(int argc, wchar_t** argv);
+
+        #define cPPLI_internal_CONVERT_UTF16_IF_WINDOWS(ARGC, ARGV) cppli::wmain_utf16_argv_to_utf8(ARGC, ARGV)
+        #define cPPLI_internal_MAIN_FUNCTION_HEADER int wmain(int argc, wchar_t *argv[])
+    #else
+        #define cPPLI_internal_CONVERT_UTF16_IF_WINDOWS(ARGC, ARGV) ARGC, ARGV
+        #define cPPLI_internal_MAIN_FUNCTION_HEADER(ARGC, ARGV) int main(int argc, char** argv)
     #endif
 }
 
-
-#ifdef _WIN32
-    #define CPPLI_MAIN_FUNCTION(PROGRAM_NAME, PROGRAM_DESCRIPTION)                                                                      \
-        int int wmain(int argc, wchar_t *argv[]) {                                                                                      \
-            try {                                                                                                                       \
-                run<PROGRAM_NAME, PROGRAM_DESCRIPTION>(wmain_utf16_argv_to_utf8(argc, argv));                                           \
-            }                                                                                                                           \
-            catch(cppli::user_error& e) {                                                                                               \
-                std::cerr << e.what() << '\n';                                                                                          \
-                return -1;                                                                                                              \
-            }                                                                                                                           \
-            /*TODO: I really need to add support for return codes and have run() return one. Using std::exit() for everything is lame*/ \
-            return 0;                                                                                                                   \
-        }
-#else
-    #define CPPLI_MAIN_FUNCTION(PROGRAM_NAME, PROGRAM_DESCRIPTION)                                                                      \
-        int int wmain(int argc, wchar_t *argv[]) {                                                                                      \
-            try {                                                                                                                       \
-                run<PROGRAM_NAME, PROGRAM_DESCRIPTION>(argc, argv);                                                                     \
-            }                                                                                                                           \
-            catch(cppli::user_error& e) {                                                                                               \
-                std::cerr << e.what() << '\n';                                                                                          \
-                return -1;                                                                                                              \
-            }                                                                                                                           \
-            /*TODO: I really need to add support for return codes and have run() return one. Using std::exit() for everything is lame*/ \
-            return 0;                                                                                                                   \
-        }
-#endif
+#define CPPLI_DEFINE_MAIN_FUNCTION(PROGRAM_NAME, PROGRAM_DESCRIPTION)                                                               \
+    cPPLI_internal_MAIN_FUNCTION_HEADER {                                                                                           \
+        try {                                                                                                                       \
+            cppli::run<PROGRAM_NAME, PROGRAM_DESCRIPTION>(cPPLI_internal_CONVERT_UTF16_IF_WINDOWS(argc, argv));                     \
+        }                                                                                                                           \
+        catch(cppli::user_error& e) {                                                                                               \
+            std::cerr << e.what() << '\n';                                                                                          \
+            return -1;                                                                                                              \
+        }                                                                                                                           \
+        /*TODO: I really need to add support for return codes and have run() return one. Using std::exit() for everything is lame*/ \
+        return 0;                                                                                                                   \
+    } enum{} // force semicolon
 
 
 //end of "run.h" include
 
 #ifdef CPPLI_IMPLEMENTATION
-    #define IRO_IMPL 
-    #define ORI_IMPL
+    #define IRO_IMPL // necessary because if an include that isn't preceded by #define *_IMPL is expanded before the include that *is* preceded by it,
+    #define ORI_IMPL // the automatic header guard will kick in and prevent the file from being expanded again, preventing the implementation from being pasted in, which will cause undefined reference errors
 
 //included from file "../src/configuration.cpp"
 
@@ -2404,7 +2392,7 @@ namespace iro {
          * This means that the escape codes to undo the effects are
          *
          * You need to make absolutely sure that you don't modify any iro state between the call to unsafe_string and the resultant string being printed to the given stream
-         * And (obviously), don't print the returned string to a stream other than the one you said you were going to print it to
+         * And (obviously), don't print the returned string to a stream othere than the one you said you were going to print it to
          *
          * You should really only use this function if you need to interface with a different printing library
          *
@@ -4454,7 +4442,7 @@ If you leave UTF_CPP_CPLUSPLUS undefined, it will be internally assigned to __cp
 */
 
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\lib\utfcpp\source\utf8/checked.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\lib\utfcpp\source\utf8/checked.h"
 // Copyright 2006-2016 Nemanja Trifunovic
 
 /*
@@ -4486,7 +4474,7 @@ DEALINGS IN THE SOFTWARE.
 #define UTF8_FOR_CPP_CHECKED_H_2675DCD0_9480_4c0c_B92A_CC14C027B731
 
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\lib\utfcpp\source\utf8\core.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\lib\utfcpp\source\utf8\core.h"
 // Copyright 2006 Nemanja Trifunovic
 
 /*
@@ -5311,7 +5299,7 @@ namespace utf8
 
 #if UTF_CPP_CPLUSPLUS >= 202002L // C++ 20 or later
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\lib\utfcpp\source\utf8\cpp20.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\lib\utfcpp\source\utf8\cpp20.h"
 // Copyright 2022 Nemanja Trifunovic
 
 /*
@@ -5343,7 +5331,7 @@ DEALINGS IN THE SOFTWARE.
 #define UTF8_FOR_CPP_207e906c01_03a3_4daf_b420_ea7ea952b3c9
 
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\lib\utfcpp\source\utf8\cpp17.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\lib\utfcpp\source\utf8\cpp17.h"
 // Copyright 2018 Nemanja Trifunovic
 
 /*
@@ -5375,7 +5363,7 @@ DEALINGS IN THE SOFTWARE.
 #define UTF8_FOR_CPP_7e906c01_03a3_4daf_b420_ea7ea952b3c9
 
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\lib\utfcpp\source\utf8\cpp11.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\lib\utfcpp\source\utf8\cpp11.h"
 // Copyright 2018 Nemanja Trifunovic
 
 /*
@@ -5618,7 +5606,7 @@ namespace utf8
 
 //end of "utf8/checked.h" include
 
-//included from file "C:\programming\p2pft\clip2pft\lib\cppli\tools\..\lib\utfcpp\source\utf8/unchecked.h"
+//included from file "C:\programming\hitoribooru\hitoribooru-cli\lib\cppli\single-header-amalgamation\..\lib\utfcpp\source\utf8/unchecked.h"
 // Copyright 2006 Nemanja Trifunovic
 
 /*
@@ -5936,13 +5924,13 @@ namespace cppli {
             else if (!parse_ret.printed_help) {
                 const auto& commands_vec = parse_ret.subcommands;
 
-#ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
-                for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
-                    if(detail::subcommand_name_to_error_checking_func().contains(command.name)) {
-                        (detail::subcommand_name_to_error_checking_func()[command.name])(command);
+                #ifdef CPPLI_FULL_ERROR_CHECKING_BEFORE_RUN
+                    for(const auto& command : commands_vec) { // throws if any errors would occur calling the given commands, without actually calling them
+                        if(detail::subcommand_name_to_error_checking_func().contains(command.name)) {
+                            (detail::subcommand_name_to_error_checking_func()[command.name])(command);
+                        }
                     }
-                }
-#endif
+                #endif
 
 
                 bool runnable_command_found = false;
@@ -5957,8 +5945,7 @@ namespace cppli {
                     detail::last_subcommand_ = commands_vec[i - 1].name;
                     if ((detail::subcommand_name_to_func().contains(commands_vec[i].name))) {
                         runnable_command_found = true;
-                        (detail::subcommand_name_to_func()[commands_vec[i].name])(commands_vec[i],
-                                                                                  {(i == commands_vec.size() - 1)});
+                        (detail::subcommand_name_to_func()[commands_vec[i].name])(commands_vec[i], {(i == commands_vec.size() - 1)});
                     }
                 }
 
@@ -5967,24 +5954,23 @@ namespace cppli {
                     // TODO: print help here?
                 }
             }
-
         }
 
         void run_impl_(int argc, const char* const* argv) {
             run_impl_(argv_to_arg_vec(argc, argv));
         }
-
+    }
 
     #ifdef _WIN32
         std::vector<std::string> wmain_utf16_argv_to_utf8(int argc, wchar_t** argv) {
             static_assert(sizeof(wchar_t) == sizeof(char16_t), "paranoia size check. This assert should never fail");
-            static_assert(sizeof(wchar_t) * CHAR_BIT == 16, "paranoia size check. This assert should never fail");
+            static_assert(sizeof(wchar_t) * CHAR_BIT == 16,    "paranoia size check. This assert should never fail");
 
             std::vector<std::string> ret;
             ret.resize(argc);
             for (unsigned i = 0; i < argc; ++i) {
                 /// two memcpy calls to convert utf16 to utf8 IN ADDITION to using functions from a utility library. Absolute state of C++
-                /// if there is a better way to do this, please let me know (if std::start_lifetime_as ever gets implemented, it could be used to reduce copies)
+                /// if there is a better way to do this, please let me know (if std::start_lifetime_as ever gets implemented, it could be used to reduce the number of copies)
                 auto wstr = std::wstring_view(argv[i]);
 
                 std::u16string u16string;
@@ -5999,7 +5985,6 @@ namespace cppli {
             return ret; //nrvo
         }
     #endif
-    }
 }
 
 
