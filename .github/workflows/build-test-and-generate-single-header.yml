@@ -13,7 +13,7 @@ on:
 
 jobs:
   build-and-test:
-    uses: de-xterm/cppli/.github/workflows/build-and-test.yaml@main
+    uses: original-picture/cppli/.github/workflows/build-and-test.yaml@main
   
   amalgamate-and-commit:
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
         
   single-header-build-and-test:
     needs: amalgamate-and-commit
-    uses: de-xterm/cppli/.github/workflows/build-and-test.yaml@main
+    uses: original-picture/cppli/.github/workflows/build-and-test.yaml@main
     with:
       test-name-suffix: '-singleheader'
   
