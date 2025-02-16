@@ -2,7 +2,9 @@ name: Build and test
 
 on:
   push:
-    branches: [ "main", "devel" ]
+    branches:
+      - "main"
+      - "devel"
     paths-ignore:
     - 'docs/**'
     - 'single_header/cppli.h'
