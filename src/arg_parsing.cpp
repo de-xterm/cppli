@@ -186,7 +186,7 @@ namespace cppli::detail {
                                            << "\" given to " << command_or_subcommand << ' ' << current_subcommand_name_string
                                            << " referred to an option with a required argument, but no argument followed\n";
 
-                                        throw user_error(ss.str(), OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
+                                        throw cli_error(ss.str(), OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
                                     }
                                 }
                             }
@@ -242,7 +242,7 @@ namespace cppli::detail {
                                               "given to " << command_or_subcommand << ' ' << current_subcommand_name_string
                                            << " referred to an option with a required argument, but no argument followed\n";
 
-                                        throw user_error(ss.str(), OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
+                                        throw cli_error(ss.str(), OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED);
                                     }
                                 }
                             }

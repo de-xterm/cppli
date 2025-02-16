@@ -4,7 +4,7 @@
 #include "iro.h"
 
 #include "configuration.h"
-#include "user_error.h"
+#include "cli_error.h"
 
 namespace cppli {
     namespace detail {
@@ -12,7 +12,7 @@ namespace cppli {
                                        const std::string& print_if_error_or_mesasge,
                                        const std::string& print_only_if_message) {
             if(get_minor_error_behavior(error_type) == THROW) {
-                throw user_error(print_if_error_or_mesasge, error_type);
+                throw cli_error(print_if_error_or_mesasge, error_type);
             }
             else if(get_minor_error_behavior(error_type) == MESSAGE) {
                 std::cerr << iro::bright_yellow << iro::effect_string(iro::bold|iro::underlined, "Warning:") << ' ' << print_if_error_or_mesasge << print_only_if_message;

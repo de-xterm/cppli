@@ -4,8 +4,9 @@
 #include <variant>
 #include <cstdint>
 
-
 #include "template_utils.h"
+
+#include "error.h"
 
 namespace cppli {
     namespace detail {
@@ -30,11 +31,13 @@ namespace cppli {
         OPTION_REQUIRED_ARGUMENT_NOT_PROVIDED,
         REQUIRED_OPTION_NOT_PROVIDED,
         REQUIRED_POSITIONAL_NOT_PROVIDED,
+        NO_RUNNABLE_COMMAND_FOUND,
 
         NUMBER_OF_MAJOR_ERROR_TYPES
     };
 
-    class user_error : public std::runtime_error {
+                              // use namespace for clarity
+class cli_error : public cppli::error { // TODO: rename to cli_error?
     public:
         using error_variant_t = std::variant<minor_error_type,
                                              major_error_type>;
@@ -42,16 +45,32 @@ namespace cppli {
     private:
         error_variant_t error_variant_;
 
+        inline static constexpr int minor_error_reserved_codes_count = 1024, // error codes [-1,   -1024] are reserved for minor error
+                                    major_error_reserved_codes_count = 1024; // error codes [-1025,-2048] are reserved for major errors
+
+    int convert_error_enum_to_error_code(minor_error_type e) {
+        return -int(e);
+    }
+
+    int convert_error_enum_to_error_code(major_error_type e) {
+        return minor_error_reserved_codes_count-int(e);
+    }
+
     public:
-        user_error(const std::string& what, minor_error_type e);
-        user_error(const std::string& what, major_error_type e);
-        user_error(const std::string& what, const error_variant_t& e);
+        cli_error(const std::string& what, minor_error_type e);
+        cli_error(const std::string& what, major_error_type e);
+        cli_error(const std::string& what, const error_variant_t& e);
+
 
         const error_variant_t& error_type() const;
     };
 
+    std::ostream& print_fancy_error(std::ostream& os, const std::string& what);
+
     /// same as what(), but the printed string has pretty effects and includes an "Error: " prefix
-    std::ostream& operator<<(std::ostream& os, const user_error& err);
+    std::ostream& operator<<(std::ostream& os, const cli_error& err);
+
+
 
     namespace detail {
         template<typename T, typename...variant_ts>
@@ -70,7 +89,7 @@ namespace cppli {
 
         template<typename...Types, typename T>
         auto operator==(const std::variant<Types...>& v, T const& t) noexcept
-        -> std::enable_if_t<is_one_of<T, Types...>::value, bool> {
+        -> std::enable_if_t<is_one_of<T, Types...>::value, bool> { // TODO: re-implement using concepts
 
             return is_a<T>(v) &&
                    (std::get<T>(v) == t);

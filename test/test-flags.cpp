@@ -17,7 +17,7 @@ static bool foo_flag;
 static bool bar_flag;
 static bool baz_flag;
 
-// TODO: add test case for trying to give an option an argument throwing a user_error
+// TODO: add test case for trying to give an option an argument throwing a cli_error
 
 CPPLI_SUBCOMMAND(flagtest,
                  "takes some flags",
@@ -127,41 +127,41 @@ TEST_CASE("passing invalid characters in flag groups throws") {
     SECTION("with random numbers") {
         const char* argv[] = {"program", "flagtest", "-fbz34239"};
 
-        REQUIRE_THREW(cppli::user_error, INVALID_FLAG, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(cppli::cli_error, INVALID_FLAG, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 
     SECTION("with equals and non-empty argument") {
         const char* argv[] = {"program", "flagtest", "-fbz=foo"};
 
-        REQUIRE_THREW(cppli::user_error, FLAG_GIVEN_AN_ARGUMENT, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(cppli::cli_error, FLAG_GIVEN_AN_ARGUMENT, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
 
     }
 
     SECTION("with equals and empty argument") {
         const char* argv[] = {"program", "flagtest", "-fbz="};
 
-        REQUIRE_THREW(cppli::user_error, FLAG_GIVEN_AN_ARGUMENT, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(cppli::cli_error, FLAG_GIVEN_AN_ARGUMENT, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 }
 
 TEST_CASE("repeated flag throw error") {
     {
         const char* argv[] = {"program", "flagtest", "--foo", "--foo"};
-        REQUIRE_THREW(cppli::user_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(cppli::cli_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 
     {
         const char* argv[] = {"program", "flagtest", "--foo", "-f"};
-        REQUIRE_THREW(cppli::user_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(cppli::cli_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 
     {
         const char* argv[] = {"program", "flagtest", "-f", "-f"};
-        REQUIRE_THREW(cppli::user_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(cppli::cli_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 
     {
         const char* argv[] = {"program", "flagtest", "-ff"};
-        REQUIRE_THREW(cppli::user_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(cppli::cli_error, FLAG_INCLUDED_MULTIPLE_TIMES, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 }

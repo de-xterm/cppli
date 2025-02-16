@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
         // program name
         cppli::run<"add", "adds two numbers together">(argc, argv);
     }                      // program description
-    catch(cppli::user_error& e) {
+    catch(cppli::cli_error& e) {
         std::cerr << e.what() << '\n';
     }
 }

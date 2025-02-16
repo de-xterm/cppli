@@ -1,6 +1,6 @@
 # Errors
-CPPLI uses exceptions for errors. All exceptions are of the type `cppli::user_error` (user as in user of the commandline, not user of the library)
-which is derived from `std::runtime_error`. `user_error` has a member function `error_type()` that can be used to query what kind error caused an exception
+CPPLI uses exceptions for errors. All exceptions are of the type `cppli::cli_error` (user as in user of the commandline, not user of the library)
+which is derived from `std::runtime_error`. `cli_error` has a member function `error_type()` that can be used to query what kind error caused an exception
 
 ## String conversion errors and full vs progressive error checking
 A string conversion error occurs when a user provided string cannot be converted to the appropriate type for a callback parameter.  
@@ -30,7 +30,7 @@ The behavior when encountering a nonfatal error can be configured by assigning t
 This can be set to one of the following enumerators:
   
 `THROW`  
-throw a `user_error` explaining what happened
+throw a `cli_error` explaining what happened
   
 `MESSAGE`  
 print a message to stderr explaining what happened  

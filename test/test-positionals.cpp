@@ -44,7 +44,7 @@ TEST_CASE("required positionals are assigned correctly") {
 
     SECTION("not including a required positional throws") {
         const char* argv[] = {"program", "postest"};
-        REQUIRE_THREW(user_error, REQUIRED_POSITIONAL_NOT_PROVIDED, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
+        REQUIRE_THREW(cli_error, REQUIRED_POSITIONAL_NOT_PROVIDED, (cppli::run<"program", "does stuff">(lengthof(argv), argv)));
     }
 }
 

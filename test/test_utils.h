@@ -5,7 +5,7 @@
 #ifdef CPPLI_SINGLE_HEADER
     #include "cppli.h"
 #else
-    #include "cppli/detail/user_error.h"
+    #include "cppli/detail/cli_error.h"
 #endif
 
 namespace cppli::detail {

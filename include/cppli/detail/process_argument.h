@@ -14,8 +14,8 @@ namespace cppli::detail {
                     return conversion_t_()(
                             subcommand.inputs.positional_args[cumulative_positional_index]);
                 }
-                catch (user_error& e) {
-                    throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
+                catch (cli_error& e) {
+                    throw cli_error("Error initializing " + main_command_or_subcommand + " \"" +
                                      to_string(subcommand.name) + "\" positional argument \"" +
                                      long_name + "\". Details: " + e.what(), e.error_type());
                 }
@@ -26,7 +26,7 @@ namespace cppli::detail {
         }
         else {
             if ((cumulative_positional_index >= subcommand.inputs.positional_args.size())) {
-                throw user_error(main_command_or_subcommand + " \"" + to_string(subcommand.name) +
+                throw cli_error(main_command_or_subcommand + " \"" + to_string(subcommand.name) +
                                  "\" required positional argument \"" + long_name +
                                  "\" was not provided (expected an argument of type " +
                                  conversion_t_::type_string.string() + ')',
@@ -37,8 +37,8 @@ namespace cppli::detail {
                     return conversion_t_()(
                             subcommand.inputs.positional_args[cumulative_positional_index]);
                 }
-                catch (user_error& e) {
-                    throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
+                catch (cli_error& e) {
+                    throw cli_error("Error initializing " + main_command_or_subcommand + " \"" +
                                      to_string(subcommand.name) + "\" positional argument \"" +
                                      long_name + "\". Details: " + e.what(), e.error_type());
                 }
@@ -55,8 +55,8 @@ namespace cppli::detail {
             try {
                 ret.emplace_back(conversion_t_()(subcommand.inputs.positional_args[i]));
             }
-            catch (user_error& e) {
-                throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
+            catch (cli_error& e) {
+                throw cli_error("Error initializing " + main_command_or_subcommand + " \"" +
                                  to_string(subcommand.name) + "\" variadic argument pack \"" +
                                  long_name + "\" at argument index " + std::to_string(i) +
                                  ". Details: " + e.what(), e.error_type());
@@ -73,7 +73,7 @@ namespace cppli::detail {
         if (!subcommand.inputs.options_to_values.contains(long_name) &&
             (!short_name || !subcommand.inputs.options_to_values.contains(*short_name))) {
 
-            throw user_error(main_command_or_subcommand + " \"" + to_string(subcommand.name) +
+            throw cli_error(main_command_or_subcommand + " \"" + to_string(subcommand.name) +
                              "\" was not provided with required option \"" + long_name + '"',
                              REQUIRED_OPTION_NOT_PROVIDED);
         }
@@ -82,7 +82,7 @@ namespace cppli::detail {
                  (short_name && subcommand.inputs.options_to_values.contains(*short_name) &&
                   !subcommand.inputs.options_to_values.at(*short_name).has_value())) {
 
-            throw user_error(
+            throw cli_error(
                     main_command_or_subcommand + " \"" + to_string(subcommand.name) + "\" option \""
                     + long_name + "\" requires an argument, but one was not provided "
                                        "(expected an argument of type "
@@ -95,8 +95,8 @@ namespace cppli::detail {
                 try {
                     return conversion_t_()(*subcommand.inputs.options_to_values.at(long_name));
                 }
-                catch (user_error& e) {
-                    throw user_error("Error initializing " + main_command_or_subcommand + " \""
+                catch (cli_error& e) {
+                    throw cli_error("Error initializing " + main_command_or_subcommand + " \""
                                      + to_string(subcommand.name) + "\" option \"" +
                                      long_name + "\". Details: " + e.what(), e.error_type());
                 }
@@ -105,8 +105,8 @@ namespace cppli::detail {
                 try {
                     return conversion_t_()(*subcommand.inputs.options_to_values.at(*short_name));
                 }
-                catch (user_error& e) {
-                    throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
+                catch (cli_error& e) {
+                    throw cli_error("Error initializing " + main_command_or_subcommand + " \"" +
                                      to_string(subcommand.name) + "\" option \"" + *short_name +
                                      "\" (full name \"" + long_name + "\"). Details: " +
                                      e.what(), e.error_type());
@@ -123,7 +123,7 @@ namespace cppli::detail {
         if (subcommand.inputs.options_to_values.contains(long_name)) {
             if (!subcommand.inputs.options_to_values.at(
                     long_name).has_value()) { // TODO: aren't we doing this check in arg_parsing.cpp too?
-                throw user_error(main_command_or_subcommand + to_string(subcommand.name) +
+                throw cli_error(main_command_or_subcommand + to_string(subcommand.name) +
                                  "\" option \"" + long_name + "\" "
                                                                    "requires an argument, but one was not provided (expected an argument of type "
                                  +
@@ -138,8 +138,8 @@ namespace cppli::detail {
                     return conversion_t_()(*subcommand.inputs.options_to_values.at(
                             long_name)); // no need for has_value check here; returning an empty optional is valid
                 }
-                catch (user_error& e) {
-                    throw user_error(
+                catch (cli_error& e) {
+                    throw cli_error(
                             "Error initializing " + main_command_or_subcommand + " \"" +
                             to_string(subcommand.name) + "\" option \"" + long_name +
                             "\". Details: " + e.what(), e.error_type());
@@ -149,7 +149,7 @@ namespace cppli::detail {
         else if (short_name && subcommand.inputs.options_to_values.contains(
                 *short_name)) { // TODO: evaluating short_name could use if constexpr
             if (!subcommand.inputs.options_to_values.at(*short_name).has_value()) {
-                throw user_error(main_command_or_subcommand + to_string(subcommand.name) +
+                throw cli_error(main_command_or_subcommand + to_string(subcommand.name) +
                                  "\" option \"" + *short_name + "\" (full name \"" +
                                  long_name + "\") "
                                                   "requires an argument, but one was not provided (expected an argument of type "
@@ -163,8 +163,8 @@ namespace cppli::detail {
                     return conversion_t_()(*subcommand.inputs.options_to_values.at(
                             *short_name)); // no need for has_value check here; returning an empty optional is valid
                 }
-                catch (user_error& e) {
-                    throw user_error(
+                catch (cli_error& e) {
+                    throw cli_error(
                             "Error initializing " + main_command_or_subcommand + " \"" +
                             to_string(subcommand.name) + "\" option \"" + *short_name +
                             "\" (full name \"" + long_name + "\"). Details: " + e.what(),
@@ -188,8 +188,8 @@ namespace cppli::detail {
                     return conversion_t_()(*subcommand.inputs.options_to_values.at(
                             long_name)); // no need for has_value check here; returning an empty optional is valid
                 }
-                catch (user_error& e) {
-                    throw user_error(
+                catch (cli_error& e) {
+                    throw cli_error(
                             "Error initializing " + main_command_or_subcommand + " \"" +
                             to_string(subcommand.name) + "\" option \"" + long_name +
                             "\". Details: " + e.what(), e.error_type());
@@ -204,8 +204,8 @@ namespace cppli::detail {
                 try {
                     return conversion_t_()(*subcommand.inputs.options_to_values.at(*short_name));
                 }
-                catch (user_error& e) {
-                    throw user_error(
+                catch (cli_error& e) {
+                    throw cli_error(
                             "Error initializing " + main_command_or_subcommand + " \"" +
                             to_string(subcommand.name) + "\" option \"" + *short_name +
                             "\" (full name \"" + long_name + "\"). Details: " +
@@ -231,8 +231,8 @@ namespace cppli::detail {
                 return {subcommand.inputs.options_to_values.at(
                         long_name)}; // no need for has_value check here; returning an empty optional is valid
             }
-            catch (user_error& e) {
-                throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
+            catch (cli_error& e) {
+                throw cli_error("Error initializing " + main_command_or_subcommand + " \"" +
                                  to_string(subcommand.name) + "\" option \"" + long_name +
                                  "\". Details: " + e.what(), e.error_type());
             }
@@ -242,8 +242,8 @@ namespace cppli::detail {
                 return {subcommand.inputs.options_to_values.at(
                         *short_name)}; // no need for has_value check here; returning an empty optional is valid
             }
-            catch (user_error& e) {
-                throw user_error("Error initializing " + main_command_or_subcommand + " \"" +
+            catch (cli_error& e) {
+                throw cli_error("Error initializing " + main_command_or_subcommand + " \"" +
                                  to_string(subcommand.name) + "\" option \"" + *short_name +
                                  "\" (full name \"" + long_name + "\"). Details: " + e.what(),
                                  e.error_type());

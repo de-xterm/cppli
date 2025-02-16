@@ -2,7 +2,7 @@
 
 #include "subcommand.h"
 #include "documentation.h"
-#include "user_error.h"
+#include "cli_error.h"
 #include "configuration.h"
 #include "template_utils.h"
 #include "process_argument.h"

@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
     /*try {
         cppli::run<"program", "does stuff">(argc, argv);
     }
-    catch(cppli::user_error& e) {
+    catch(cppli::cli_error& e) {
         std::cerr << e << '\n';
     }*/
 

@@ -12,7 +12,7 @@
     #include "arg_parsing.cpp"
     #include "documentation.cpp"
     #include "subcommand.cpp"
-    #include "user_error.cpp"
+    #include "cli_error.cpp"
     #include "command_registration.cpp"
     #include "command_macros.cpp"
     #include "run.cpp"
