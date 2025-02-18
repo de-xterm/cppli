@@ -32,14 +32,17 @@ namespace cppli {
         return detail::run_impl_(argc, argv);
     }
 
+
     #ifdef _WIN32
         std::vector<std::string> wmain_utf16_argv_to_utf8(int argc, wchar_t** argv);
 
         #define cPPLI_internal_CONVERT_UTF16_IF_WINDOWS(ARGC, ARGV) cppli::wmain_utf16_argv_to_utf8(ARGC, ARGV)
         #define cPPLI_internal_MAIN_FUNCTION_HEADER int wmain(int argc, wchar_t *argv[])
     #else
-        #define cPPLI_internal_CONVERT_UTF16_IF_WINDOWS(ARGC, ARGV) ARGC, ARGV
-        #define cPPLI_internal_MAIN_FUNCTION_HEADER(ARGC, ARGV) int main(int argc, char** argv)
+        std::vector<std::string> argv_to_arg_vec(int argc, char** argv);
+
+        #define cPPLI_internal_CONVERT_UTF16_IF_WINDOWS(ARGC, ARGV) argc_argv_to_string_vec(ARGC, ARGV)
+        #define cPPLI_internal_MAIN_FUNCTION_HEADER int main(int argc, char** argv)
     #endif
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "subcommand.h"
+#include "command.h"
 #include "documentation.h"
 #include "cli_error.h"
 #include "configuration.h"

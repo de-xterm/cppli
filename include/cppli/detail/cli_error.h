@@ -37,7 +37,7 @@ namespace cppli {
     };
 
                               // use namespace for clarity
-class cli_error : public cppli::error { // TODO: rename to cli_error?
+class cli_error : public cppli::detail::error { // TODO: rename to cli_error?
     public:
         using error_variant_t = std::variant<minor_error_type,
                                              major_error_type>;
@@ -47,14 +47,6 @@ class cli_error : public cppli::error { // TODO: rename to cli_error?
 
         inline static constexpr int minor_error_reserved_codes_count = 1024, // error codes [-1,   -1024] are reserved for minor error
                                     major_error_reserved_codes_count = 1024; // error codes [-1025,-2048] are reserved for major errors
-
-    int convert_error_enum_to_error_code(minor_error_type e) {
-        return -int(e);
-    }
-
-    int convert_error_enum_to_error_code(major_error_type e) {
-        return minor_error_reserved_codes_count-int(e);
-    }
 
     public:
         cli_error(const std::string& what, minor_error_type e);

@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "subcommand.h"
+#include "command.h"
 
 namespace cppli {
     enum documentation_verbosity {

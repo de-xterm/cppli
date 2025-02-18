@@ -1,6 +1,6 @@
 #pragma once
 
-#include "subcommand.h"
+#include "command.h"
 
 namespace cppli::detail {
     struct parse_ret_t {

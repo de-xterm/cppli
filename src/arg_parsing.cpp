@@ -387,24 +387,7 @@ namespace cppli::detail {
         return ret;
     }
 
-    std::vector<std::string> argv_to_arg_vec(int argc, const char* const* argv) {
-        if(argc == 0) {
-            std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argc == 0. This is very terrible and unrecoverable\n";
-            std::exit(-1);
-        }
-        if(!argv[0]) {
-            std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argv[0] was null. This is very terrible and unrecoverable\n";
-            std::exit(-1);
-        }
-
-        std::vector<std::string> arg_vec(argc);
-        for(unsigned i = 0; i < argc; ++i) {
-            arg_vec[i] = argv[i];
-        }
-        return arg_vec;
-    }
-
-    parse_ret_t parse(int argc, const char* const* argv) {
+    /*parse_ret_t parse(int argc, const char* const* argv) {
         return parse(argv_to_arg_vec(argc, argv));
-    }
+    }*/
 }

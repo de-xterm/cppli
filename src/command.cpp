@@ -2,7 +2,7 @@
 #include <tuple>
 #include <sstream>
 
-#include "subcommand.h"
+#include "command.h"
 #include "documentation.h"
 #include "configuration.h"
 

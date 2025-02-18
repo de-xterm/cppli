@@ -4,9 +4,12 @@
                                   // https://github.com/nemtrif/utfcpp/pull/125
 #include "utf8.h"
 
+#include "iro.h"
+
 #include "arg_parsing.h"
 #include "documentation.h"
 #include "command_registration.h"
+
 
 namespace cppli {
     namespace detail {
@@ -62,14 +65,14 @@ namespace cppli {
                     }
                 }
             }
-            catch(cppli::error& e) {
+            catch(cppli::application_error& e) {
                 print_fancy_error(std::cerr, e.what());
-                return e.error_code();
+                return 1; /// by convention, exit code 1 is for application errors https://stackoverflow.com/a/40484670
             }
-        }
-
-        int run_impl_(int argc, const char* const* argv) {
-            return run_impl_(argv_to_arg_vec(argc, argv));
+            catch(cppli::cli_error& e) {
+                print_fancy_error(std::cerr, e.what());
+                return 2; /// by convention, exit code 2 is for command-line errors https://stackoverflow.com/a/40484670
+            }
         }
     }
 
@@ -77,6 +80,15 @@ namespace cppli {
         std::vector<std::string> wmain_utf16_argv_to_utf8(int argc, wchar_t** argv) {
             static_assert(sizeof(wchar_t) == sizeof(char16_t), "paranoia size check. This assert should never fail");
             static_assert(sizeof(wchar_t) * CHAR_BIT == 16,    "paranoia size check. This assert should never fail");
+
+            if(argc == 0) {
+                std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argc == 0. This is very terrible and unrecoverable\n";
+                std::exit(-1);
+            }
+            if(!argv[0]) {
+                std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argv[0] was null. This is very terrible and unrecoverable\n";
+                std::exit(-1);
+            }
 
             std::vector<std::string> ret;
             ret.resize(argc);
@@ -95,6 +107,23 @@ namespace cppli {
             }
 
             return ret; //nrvo
+        }
+    #else
+        std::vector<std::string> argv_to_arg_vec(int argc, const char* const* argv) {
+            if(argc == 0) {
+                std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argc == 0. This is very terrible and unrecoverable\n";
+                std::exit(-1);
+            }
+            if(!argv[0]) {
+                std::cerr << iro::bright_red << iro::effect_string(iro::bold|iro::underlined, "Error:") << " argv[0] was null. This is very terrible and unrecoverable\n";
+                std::exit(-1);
+            }
+
+            std::vector<std::string> arg_vec(argc);
+            for(unsigned i = 0; i < argc; ++i) {
+                arg_vec[i] = argv[i];
+            }
+            return arg_vec;
         }
     #endif
 }
